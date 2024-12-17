@@ -1,6 +1,119 @@
 import React, { useState, useEffect } from 'react';
 import './ItemsContext.css';
 
+const dummyData = [
+  {
+    id: 1,
+    name: "Student Haven",
+    location: "Alangilan",
+    owner: "John Doe",
+    price: 5000,
+    type: "Dormitory",
+    tags: ["With WiFi", "Near School"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  },
+  {
+    id: 2,
+    name: "Cozy Nest",
+    location: "Poblacion",
+    owner: "Jane Smith",
+    price: 6000,
+    type: "Apartment",
+    tags: ["Furnished", "Pet Friendly"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  },
+  {
+    id: 3,
+    name: "Safe Haven",
+    location: "Gulod",
+    owner: "Alice Johnson",
+    price: 4500,
+    type: "Dormitory",
+    tags: ["With Security", "Near School"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  },
+  {
+    id: 4,
+    name: "Sunny Apartments",
+    location: "Kumintang",
+    owner: "Bob Brown",
+    price: 7000,
+    type: "Apartment",
+    tags: ["With Parking", "Near Mall"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  },
+  {
+    id: 5,
+    name: "Student Lodge",
+    location: "Pallocan",
+    owner: "Charlie Green",
+    price: 5500,
+    type: "Boarding House",
+    tags: ["With WiFi", "Quiet Area"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  },
+  {
+    id: 6,
+    name: "Dormitory Life",
+    location: "Alangilan",
+    owner: "Diana Prince",
+    price: 5000,
+    type: "Dormitory",
+    tags: ["Furnished", "With WiFi"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  },
+  {
+    id: 7,
+    name: "Comfort Stay",
+    location: "Poblacion",
+    owner: "Ethan Hunt",
+    price: 8000,
+    type: "Apartment",
+    tags: ["Pet Friendly", "With Parking"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  },
+  {
+    id: 8,
+    name: "Peaceful Living",
+    location: "Gulod",
+    owner: "Fiona Apple",
+    price: 6000,
+    type: "Dormitory",
+    tags: ["Near School", "Quiet Area"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  },
+  {
+    id: 9,
+    name: "Student Shelter",
+    location: "Kumintang",
+    owner: "George Clooney",
+    price: 6500,
+    type: "Boarding House",
+    tags: ["With Security", "Near Mall"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  },
+  {
+    id: 10,
+    name: "Home Away From Home",
+    location: "Pallocan",
+    owner: "Hannah Montana",
+    price: 7000,
+    type: "Apartment",
+    tags: ["Furnished", "With WiFi"],
+    images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
+    verified: true
+  }
+];
+
 export function ItemsContext({ isOpen, onClose, itemId }) {
   const [item, setItem] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -10,17 +123,10 @@ export function ItemsContext({ isOpen, onClose, itemId }) {
     // This is where you'll implement the Firebase fetch logic
     const fetchItemData = async () => {
       try {
-        // Implement Firebase fetch here
-        // For now, using dummy data
-        setItem({
-          name: "Sample Dormitory",
-          location: "Batangas City",
-          owner: "John Doe",
-          price: "₱5,000/month",
-          rating: 4.9,
-          images: ["image1.jpg", "image2.jpg", "image3.jpg", "image4.jpg", "image5.jpg"],
-          verified: true
-        });
+        const selectedItem = dummyData.find(item => item.id === itemId);
+        if (selectedItem) {
+          setItem(selectedItem);
+        }
         // Reset the current image index to 0 when new item data is fetched
         setCurrentImageIndex(0);
       } catch (error) {
@@ -88,7 +194,7 @@ export function ItemsContext({ isOpen, onClose, itemId }) {
               <div className="property-name">{item.name}</div>
               <div className="property-location">{item.location}</div>
               <div className="property-owner">Owner: {item.owner}</div>
-              <div className="property-price">{item.price}</div>
+              <div className="property-price">₱{item.price.toLocaleString()}/month</div>
             </div>
             <div className="rating">
               ★ {item.rating}

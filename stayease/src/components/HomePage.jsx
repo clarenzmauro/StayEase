@@ -251,7 +251,6 @@ export function HomePage() {
               className="property-card"
               onClick={() => handleItemClick(item.id)}
             >
-              {/* Property image will be added here */}
               <div className="property-placeholder">
                 <div className="property-info">
                   <div className="property-name">{item.name}</div>
