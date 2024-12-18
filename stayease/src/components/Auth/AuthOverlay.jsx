@@ -44,6 +44,7 @@ const AuthOverlay = ({ onClose }) => {
         isOwner: false,
         itemsInterested: [""],
         itemsSaved: [""],
+        password: "",
         profilePicUrl: user.photoURL || "",
         rating: 0,
         socials: {
@@ -112,39 +113,12 @@ const AuthOverlay = ({ onClose }) => {
         ) : (
           <>
             <button className="close-button" onClick={onClose} aria-label="Close">×</button>
-            <h2>{isLogin ? 'Sign In' : 'Sign Up'}</h2>
+            <h2>Login</h2>
             {error && <div className="error-message">{error}</div>}
-            
-            <form onSubmit={handleEmailAuth}>
-              <input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-              <input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button type="submit" className="auth-button">
-                {isLogin ? 'Sign In' : 'Sign Up'}
-              </button>
-            </form>
 
             <button onClick={handleGoogleAuth} className="google-button">
               Continue with Google
             </button>
-
-            <p className="auth-switch">
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={() => setIsLogin(!isLogin)} className="switch-button">
-                {isLogin ? 'Sign Up' : 'Sign In'}
-              </button>
-            </p>
           </>
         )}
       </div>
