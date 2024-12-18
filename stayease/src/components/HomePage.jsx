@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './HomePage.css';
-import { ItemsContext } from './ItemsContext';
+import ItemsContext from './ItemsContext';
 import { FilterMenu } from './FilterMenu';
 import { Link } from 'react-router-dom';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebase/config.js';
 
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -18,103 +20,77 @@ export function HomePage() {
     selectedPropertyType: ''
   });
 
-  // TODO: Fetch properties from Firebase
+  // Set up real-time listener for properties
   useEffect(() => {
-    // Implement Firebase fetch here
-    // For now, using dummy data
-    setProperties([
-      {
-        id: 1,
-        name: "Student Haven",
-        location: "Alangilan",
-        owner: "John Doe",
-        price: 5000,
-        type: "Dormitory",
-        tags: ["With WiFi", "Near School"]
-      },
-      {
-        id: 2,
-        name: "Cozy Nest",
-        location: "Poblacion",
-        owner: "Jane Smith",
-        price: 6000,
-        type: "Apartment",
-        tags: ["Furnished", "Pet Friendly"]
-      },
-      {
-        id: 3,
-        name: "Safe Haven",
-        location: "Gulod",
-        owner: "Alice Johnson",
-        price: 4500,
-        type: "Dormitory",
-        tags: ["With Security", "Near School"]
-      },
-      {
-        id: 4,
-        name: "Sunny Apartments",
-        location: "Kumintang",
-        owner: "Bob Brown",
-        price: 7000,
-        type: "Apartment",
-        tags: ["With Parking", "Near Mall"]
-      },
-      {
-        id: 5,
-        name: "Student Lodge",
-        location: "Pallocan",
-        owner: "Charlie Green",
-        price: 5500,
-        type: "Boarding House",
-        tags: ["With WiFi", "Quiet Area"]
-      },
-      {
-        id: 6,
-        name: "Dormitory Life",
-        location: "Alangilan",
-        owner: "Diana Prince",
-        price: 5000,
-        type: "Dormitory",
-        tags: ["Furnished", "With WiFi"]
-      },
-      {
-        id: 7,
-        name: "Comfort Stay",
-        location: "Poblacion",
-        owner: "Ethan Hunt",
-        price: 8000,
-        type: "Apartment",
-        tags: ["Pet Friendly", "With Parking"]
-      },
-      {
-        id: 8,
-        name: "Peaceful Living",
-        location: "Gulod",
-        owner: "Fiona Apple",
-        price: 6000,
-        type: "Dormitory",
-        tags: ["Near School", "Quiet Area"]
-      },
-      {
-        id: 9,
-        name: "Student Shelter",
-        location: "Kumintang",
-        owner: "George Clooney",
-        price: 6500,
-        type: "Boarding House",
-        tags: ["With Security", "Near Mall"]
-      },
-      {
-        id: 10,
-        name: "Home Away From Home",
-        location: "Pallocan",
-        owner: "Hannah Montana",
-        price: 7000,
-        type: "Apartment",
-        tags: ["Furnished", "With WiFi"]
-      }
-    ]);
-  }, []);
+    console.log('Setting up real-time listener for properties...');
+    const propertiesCollection = collection(db, 'properties');
+    
+    // Create real-time listener
+    const unsubscribe = onSnapshot(propertiesCollection, (snapshot) => {
+      console.log('Received database update:', snapshot.size, 'properties');
+      const propertiesData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      console.log('Updated properties data:', propertiesData);
+      
+      setProperties(propertiesData);
+      setFilteredProperties(propertiesData);
+    }, (error) => {
+      console.error('Error in real-time listener:', error);
+    });
+
+    // Cleanup listener on component unmount
+    return () => {
+      console.log('Cleaning up real-time listener...');
+      unsubscribe();
+    };
+  }, []); // Empty dependency array means this only runs once on mount
+
+  // Filter properties based on search and filters
+  useEffect(() => {
+    let filtered = [...properties];
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter(property =>
+        property.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        property.propertyLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        property.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        property.propertyType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        property.owner.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply price range filter
+    filtered = filtered.filter(property =>
+      property.rent >= activeFilters.priceRange.min &&
+      property.rent <= activeFilters.priceRange.max
+    );
+
+    // Apply location filter
+    if (activeFilters.selectedLocation) {
+      filtered = filtered.filter(property =>
+        property.propertyLocation === activeFilters.selectedLocation
+      );
+    }
+
+    // Apply property type filter
+    if (activeFilters.selectedPropertyType) {
+      filtered = filtered.filter(property =>
+        property.propertyType === activeFilters.selectedPropertyType
+      );
+    }
+
+    // Apply tags filter
+    if (activeFilters.selectedTags.length > 0) {
+      filtered = filtered.filter(property =>
+        activeFilters.selectedTags.every(tag => property.tags.includes(tag))
+      );
+    }
+
+    setFilteredProperties(filtered);
+  }, [properties, searchQuery, activeFilters]);
 
   // Handle search functionality
   useEffect(() => {
@@ -127,7 +103,7 @@ export function HomePage() {
 
     const filtered = properties.filter(property => {
       // Search by location
-      const locationMatch = property.location.toLowerCase().includes(query);
+      const locationMatch = property.propertyLocation.toLowerCase().includes(query);
       
       // Search by tags
       const tagMatch = property.tags.some(tag => 
@@ -135,10 +111,10 @@ export function HomePage() {
       );
       
       // Search by property name
-      const nameMatch = property.name.toLowerCase().includes(query);
+      const nameMatch = property.propertyName.toLowerCase().includes(query);
       
       // Search by property type
-      const typeMatch = property.type.toLowerCase().includes(query);
+      const typeMatch = property.propertyType.toLowerCase().includes(query);
       
       // Search by owner name
       const ownerMatch = property.owner.toLowerCase().includes(query);
@@ -154,39 +130,11 @@ export function HomePage() {
     setActiveFilters(filters);
   };
 
-  useEffect(() => {
-    const filtered = properties.filter(property => {
-      const priceInRange = 
-        property.price >= activeFilters.priceRange.min &&
-        property.price <= activeFilters.priceRange.max;
-      
-      const matchesTags = 
-        activeFilters.selectedTags.length === 0 ||
-        activeFilters.selectedTags.every(tag => property.tags.includes(tag));
-      
-      const matchesLocation = 
-        !activeFilters.selectedLocation ||
-        property.location === activeFilters.selectedLocation;
-      
-      const matchesType = 
-        !activeFilters.selectedPropertyType ||
-        property.type === activeFilters.selectedPropertyType;
-
-      return priceInRange && matchesTags && matchesLocation && matchesType;
-    });
-    setFilteredProperties(filtered);
-  }, [activeFilters, properties]);
-
   const handleItemClick = (itemId) => {
+    console.log('HomePage: Item clicked with id:', itemId);
     setSelectedItem(itemId);
     setIsItemDetailsOpen(true);
   };
-
-  // TODO: Add a function for "Properties" and "People" located in the navbar
-
-  // TODO: Add a function for "EN" located in the navbar
-
-  // TODO: Add a function for user icon located in the navbar => AccountPage.jsx
 
   return (
     <div className="homepage-container">
@@ -253,10 +201,10 @@ export function HomePage() {
             >
               <div className="property-placeholder">
                 <div className="property-info">
-                  <div className="property-name">{item.name}</div>
-                  <div className="property-location">{item.location}</div>
-                  <div className="property-type">{item.type}</div>
-                  <div className="property-price">₱{item.price.toLocaleString()}/month</div>
+                  <div className="property-name">{item.propertyName}</div>
+                  <div className="property-location">{item.propertyLocation}</div>
+                  <div className="property-type">{item.propertyType}</div>
+                  <div className="property-price">₱{item.rent.toLocaleString()}/month</div>
                 </div>
               </div>
             </div>
