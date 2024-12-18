@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import './HomePage.css';
-import ItemsContext from './ItemsContext';
-import { FilterMenu } from './FilterMenu';
-import { Link } from 'react-router-dom';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/config.js';
+import ItemsContext from './ItemsContext.jsx';
+import { FilterMenu } from './FilterMenu.jsx';
+import { Link, useNavigate } from 'react-router-dom';
+import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase/config.js';
+import { auth } from '../../firebase/config';
+import AuthOverlay from '../Auth/AuthOverlay';
 
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +21,10 @@ export function HomePage() {
     selectedLocation: '',
     selectedPropertyType: ''
   });
+  const [showAuthOverlay, setShowAuthOverlay] = useState(false);
+  const [user, setUser] = useState(null);
+  const [userFavorites, setUserFavorites] = useState([]);
+  const navigate = useNavigate();
 
   // Set up real-time listener for properties
   useEffect(() => {
@@ -46,6 +52,28 @@ export function HomePage() {
       unsubscribe();
     };
   }, []); // Empty dependency array means this only runs once on mount
+
+  // Set up auth listener and fetch user favorites
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setUser(user);
+      if (user) {
+        const accountDoc = await getDoc(doc(db, 'accounts', user.uid));
+        if (accountDoc.exists()) {
+          setUserFavorites(accountDoc.data().favoriteDorms || []);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Filter properties based on search and filters
   useEffect(() => {
@@ -136,6 +164,37 @@ export function HomePage() {
     setIsItemDetailsOpen(true);
   };
 
+  const handleFavorite = async (e, itemId) => {
+    e.stopPropagation();
+    if (!user) {
+      setShowAuthOverlay(true);
+      return;
+    }
+
+    try {
+      const accountRef = doc(db, 'accounts', user.uid);
+      const accountDoc = await getDoc(accountRef);
+      const currentFavorites = accountDoc.data()?.favoriteDorms || [];
+      const isFavorited = currentFavorites.includes(itemId);
+
+      if (isFavorited) {
+        // Remove from favorites
+        await updateDoc(accountRef, {
+          favoriteDorms: arrayRemove(itemId)
+        });
+        setUserFavorites(prev => prev.filter(id => id !== itemId));
+      } else {
+        // Add to favorites
+        await updateDoc(accountRef, {
+          favoriteDorms: arrayUnion(itemId)
+        });
+        setUserFavorites(prev => [...prev, itemId]);
+      }
+    } catch (error) {
+      console.error('Error updating favorites:', error);
+    }
+  };
+
   return (
     <div className="homepage-container">
       {/* Navigation Bar */}
@@ -160,11 +219,26 @@ export function HomePage() {
         </div>
 
         <div className="nav-right">
-          <span className="language-switch">EN</span>
-          <div className="user-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12ZM12 14C9.33 14 4 15.34 4 18V20H20V18C20 15.34 14.67 14 12 14Z" fill="#333333"/>
-            </svg>
+          <div className="language-switch">EN</div>
+          <div 
+            className="user-icon" 
+            onClick={() => navigate('/account')}
+            role="button"
+            aria-label="Account"
+          >
+            {user ? (
+              user.photoURL ? (
+                <img 
+                  src={user.photoURL} 
+                  alt="Profile" 
+                  className="user-photo" 
+                />
+              ) : (
+                user.displayName?.[0] || user.email?.[0] || '?'
+              )
+            ) : (
+              '👤'
+            )}
           </div>
         </div>
       </nav>
@@ -200,6 +274,17 @@ export function HomePage() {
               onClick={() => handleItemClick(item.id)}
             >
               <div className="property-placeholder">
+                <img 
+                  src={item.propertyPhotos[0]} 
+                  alt={item.propertyName} 
+                  className="property-image" 
+                />
+                <button 
+                  className="favorite-button"
+                  onClick={(e) => handleFavorite(e, item.id)}
+                >
+                  {userFavorites.includes(item.id) ? '❤️' : '🤍'}
+                </button>
                 <div className="property-info">
                   <div className="property-name">{item.propertyName}</div>
                   <div className="property-location">{item.propertyLocation}</div>
@@ -225,6 +310,10 @@ export function HomePage() {
         onClose={() => setIsFilterMenuOpen(false)}
         onApplyFilters={handleApplyFilters}
       />
+
+      {showAuthOverlay && (
+        <AuthOverlay onClose={() => setShowAuthOverlay(false)} />
+      )}
     </div>
   );
 }

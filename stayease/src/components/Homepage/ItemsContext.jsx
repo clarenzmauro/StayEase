@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './ItemsContext.css';
 import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/config.js';
+import { db } from '../../firebase/config.js';
 
 export function ItemsContext({ isOpen, onClose, itemId }) {
   const [item, setItem] = useState(null);
@@ -73,10 +73,6 @@ export function ItemsContext({ isOpen, onClose, itemId }) {
               <span>Verified</span>
             </div>
           )}
-          
-          <div className="favorite-button">
-            ♡
-          </div>
 
           {currentImageIndex > 0 && (
             <div className="previous-button" onClick={() => setCurrentImageIndex(prev => prev - 1)}>

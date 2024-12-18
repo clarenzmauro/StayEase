@@ -151,16 +151,26 @@
 }
 
 .close-button {
+  font-size: 24px;
   position: absolute;
-  top: 20px;
-  right: 20px;
+  top: 12px;
+  right: 12px;
   background: white;
-  width: 30px;
-  height: 30px;
+  color: black;
+  border: none;
   border-radius: 50%;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 3;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.close-button:hover {
+  background: #b4b3b3;
+  font-size: 32px;
+  color: black;
 }
