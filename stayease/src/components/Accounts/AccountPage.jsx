@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase/config';
 import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
-import AuthOverlay from '../Auth/AuthOverlay';
 import { useNavigate } from 'react-router-dom';
 import './AccountPage.css';
 
@@ -10,7 +9,6 @@ const AccountPage = () => {
   const [userData, setUserData] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editedData, setEditedData] = useState(null);
-  const [showAuthOverlay, setShowAuthOverlay] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [favoriteDorms, setFavoriteDorms] = useState([]);
   const navigate = useNavigate();
@@ -38,12 +36,12 @@ const AccountPage = () => {
           }
         }
       } else {
-        setShowAuthOverlay(true);
+        navigate('/'); // Redirect to homepage if not authenticated
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleLogout = async () => {
     try {
@@ -94,10 +92,6 @@ const AccountPage = () => {
       }
     }));
   };
-
-  if (showAuthOverlay) {
-    return <AuthOverlay onClose={() => navigate('/')} />;
-  }
 
   if (!user || !userData || !editedData) {
     return <div className="loading">Loading...</div>;

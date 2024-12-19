@@ -3,10 +3,10 @@ import './HomePage.css';
 import ItemsContext from './ItemsContext.jsx';
 import { FilterMenu } from './FilterMenu.jsx';
 import { Link, useNavigate } from 'react-router-dom';
-import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config.js';
 import { auth } from '../../firebase/config';
-import AuthOverlay from '../Auth/AuthOverlay';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,6 +25,11 @@ export function HomePage() {
   const [user, setUser] = useState(null);
   const [userFavorites, setUserFavorites] = useState([]);
   const navigate = useNavigate();
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isSuccess, setIsSuccess] = useState(false);
 
   // Set up real-time listener for properties
   useEffect(() => {
@@ -195,6 +200,63 @@ export function HomePage() {
     }
   };
 
+  const createUserDocument = async (user) => {
+    const accountRef = doc(db, 'accounts', user.uid);
+    const accountSnap = await getDoc(accountRef);
+
+    if (!accountSnap.exists()) {
+      const accountData = {
+        chatMates: {},
+        convoId: "",
+        comments: [""],
+        contactNumber: "",
+        dashboardId: "",
+        dateJoined: serverTimestamp(),
+        email: user.email || "",
+        isOwner: false,
+        itemsInterested: [""],
+        itemsSaved: [""],
+        profilePicUrl: user.photoURL || "",
+        rating: 0,
+        socials: {
+          Facebook: ""
+        },
+        testField: "",
+        username: user.displayName || user.email?.split('@')[0] || ""
+      };
+
+      try {
+        await setDoc(accountRef, accountData);
+      } catch (error) {
+        console.error("Error creating account document:", error);
+      }
+    }
+  };
+
+  const handleSuccess = () => {
+    setIsSuccess(true);
+    setTimeout(() => {
+      setShowAuthOverlay(false);
+    }, 1500);
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      await createUserDocument(result.user);
+      handleSuccess();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+
+  const handleOverlayClick = (e) => {
+    if (e.target.className === 'auth-overlay') {
+      setShowAuthOverlay(false);
+    }
+  };
+
   return (
     <div className="homepage-container">
       {/* Navigation Bar */}
@@ -222,7 +284,13 @@ export function HomePage() {
           <div className="language-switch">EN</div>
           <div 
             className="user-icon" 
-            onClick={() => navigate('/account')}
+            onClick={() => {
+              if (user) {
+                navigate('/account'); // Navigate to account page if user is logged in
+              } else {
+                setShowAuthOverlay(true); // Open the auth overlay if not logged in
+              }
+            }} 
             role="button"
             aria-label="Account"
           >
@@ -312,7 +380,25 @@ export function HomePage() {
       />
 
       {showAuthOverlay && (
-        <AuthOverlay onClose={() => setShowAuthOverlay(false)} />
+        <div className="auth-overlay" onClick={handleOverlayClick}>
+          <div className="auth-modal">
+            {isSuccess ? (
+              <div className="success-message">
+                Successfully logged in!
+              </div>
+            ) : (
+              <>
+                <button className="close-button" onClick={() => setShowAuthOverlay(false)} aria-label="Close">×</button>
+                <h2>Login</h2>
+                {error && <div className="error-message">{error}</div>}
+
+                <button onClick={handleGoogleAuth} className="google-button">
+                  Continue with Google
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
