@@ -23,7 +23,7 @@ const PropertyPage = () => {
 
           // Fetch host data using ownerId
           if (propertyData.ownerId) {
-            const hostDoc = await getDoc(doc(db, 'users', propertyData.ownerId));
+            const hostDoc = await getDoc(doc(db, 'accounts', propertyData.ownerId));
             if (hostDoc.exists()) {
               setHost(hostDoc.data());
             }
