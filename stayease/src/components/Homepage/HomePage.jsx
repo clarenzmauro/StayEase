@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import './HomePage.css';
-import ItemsContext from './ItemsContext.jsx';
 import { FilterMenu } from './FilterMenu.jsx';
 import { Link, useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../firebase/config.js';
-import { auth } from '../../firebase/config';
+import { db, auth } from '../../firebase/config.js';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState(null);
-  const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [properties, setProperties] = useState([]);
   const [filteredProperties, setFilteredProperties] = useState([]);
@@ -25,9 +21,6 @@ export function HomePage() {
   const [user, setUser] = useState(null);
   const [userFavorites, setUserFavorites] = useState([]);
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -161,12 +154,6 @@ export function HomePage() {
   // Handle filter application
   const handleApplyFilters = (filters) => {
     setActiveFilters(filters);
-  };
-
-  const handleItemClick = (itemId) => {
-    console.log('HomePage: Item clicked with id:', itemId);
-    setSelectedItem(itemId);
-    setIsItemDetailsOpen(true);
   };
 
   const handleFavorite = async (e, itemId) => {
@@ -339,7 +326,7 @@ export function HomePage() {
             <div 
               key={item.id} 
               className="property-card"
-              onClick={() => handleItemClick(item.id)}
+              onClick={() => window.open(`/property/${item.id}`, '_blank')}
             >
               <div className="property-placeholder">
                 <img 
@@ -364,13 +351,6 @@ export function HomePage() {
           ))
         )}
       </div>
-
-      {/* Item Details Overlay */}
-      <ItemsContext
-        isOpen={isItemDetailsOpen}
-        onClose={() => setIsItemDetailsOpen(false)}
-        itemId={selectedItem}
-      />
 
       {/* Filter Menu */}
       <FilterMenu
