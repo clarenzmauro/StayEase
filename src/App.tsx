@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import HomePage from './components/Homepage/HomePage';
 import AccountPage from './components/Accounts/AccountPage';
 import OwnersPage from './components/Owners/OwnersPage';
+import PropertyPage from './components/Property Page/PropertyPage';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/owner-page" element={<OwnersPage/>} />
+          <Route path="/property/:id" element={<PropertyPage />} />
         </Routes>
       </Router>
     </div>

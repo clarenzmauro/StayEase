@@ -343,7 +343,7 @@ export function HomePage() {
             <div 
               key={item.id} 
               className="property-card"
-              onClick={() => handleItemClick(item.id)}
+              onClick={() => window.open(`/property/${item.id}`, '_blank')}
             >
               <div className="property-placeholder">
                 <img 

@@ -1,0 +1,272 @@
+.property-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .property-header {
+    margin-bottom: 24px;
+  }
+  
+  .property-title {
+    font-size: 26px;
+    font-weight: 600;
+    color: #222222;
+    margin-bottom: 8px;
+  }
+  
+  .property-location {
+    font-size: 14px;
+    color: #717171;
+  }
+  
+  .property-images-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 8px;
+    height: 100%;
+    margin-bottom: 48px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .property-images-grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .main-image {
+    grid-row: span 2;
+  }
+  
+  .property-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 80px;
+    padding-top: 32px;
+  }
+  
+  .property-info {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  
+  .host-section {
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #dddddd;
+  }
+  
+  .host-info {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .host-name {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  
+  .property-stats {
+    display: flex;
+    gap: 16px;
+    color: #717171;
+  }
+  
+  .property-details {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    padding: 32px 0;
+    border-bottom: 1px solid #dddddd;
+  }
+  
+  .booking-card {
+    position: sticky;
+    top: 80px;
+    padding: 24px;
+    border: 1px solid #dddddd;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  }
+  
+  .price-info {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 24px;
+  }
+  
+  .price {
+    font-size: 22px;
+    font-weight: 600;
+  }
+  
+  .price-period {
+    font-size: 16px;
+    color: #717171;
+    margin-left: 4px;
+  }
+  
+  .booking-dates {
+    margin-bottom: 16px;
+  }
+  
+  .guests-input {
+    margin-bottom: 16px;
+  }
+  
+  .interested-button {
+    width: 100%;
+    padding: 14px;
+    background-color: #FF385C;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  
+  .interested-button:hover {
+    background-color: #E31C5F;
+  }
+  
+  .total-calculation {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #dddddd;
+  }
+  
+  .amenities-section {
+    padding: 32px 0;
+    border-bottom: 1px solid #dddddd;
+  }
+  
+  .amenities-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 24px;
+  }
+  
+  .amenity-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .section-title {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+  
+  .favorite-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2;
+    transition: all 0.3s ease;
+  }
+  
+  .favorite-button.favorited {
+    background-color: #ff385c;
+    color: white;
+  }
+  
+  .comment-form {
+    margin-bottom: 20px;
+  }
+  
+  .comment-form textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    resize: vertical;
+  }
+  
+  .comment-form button {
+    background-color: #ff385c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .comment-form button:hover {
+    background-color: #e31c5f;
+  }
+  
+  .comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .comment {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+  }
+  
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+  
+  .comment-author {
+    font-weight: bold;
+    color: #333;
+  }
+  
+  .comment-date {
+    color: #666;
+    font-size: 0.9rem;
+  }
+  
+  .loading, .error {
+    text-align: center;
+    padding: 50px;
+    font-size: 1.2rem;
+    color: #666;
+  }
+  
+  .error {
+    color: #ff385c;
+  }
+  
+  @media (max-width: 768px) {
+    .property-header {
+      flex-direction: column;
+      gap: 15px;
+      text-align: center;
+    }
+  
+    .property-images-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .host-info {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }

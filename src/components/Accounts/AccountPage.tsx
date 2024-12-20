@@ -173,9 +173,16 @@ const AccountPage = () => {
                   <button onClick={handleLogout} className="logout-button">
                     Logout
                   </button>
-                  <button onClick={handleApplyAsOwner} className="apply-button">
-                    Apply as Owner
-                  </button>
+                  {userData && userData.isOwner === false ? (
+      <button onClick={handleApplyAsOwner} className="apply-button">
+        Apply as Owner
+      </button>
+    ) : userData && userData.isOwner === true ? (
+      <button onClick={() => navigate('/owner-page')} className="visit-button">
+        Visit Owner Page
+      </button>
+    ) : null}
+
                 </>
               )}
             </div>
