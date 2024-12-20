@@ -7,6 +7,7 @@ import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc
 import { db } from '../../firebase/config.js';
 import { auth } from '../../firebase/config';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import logoSvg from '../../assets/STAY.svg';
 
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,12 +31,14 @@ export function HomePage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Set up real-time listener for properties
   useEffect(() => {
     console.log('Setting up real-time listener for properties...');
     const propertiesCollection = collection(db, 'properties');
     
+    setIsLoading(true);
     // Create real-time listener
     const unsubscribe = onSnapshot(propertiesCollection, (snapshot) => {
       console.log('Received database update:', snapshot.size, 'properties');
@@ -47,8 +50,10 @@ export function HomePage() {
       
       setProperties(propertiesData);
       setFilteredProperties(propertiesData);
+      setIsLoading(false);
     }, (error) => {
       console.error('Error in real-time listener:', error);
+      setIsLoading(false);
     });
 
     // Cleanup listener on component unmount
@@ -274,8 +279,8 @@ export function HomePage() {
               selectedLocation: '',
               selectedPropertyType: ''
             });
-          }} style={{ textDecoration: 'none', color: 'inherit' }}>
-            StayEase
+          }}> 
+            <img src={logoSvg} alt="StayEase Logo" className="logo-image" />
           </Link>
         </div>
         
@@ -315,58 +320,93 @@ export function HomePage() {
         </div>
       </nav>
 
-      {/* Search Section */}
-      <div className="search-section">
-        <input
-          type="text"
-          className="search-bar"
-          placeholder="Search by location, tags, property name, type, or owner..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <button 
-          className="filter-button"
-          onClick={() => setIsFilterMenuOpen(true)}
-        >
-          Filter
-        </button>
-      </div>
-
-      {/* Properties Grid */}
-      <div className="properties-grid">
-        {filteredProperties.length === 0 ? (
-          <div className="no-results">
-            No properties found matching your search criteria
-          </div>
-        ) : (
-          filteredProperties.map((item) => (
-            <div 
-              key={item.id} 
-              className="property-card"
-              onClick={() => window.open(`/property/${item.id}`, '_blank')}
+      <div className="homepage-layout">
+        {/* Filters Sidebar */}
+        <div className="filters-sidebar">
+          <div className={`search-section ${isLoading ? 'skeleton' : ''}`}>
+            <input
+              type="text"
+              className="search-bar"
+              placeholder="Search for your perfect stay..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={isLoading}
+            />
+            <svg
+              className="search-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ opacity: isLoading ? 0 : 1 }}
             >
-              <div className="property-placeholder">
-                <img 
-                  src={item.propertyPhotos[0]} 
-                  alt={item.propertyName} 
-                  className="property-image" 
-                />
-                <button 
-                  className="favorite-button"
-                  onClick={(e) => handleFavorite(e, item.id)}
-                >
-                  {userFavorites.includes(item.id) ? '❤️' : '🤍'}
-                </button>
-                <div className="property-info">
-                  <div className="property-name">{item.propertyName}</div>
-                  <div className="property-location">{item.propertyLocation}</div>
-                  <div className="property-type">{item.propertyType}</div>
-                  <div className="property-price">₱{item.rent.toLocaleString()}/month</div>
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+          </div>
+          <FilterMenu 
+            isOpen={true} 
+            onClose={() => {}} 
+            onApplyFilters={handleApplyFilters}
+            isLoading={isLoading}
+          />
+        </div>
+
+        <div className="main-content">
+          {/* Properties Grid */}
+          <div className="properties-grid">
+            {isLoading ? (
+              // Show 8 skeleton cards while loading
+              [...Array(8)].map((_, index) => (
+                <div key={index} className="property-card skeleton">
+                  <div className="property-placeholder">
+                    <div className="skeleton-image"></div>
+                    <div className="property-info">
+                      <div className="skeleton-text skeleton-name"></div>
+                      <div className="skeleton-text skeleton-location"></div>
+                      <div className="skeleton-text skeleton-type"></div>
+                      <div className="skeleton-text skeleton-price"></div>
+                    </div>
+                  </div>
                 </div>
+              ))
+            ) : filteredProperties.length === 0 ? (
+              <div className="no-results">
+                No properties found matching your search criteria
               </div>
-            </div>
-          ))
-        )}
+            ) : (
+              filteredProperties.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="property-card"
+                  onClick={() => window.open(`/property/${item.id}`, '_blank')}
+                >
+                  <div className="property-placeholder">
+                    <img 
+                      src={item.propertyPhotos[0]} 
+                      alt={item.propertyName} 
+                      className="property-image" 
+                    />
+                    <button 
+                      className="favorite-button"
+                      onClick={(e) => handleFavorite(e, item.id)}
+                    >
+                      {userFavorites.includes(item.id) ? '❤️' : '🤍'}
+                    </button>
+                    <div className="property-info">
+                      <div className="property-name">{item.propertyName}</div>
+                      <div className="property-location">{item.propertyLocation}</div>
+                      <div className="property-type">{item.propertyType}</div>
+                      <div className="property-price">₱{item.rent.toLocaleString()}/month</div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Item Details Overlay */}
@@ -374,13 +414,6 @@ export function HomePage() {
         isOpen={isItemDetailsOpen}
         onClose={() => setIsItemDetailsOpen(false)}
         itemId={selectedItem}
-      />
-
-      {/* Filter Menu */}
-      <FilterMenu
-        isOpen={isFilterMenuOpen}
-        onClose={() => setIsFilterMenuOpen(false)}
-        onApplyFilters={handleApplyFilters}
       />
 
       {showAuthOverlay && (

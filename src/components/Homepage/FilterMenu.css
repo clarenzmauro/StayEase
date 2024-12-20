@@ -1,55 +1,43 @@
-.filter-menu-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: flex-end;
-  z-index: 1000;
-}
-
 .filter-menu {
   background: white;
-  width: 400px;
-  height: 100%;
-  padding: 2rem;
-  overflow-y: auto;
-}
-
-.filter-menu h2 {
-  margin-bottom: 2rem;
-  font-size: 1.5rem;
+  width: 100%;
 }
 
 .filter-section {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
 }
 
 .filter-section h3 {
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-  color: #666;
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
+  color: #333;
+  font-weight: 600;
 }
 
 .price-range {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
   align-items: center;
 }
 
 .price-range input {
-  width: 120px;
+  width: 100px;
   padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.price-range span {
+  color: #666;
+  font-size: 0.9rem;
 }
 
 .tags-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .tag-checkbox {
@@ -57,10 +45,14 @@
   align-items: center;
   gap: 0.5rem;
   cursor: pointer;
+  font-size: 0.9rem;
+  color: #444;
 }
 
 .tag-checkbox input {
   cursor: pointer;
+  width: 16px;
+  height: 16px;
 }
 
 select {
@@ -69,31 +61,36 @@ select {
   border: 1px solid #ddd;
   border-radius: 4px;
   background-color: white;
+  font-size: 0.9rem;
+  color: #444;
 }
 
 .filter-buttons {
   display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
 }
 
 .reset-button,
 .apply-button {
   flex: 1;
-  padding: 0.75rem;
+  padding: 0.6rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-weight: bold;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
 }
 
 .reset-button {
   background-color: #f5f5f5;
   color: #666;
+  border: 1px solid #ddd;
 }
 
 .apply-button {
-  background-color: #007bff;
+  background-color: #021526 !important;
   color: white;
 }
 
@@ -102,5 +99,5 @@ select {
 }
 
 .apply-button:hover {
-  background-color: #0056b3;
+  background-color: #052746 !important;
 }
