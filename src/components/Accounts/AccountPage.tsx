@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase/config';
-import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, updateDoc, addDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import './AccountPage.css';
 
@@ -60,11 +60,24 @@ const AccountPage = () => {
 
   const handleSubmitOwner = async () => {
     try {
-      const accountRef = doc(db, 'accounts', user.uid);
-      await updateDoc(accountRef, { isOwner: true });
-      setUserData((prev) => ({ ...prev, isOwner: true }));
-      setShowOwnerOverlay(false);
-      navigate("/owner-page")
+      // Create a new document in the dashboards collection
+    const dashboardRef = await addDoc(collection(db, 'dashboards'), {
+      followers: [],
+      listedDorms: [],
+      ownerId: user.uid
+    });
+
+    // Update the user's account in the accounts collection
+    const accountRef = doc(db, 'accounts', user.uid);
+    await updateDoc(accountRef, {
+      isOwner: true,
+      dashboardId: dashboardRef.id
+    });
+
+    setUserData((prev) => ({ ...prev, isOwner: true, dashboardId: dashboardRef.id }));
+    setShowOwnerOverlay(false);
+
+    navigate('/owner-page');
     } catch (error) {
       console.error('Error updating isOwner:', error);
     }
