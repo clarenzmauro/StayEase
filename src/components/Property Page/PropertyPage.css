@@ -116,7 +116,7 @@
     margin-bottom: 16px;
   }
   
-  .guests-input {
+  .guests-input, .floor-level, .furnishing, .pet-friendly, .property-size {
     margin-bottom: 16px;
   }
   
@@ -187,59 +187,183 @@
     color: white;
   }
   
+  .comments-section {
+    margin-top: 2rem;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .comments-section h2 {
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    color: #333;
+  }
+  
   .comment-form {
-    margin-bottom: 20px;
+    margin-bottom: 2rem;
   }
   
   .comment-form textarea {
     width: 100%;
     min-height: 100px;
-    padding: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
     border: 1px solid #ddd;
-    border-radius: 5px;
-    margin-bottom: 10px;
+    border-radius: 4px;
     resize: vertical;
   }
   
   .comment-form button {
-    background-color: #ff385c;
+    padding: 0.5rem 1rem;
+    background-color: #007bff;
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.2s;
   }
   
   .comment-form button:hover {
-    background-color: #e31c5f;
+    background-color: #0056b3;
   }
   
   .comments-list {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 1rem;
   }
   
   .comment {
-    border-bottom: 1px solid #eee;
-    padding-bottom: 15px;
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #f9f9f9;
   }
   
   .comment-header {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 5px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
   }
   
   .comment-author {
-    font-weight: bold;
-    color: #333;
+    font-weight: 600;
   }
   
-  .comment-date {
+  .comment-date, .comment-time {
+    color: #888;
+  }
+  
+  .comment-content {
+    margin: 0;
+    color: #333;
+    line-height: 1.5;
+  }
+  
+  .comment-actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .comment-actions button {
+    padding: 0.25rem 0.5rem;
+    background-color: transparent;
+    border: 1px solid #ddd;
+    border-radius: 4px;
     color: #666;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+  
+  .comment-actions button:hover {
+    background-color: #f0f0f0;
+    border-color: #999;
+  }
+  
+  .delete-button {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: auto;
+    font-size: 14px;
+  }
+  
+  .delete-button:hover {
+    background-color: #ff3333;
+  }
+  
+  .replies {
+    margin-left: 2rem;
+    margin-top: 1rem;
+    border-left: 2px solid #eee;
+    padding-left: 1rem;
+  }
+  
+  .reply {
+    background-color: #f5f5f5;
+    padding: 0.75rem;
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+  }
+  
+  .reply-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: #666;
+  }
+  
+  .reply-author {
+    font-weight: 600;
+  }
+  
+  .reply-date {
+    color: #888;
+  }
+  
+  .reply-content {
+    margin: 0;
     font-size: 0.9rem;
+    color: #333;
+    line-height: 1.4;
+  }
+  
+  .comment form {
+    margin-top: 1rem;
+  }
+  
+  .comment form textarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+    font-size: 0.9rem;
+  }
+  
+  .comment form button {
+    padding: 0.4rem 0.8rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+  }
+  
+  .comment form button:hover {
+    background-color: #0056b3;
   }
   
   .loading, .error {
@@ -251,6 +375,28 @@
   
   .error {
     color: #ff385c;
+  }
+  
+  .comments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .sort-button {
+    background-color: #4a90e2;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+  }
+  
+  .sort-button:hover {
+    background-color: #357abd;
   }
   
   @media (max-width: 768px) {
