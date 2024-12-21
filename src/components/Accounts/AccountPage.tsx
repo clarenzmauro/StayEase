@@ -1,16 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase/config';
 import { collection, doc, getDoc, updateDoc, addDoc } from 'firebase/firestore';
 import { useNavigate } from 'react-router-dom';
 import './AccountPage.css';
+import { User } from 'firebase/auth';
+import { DocumentData } from 'firebase/firestore';
 
 const AccountPage = () => {
-  const [user, setUser] = useState(null);
-  const [userData, setUserData] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [userData, setUserData] = useState<DocumentData | null>(null);
   const [editMode, setEditMode] = useState(false);
-  const [editedData, setEditedData] = useState(null);
+  const [editedData, setEditedData] = useState<DocumentData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [itemsSaved, setFavoriteDorms] = useState([]);
+  const [itemsSaved, setFavoriteDorms] = useState<string[]>([]);
   const [showOwnerOverlay, setShowOwnerOverlay] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const navigate = useNavigate();
@@ -29,7 +31,7 @@ const AccountPage = () => {
           if (data.itemsSaved && data.itemsSaved.length > 0) {
             const propertiesRef = collection(db, 'properties');
             const favoriteProperties = await Promise.all(
-              data.itemsSaved.map(async (propertyId) => {
+              data.itemsSaved.map(async (propertyId: string) => {
                 const propertyDoc = await getDoc(doc(propertiesRef, propertyId));
                 return propertyDoc.exists() ? { id: propertyDoc.id, ...propertyDoc.data() } : null;
               })
@@ -59,6 +61,10 @@ const AccountPage = () => {
   };
 
   const handleSubmitOwner = async () => {
+    if (!user) {
+      console.error("User is not logged in.");
+      return;
+    }
     try {
       // Create a new document in the dashboards collection
     const dashboardRef = await addDoc(collection(db, 'dashboards'), {
@@ -103,6 +109,16 @@ const AccountPage = () => {
   };
 
   const handleSave = async () => {
+    if (!user) {
+      console.error('User is not logged in.');
+      return;
+    }
+
+    if (!editedData) {
+      console.error('Edited data is null.');
+      return;
+    }
+
     try {
       setIsSaving(true);
       const accountRef = doc(db, 'accounts', user.uid);
@@ -116,19 +132,19 @@ const AccountPage = () => {
     }
   };
 
-  const handleChange = (field, value) => {
+  const handleChange = (field: any, value: any) => {
     setEditedData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleSocialChange = (platform, value) => {
+  const handleSocialChange = (platform: any, value: any) => {
     setEditedData(prev => ({
       ...prev,
       socials: {
-        ...prev.socials,
-        [platform]: value
+        ...(prev?.socials || {}),
+        [platform]: value,
       }
     }));
   };
@@ -354,7 +370,7 @@ const AccountPage = () => {
             <div className="info-group">
               <label>Comments</label>
               <div className="comments-list">
-                {userData.comments.map((comment, index) => (
+                {userData.comments.map((comment: string, index: number) => (
                   comment && <p key={index}>{comment}</p>
                 ))}
               </div>
@@ -366,7 +382,7 @@ const AccountPage = () => {
           <h3>Favorite Dorms</h3>
           <div className="favorite-dorms-grid">
             {itemsSaved.length > 0 ? (
-              itemsSaved.map((dorm) => (
+              itemsSaved.map((dorm:any) => (
                 <div key={dorm.id} className="favorite-dorm-card" onClick={() => navigate(`/property/${dorm.id}`)}>
                   <img 
                     src={dorm.propertyPhotos[0]} 
@@ -391,7 +407,7 @@ const AccountPage = () => {
           <h3>Interested Dorms</h3>
           <div className="favorite-dorms-grid">
             {itemsSaved.length > 0 ? (
-              itemsSaved.map((dorm) => (
+              itemsSaved.map((dorm:any) => (
                 <div key={dorm.id} className="favorite-dorm-card" onClick={() => navigate(`/property/${dorm.id}`)}>
                   <img 
                     src={dorm.propertyPhotos[0]} 
