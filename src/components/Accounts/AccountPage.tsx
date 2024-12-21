@@ -125,6 +125,31 @@ const AccountPage = () => {
     }));
   };
 
+  const caesarCipher = (text: string, key: number): string => {
+    return text.split('').map(char => {
+      const code = char.charCodeAt(0);
+
+      if (code >= 65 && code <= 90) {
+        return String.fromCharCode(((code - 65 + key) % 26) + 65);
+      } else if (code >= 97 && code <= 122) {
+        return String.fromCharCode(((code - 97 + key) % 26) + 97);
+      }
+      return char;
+    }).join('');
+  };
+
+  const handleNavigateToOwnerPage = async () => {
+    if (user) {
+      const accountDoc = await getDoc(doc(db, 'accounts', user.uid));
+      if (accountDoc.exists()) {
+        const documentId = accountDoc.id;
+        const key = new Date().getDate(); // Get the current day
+        const encryptedId = caesarCipher(documentId, key);
+        navigate(`/owner-page/${encryptedId}`, { state: { normalDocumentId: documentId, encryptedDocumentId: encryptedId } });
+      }
+    }
+  };
+
   if (!user || !userData || !editedData) {
     return <div className="loading">Loading...</div>;
   }
@@ -178,7 +203,7 @@ const AccountPage = () => {
         Apply as Owner
       </button>
     ) : userData && userData.isOwner === true ? (
-      <button onClick={() => navigate('/owner-page')} className="visit-button">
+      <button onClick={handleNavigateToOwnerPage} className="visit-button">
         Visit Owner Page
       </button>
     ) : null}

@@ -1,8 +1,40 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 import './OwnersPage.css';
 import logoSvg from '../../assets/STAY.svg';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 
 const OwnersPage: React.FC = () => {
+    const { id } = useParams<{ id: string }>();
+    const location = useLocation();
+    const { normalDocumentId, encryptedDocumentId } = location.state || {}; // Accessing state
+    const [ownerData, setOwnerData] = useState<any>(null);
+    const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner'; // Default to 'Owner' if username is not available
+
+    useEffect(() => {
+        const fetchOwnerData = async () => {
+            if (normalDocumentId) {
+                const docRef = doc(db, 'accounts', normalDocumentId); // Assuming 'accounts' is the collection name
+                const docSnap = await getDoc(docRef);
+                
+                if (docSnap.exists()) {
+                    setOwnerData(docSnap.data()); // Store the document data in state
+                } else {
+                    console.log('No such document!');
+                }
+            }
+        };
+
+        fetchOwnerData();
+    }, [normalDocumentId]);
+
+    useEffect(() => {
+        if (encryptedDocumentId && id === encryptedDocumentId) {
+          alert('Owner is viewing!'); // Simple notification for the owner
+        }
+      }, [id, encryptedDocumentId]);
+    
     const reviews = [
         {
           id: 1,
@@ -67,41 +99,56 @@ const OwnersPage: React.FC = () => {
         <div className="profile-sidebar">
           <div className="profile-card">
             <div className="profile-image-container">
-              <img src="/placeholder.svg?height=150&width=150" alt="Profile" className="profile-image" />
+            <img 
+        src={ownerData?.profilePicUrl || "/placeholder.svg?height=150&width=150"} 
+        alt="Profile" 
+        className="profile-image" 
+    />
               <button className="heart-badge">
                 <svg viewBox="0 0 24 24" className="heart-icon">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                 </svg>
               </button>
             </div>
-            <h1 className="profile-name">Paulino</h1>
-            <p className="superhost-badge">Superhost</p>
+            <h1 className="profile-name">{ownerData?.username}</h1>
+            <p className="superhost-badge">Property Owner</p>
             
             <div className="stats-container">
               <div className="stat-item">
-                <div className="stat-value">421</div>
-                <div className="stat-label">Reviews</div>
+                <div className="stat-value">{ownerData?.followerCount}</div>
+                <div className="stat-label">Followers</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">4.95★</div>
+                <div className="stat-value">{ownerData?.rating}★</div>
                 <div className="stat-label">Rating</div>
               </div>
               <div className="stat-item">
-                <div className="stat-value">7</div>
-                <div className="stat-label">Years hosting</div>
+                <div className="stat-value">{ownerData?.dateJoined ?
+                new Date(ownerData.dateJoined.seconds * 1000).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })
+                  : 'N/A'}
+                  </div>
+                <div className="stat-label">Date Joined</div>
               </div>
             </div>
           </div>
 
           <div className="info-card">
-            <h2 className="info-title">Paulino's confirmed information</h2>
+            <h2 className="info-title">{firstName}'s confirmed information</h2>
             <div className="confirmed-items">
-              {['Identity', 'Email address', 'Phone number'].map(item => (
-                <div key={item} className="confirmed-item">
-                  <span className="check-icon">✓</span>
-                  <span>{item}</span>
+            {ownerData ? (
+            [ownerData.email || "N/A", ownerData.contactNumber || "N/A"].map((item, index) => (
+                <div key={index} className="confirmed-item">
+                    <span className="check-icon">✓</span>
+                    <span>{item}</span>
                 </div>
-              ))}
+            ))
+        ) : (
+            <p>Loading confirmed information...</p>
+        )}
             </div>
           </div>
 
@@ -109,7 +156,7 @@ const OwnersPage: React.FC = () => {
         </div>
 
         <div className="about-section">
-          <h2 className="about-title">About Paulino</h2>
+          <h2 className="about-title">About {firstName}</h2>
           
           <div className="details-grid">
             <div className="detail-item">
@@ -170,16 +217,12 @@ const OwnersPage: React.FC = () => {
           </div>
 
           <p className="bio">
-            Hello there! I'm a marketing & advertising professional, entrepreneur and life explorer 
-            who loves travel, music and design. Having lived in 6 different countries and travelled 
-            to 32 countries my whole life, nothing excites me more than trying new things and 
-            seeing new places. I can't wait to share my home with you which I've meticuously 
-            curated and designed for your pleasure and comfort. Hope to see you soon :) Carpe awesome!
+            {ownerData?.description}
           </p>
 
         <section className="reviews-section">
         <div className="section-header">
-          <h2>Paulino's reviews</h2>
+          <h2>{firstName}'s reviews</h2>
           <div className="navigation-buttons">
             <button className="nav-button" aria-label="Previous">
               <span className="arrow left"></span>
@@ -210,7 +253,7 @@ const OwnersPage: React.FC = () => {
 
       <section className="listings-section">
         <div className="section-header">
-          <h2>Paulino's listings</h2>
+          <h2>{firstName}'s listings</h2>
           <div className="navigation-buttons">
             <button className="nav-button" aria-label="Previous">
               <span className="arrow left"></span>
