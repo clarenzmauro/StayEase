@@ -12,12 +12,12 @@ const PropertyHeader = () => {
       <Link to="/" className="logo">
         <img src={logoSvg} alt="StayEase Logo" />
       </Link>
-      
+
       <div className="nav-right">
         <Link to={user ? "/profile" : "/login"}>
-          <img 
-            src={userIcon} 
-            alt="User Profile" 
+          <img
+            src={userIcon}
+            alt="User Profile"
             className="user-icon"
           />
         </Link>

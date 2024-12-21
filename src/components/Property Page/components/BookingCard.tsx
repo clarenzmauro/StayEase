@@ -45,8 +45,8 @@ const BookingCard = ({ property, onInterestedClick }: BookingCardProps) => {
         <div>Property Size: {property.propertySize}</div>
       </div>
 
-      <button 
-        className="interested-button" 
+      <button
+        className="interested-button"
         onClick={onInterestedClick}
       >
         Interested

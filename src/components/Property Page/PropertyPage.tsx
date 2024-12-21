@@ -97,7 +97,7 @@ const PropertyPage = () => {
           // Fetch comments and their replies
           const commentsQuery = query(collection(db, 'comments'), where('propertyId', '==', id));
           const commentsSnapshot = await getDocs(commentsQuery);
-          
+
           // First, get all comments
           const commentsData = commentsSnapshot.docs.map(doc => ({
             id: doc.id,
@@ -120,7 +120,7 @@ const PropertyPage = () => {
             where('isReply', '==', true)
           );
           const repliesSnapshot = await getDocs(repliesQuery);
-          
+
           // Create a map of parent comments to their replies
           const repliesMap = new Map();
           repliesSnapshot.docs.forEach(doc => {
@@ -232,7 +232,7 @@ const PropertyPage = () => {
       });
 
       setNewComment('');
-      
+
       // Refresh comments
       const commentsQuery = query(collection(db, 'comments'), where('propertyId', '==', id));
       const commentsSnapshot = await getDocs(commentsQuery);
@@ -254,9 +254,9 @@ const PropertyPage = () => {
       });
 
       // Sort comments to maintain current sort order
-      const sortedComments = activeSortType === 'date' 
+      const sortedComments = activeSortType === 'date'
         ? commentsData.sort((a, b) => {
-          return dateSort === 'newest' 
+          return dateSort === 'newest'
             ? a.commentDate?.seconds - b.commentDate?.seconds
             : b.commentDate?.seconds - a.commentDate?.seconds;
         })
@@ -278,11 +278,11 @@ const PropertyPage = () => {
     try {
       const commentRef = doc(db, 'comments', commentId);
       const commentDoc = await getDoc(commentRef);
-      
+
       if (!commentDoc.exists()) return;
-      
+
       const commentData = commentDoc.data();
-      
+
       // Only allow deletion if the user is the comment author
       if (commentData.userId !== user.uid) return;
 
@@ -301,7 +301,7 @@ const PropertyPage = () => {
     setComments(prevComments => {
       const sortedComments = [...prevComments];
       return sortedComments.sort((a, b) => {
-        return dateSort === 'newest' 
+        return dateSort === 'newest'
           ? a.commentDate?.seconds - b.commentDate?.seconds
           : b.commentDate?.seconds - a.commentDate?.seconds;
       });
@@ -330,13 +330,13 @@ const PropertyPage = () => {
     try {
       const commentRef = doc(db, 'comments', commentId);
       const commentDoc = await getDoc(commentRef);
-      
+
       if (!commentDoc.exists()) return;
-      
+
       const commentData = commentDoc.data();
       const likedBy = commentData.likedBy || [];
       const hasLiked = likedBy.includes(user.uid);
-      
+
       if (hasLiked) {
         // Unlike the comment
         await updateDoc(commentRef, {
@@ -352,13 +352,13 @@ const PropertyPage = () => {
       }
 
       // Update local state
-      setComments(prevComments => 
+      setComments(prevComments =>
         prevComments.map(comment => {
           if (comment.id === commentId) {
             return {
               ...comment,
               likesCounter: hasLiked ? (comment.likesCounter || 0) - 1 : (comment.likesCounter || 0) + 1,
-              likedBy: hasLiked 
+              likedBy: hasLiked
                 ? (comment.likedBy || []).filter((id: string) => id !== user.uid)
                 : [...(comment.likedBy || []), user.uid]
             };
@@ -396,7 +396,7 @@ const PropertyPage = () => {
       const replyWithId = { ...replyData, id: replyRef.id };
 
       // Update local state
-      setComments(prevComments => 
+      setComments(prevComments =>
         prevComments.map(comment => {
           if (comment.id === commentId) {
             return {
@@ -425,7 +425,7 @@ const PropertyPage = () => {
       const replyRef = doc(db, 'comments', replyId);
       const replyDoc = await getDoc(replyRef);
       const replyData = replyDoc.data();
-      
+
       if (!replyData) return;
 
       const hasLiked = replyData.likedBy?.includes(user.uid);
@@ -445,7 +445,7 @@ const PropertyPage = () => {
       }
 
       // Update local state
-      setComments(prevComments => 
+      setComments(prevComments =>
         prevComments.map(comment => {
           if (comment.id === commentId) {
             return {
@@ -455,7 +455,7 @@ const PropertyPage = () => {
                   return {
                     ...reply,
                     likesCounter: hasLiked ? (reply.likesCounter || 0) - 1 : (reply.likesCounter || 0) + 1,
-                    likedBy: hasLiked 
+                    likedBy: hasLiked
                       ? (reply.likedBy || []).filter((id: string) => id !== user.uid)
                       : [...(reply.likedBy || []), user.uid]
                   };
@@ -526,10 +526,10 @@ const PropertyPage = () => {
   return (
     <div className="property-page">
       <PropertyHeader />
-      
+
       {/* Back button */}
-      <button 
-        onClick={() => navigate(-1)} 
+      <button
+        onClick={() => navigate(-1)}
         className="back-button"
       >
         ←
@@ -555,8 +555,8 @@ const PropertyPage = () => {
 
       <div className="property-content">
         <PropertyInfo property={property} host={host} />
-        
-        <BookingCard 
+
+        <BookingCard
           property={property}
           onInterestedClick={handleInterestedClick}
         />
@@ -575,7 +575,7 @@ const PropertyPage = () => {
         onDeleteReply={handleDeleteReply}
       />
 
-      <LoginPrompt 
+      <LoginPrompt
         show={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
       />
