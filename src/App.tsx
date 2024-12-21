@@ -13,7 +13,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/account" element={<AccountPage />} />
-          <Route path="/owner-page" element={<OwnersPage/>} />
+          <Route path="/owner-page/:id" element={<OwnersPage/>} />
           <Route path="/property/:id" element={<PropertyPage />} />
         </Routes>
       </Router>
