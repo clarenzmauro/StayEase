@@ -77,7 +77,15 @@ const AccountPage = () => {
     setUserData((prev) => ({ ...prev, isOwner: true, dashboardId: dashboardRef.id }));
     setShowOwnerOverlay(false);
 
-    navigate('/owner-page');
+    if (user) {
+      const accountDoc = await getDoc(doc(db, 'accounts', user.uid));
+      if (accountDoc.exists()) {
+        const documentId = accountDoc.id;
+        const key = new Date().getDate(); // Get the current day
+        const encryptedId = caesarCipher(documentId, key);
+        navigate(`/owner-page/${encryptedId}`, { state: { normalDocumentId: documentId, encryptedDocumentId: encryptedId } });
+      }
+    }
     } catch (error) {
       console.error('Error updating isOwner:', error);
     }
