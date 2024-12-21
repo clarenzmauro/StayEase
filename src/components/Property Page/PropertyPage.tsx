@@ -1,8 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { collection, doc, addDoc, serverTimestamp, getDoc, getDocs, query, where, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase/config';
 import { DocumentData } from 'firebase/firestore';
+import { useAuth } from '../../hooks/useAuth';
+
+import PropertyHeader from './components/PropertyHeader';
+import PropertyGallery from './components/PropertyGallery';
+import PropertyInfo from './components/PropertyInfo';
+import BookingCard from './components/BookingCard';
+import CommentSection from './components/CommentSection';
+import LoginPrompt from './components/LoginPrompt';
+
 import './PropertyPage.css';
 
 interface Property {
@@ -37,7 +46,8 @@ interface Comment {
   userEmail: string;
   content: string;
   commentDate: any;
-  likesCounter?: number;
+  likesCounter: number;
+  likedBy: string[];
   dislikeCounter?: number;
   isReply?: boolean;
   replies?: any[];
@@ -45,13 +55,22 @@ interface Comment {
 
 const PropertyPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [host, setHost] = useState<DocumentData | null>(null);
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [dateSort, setDateSort] = useState<'newest' | 'oldest'>('newest');
+  const [likeSort, setLikeSort] = useState<'mostLiked' | 'leastLiked'>('mostLiked');
+  const [activeSortType, setActiveSortType] = useState<'date' | 'likes'>('date');
+  const [visibleComments, setVisibleComments] = useState(5);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyContent, setReplyContent] = useState('');
+  const COMMENTS_PER_PAGE = 5;
 
   useEffect(() => {
     const fetchPropertyData = async () => {
@@ -75,25 +94,65 @@ const PropertyPage = () => {
             }
           }
 
-          // Fetch comments
+          // Fetch comments and their replies
           const commentsQuery = query(collection(db, 'comments'), where('propertyId', '==', id));
           const commentsSnapshot = await getDocs(commentsQuery);
-          const commentsData: Comment[] = commentsSnapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              propertyId: data.propertyId,
-              userId: data.userId,
-              userEmail: data.userEmail,
-              content: data.content,
-              commentDate: data.commentDate || data.timestamp,
-              likesCounter: data.likesCounter,
-              dislikeCounter: data.dislikeCounter,
-              isReply: data.isReply,
-              replies: data.replies
-            };
+          
+          // First, get all comments
+          const commentsData = commentsSnapshot.docs.map(doc => ({
+            id: doc.id,
+            propertyId: doc.data().propertyId,
+            userId: doc.data().userId,
+            userEmail: doc.data().userEmail,
+            content: doc.data().content,
+            commentDate: doc.data().commentDate,
+            likesCounter: doc.data().likesCounter,
+            likedBy: doc.data().likedBy,
+            dislikeCounter: doc.data().dislikeCounter,
+            isReply: doc.data().isReply,
+            replies: []
+          })) as Comment[];
+
+          // Then, fetch replies for each comment
+          const repliesQuery = query(
+            collection(db, 'comments'),
+            where('propertyId', '==', id),
+            where('isReply', '==', true)
+          );
+          const repliesSnapshot = await getDocs(repliesQuery);
+          
+          // Create a map of parent comments to their replies
+          const repliesMap = new Map();
+          repliesSnapshot.docs.forEach(doc => {
+            const replyData = doc.data();
+            const parentId = replyData.parentCommentId;
+            if (parentId) {
+              if (!repliesMap.has(parentId)) {
+                repliesMap.set(parentId, []);
+              }
+              repliesMap.get(parentId).push({
+                id: doc.id,
+                propertyId: replyData.propertyId,
+                userId: replyData.userId,
+                userEmail: replyData.userEmail,
+                content: replyData.content,
+                commentDate: replyData.commentDate,
+                likesCounter: replyData.likesCounter,
+                likedBy: replyData.likedBy,
+                dislikeCounter: replyData.dislikeCounter,
+                isReply: replyData.isReply,
+                replies: []
+              });
+            }
           });
-          setComments(commentsData);
+
+          // Attach replies to their parent comments
+          const commentsWithReplies = commentsData.map(comment => ({
+            ...comment,
+            replies: repliesMap.get(comment.id) || []
+          }));
+
+          setComments(commentsWithReplies);
         }
         setLoading(false);
       } catch (error) {
@@ -118,9 +177,13 @@ const PropertyPage = () => {
   }, []);
 
   const handleFavoriteToggle = async () => {
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
     if (!auth.currentUser || !id) return;
 
-    const userRef = doc(db, 'users', auth.currentUser.uid);
+    const userRef = doc(db, 'accounts', auth.currentUser.uid);
     const isFavorited = userFavorites.includes(id);
 
     try {
@@ -135,8 +198,20 @@ const PropertyPage = () => {
     }
   };
 
+  const handleInterestedClick = async () => {
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+    // ... rest of the interested logic
+  };
+
   const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
     if (!auth.currentUser || !newComment.trim() || !id) return;
 
     try {
@@ -170,209 +245,340 @@ const PropertyPage = () => {
           userEmail: data.userEmail,
           content: data.content,
           commentDate: data.commentDate || data.timestamp,
-          likesCounter: data.likesCounter,
-          dislikeCounter: data.dislikeCounter,
-          isReply: data.isReply,
-          replies: data.replies
+          likesCounter: data.likesCounter || 0,
+          likedBy: data.likedBy || [],
+          dislikeCounter: data.dislikeCounter || 0,
+          isReply: data.isReply || false,
+          replies: data.replies || []
         };
       });
-      setComments(commentsData);
+
+      // Sort comments to maintain current sort order
+      const sortedComments = activeSortType === 'date' 
+        ? commentsData.sort((a, b) => {
+          return dateSort === 'newest' 
+            ? a.commentDate?.seconds - b.commentDate?.seconds
+            : b.commentDate?.seconds - a.commentDate?.seconds;
+        })
+        : commentsData.sort((a, b) => {
+          return likeSort === 'mostLiked'
+            ? (a.likesCounter || 0) - (b.likesCounter || 0)
+            : (b.likesCounter || 0) - (a.likesCounter || 0);
+        });
+
+      setComments(sortedComments);
     } catch (error) {
       console.error('Error adding comment:', error);
     }
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!auth.currentUser || !id) return;
+    if (!user) return;
 
     try {
-      // Delete the comment document
       const commentRef = doc(db, 'comments', commentId);
+      const commentDoc = await getDoc(commentRef);
+      
+      if (!commentDoc.exists()) return;
+      
+      const commentData = commentDoc.data();
+      
+      // Only allow deletion if the user is the comment author
+      if (commentData.userId !== user.uid) return;
+
       await deleteDoc(commentRef);
 
-      // Remove the comment from the comments array
-      const updatedComments = comments.filter(comment => comment.id !== commentId);
-      setComments(updatedComments);
+      // Update local state
+      setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
     } catch (error) {
       console.error('Error deleting comment:', error);
     }
   };
 
-  const handleSortComments = () => {
-    const sortedComments = [...comments].sort((a, b) => {
-      const dateA = (a.commentDate?.seconds || 0) * 1000;
-      const dateB = (b.commentDate?.seconds || 0) * 1000;
-      return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+  const handleDateSort = () => {
+    setDateSort(prev => prev === 'newest' ? 'oldest' : 'newest');
+    setActiveSortType('date');
+    setComments(prevComments => {
+      const sortedComments = [...prevComments];
+      return sortedComments.sort((a, b) => {
+        return dateSort === 'newest' 
+          ? a.commentDate?.seconds - b.commentDate?.seconds
+          : b.commentDate?.seconds - a.commentDate?.seconds;
+      });
     });
-    setComments(sortedComments);
-    setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest');
+  };
+
+  const handleLikeSort = () => {
+    setLikeSort(prev => prev === 'mostLiked' ? 'leastLiked' : 'mostLiked');
+    setActiveSortType('likes');
+    setComments(prevComments => {
+      const sortedComments = [...prevComments];
+      return sortedComments.sort((a, b) => {
+        return likeSort === 'mostLiked'
+          ? (a.likesCounter || 0) - (b.likesCounter || 0)
+          : (b.likesCounter || 0) - (a.likesCounter || 0);
+      });
+    });
+  };
+
+  const handleLikeComment = async (commentId: string) => {
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    try {
+      const commentRef = doc(db, 'comments', commentId);
+      const commentDoc = await getDoc(commentRef);
+      
+      if (!commentDoc.exists()) return;
+      
+      const commentData = commentDoc.data();
+      const likedBy = commentData.likedBy || [];
+      const hasLiked = likedBy.includes(user.uid);
+      
+      if (hasLiked) {
+        // Unlike the comment
+        await updateDoc(commentRef, {
+          likesCounter: (commentData.likesCounter || 0) - 1,
+          likedBy: arrayRemove(user.uid)
+        });
+      } else {
+        // Like the comment
+        await updateDoc(commentRef, {
+          likesCounter: (commentData.likesCounter || 0) + 1,
+          likedBy: arrayUnion(user.uid)
+        });
+      }
+
+      // Update local state
+      setComments(prevComments => 
+        prevComments.map(comment => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              likesCounter: hasLiked ? (comment.likesCounter || 0) - 1 : (comment.likesCounter || 0) + 1,
+              likedBy: hasLiked 
+                ? (comment.likedBy || []).filter((id: string) => id !== user.uid)
+                : [...(comment.likedBy || []), user.uid]
+            };
+          }
+          return comment;
+        })
+      );
+    } catch (error) {
+      console.error('Error updating like:', error);
+    }
+  };
+
+  const handleReplySubmit = async (commentId: string) => {
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    if (!replyContent.trim()) return;
+
+    try {
+      const replyData = {
+        propertyId: id,
+        userId: user.uid,
+        userEmail: user.email,
+        content: replyContent,
+        commentDate: serverTimestamp(),
+        likesCounter: 0,
+        likedBy: [],
+        isReply: true,
+        parentCommentId: commentId
+      };
+
+      const replyRef = await addDoc(collection(db, 'comments'), replyData);
+      const replyWithId = { ...replyData, id: replyRef.id };
+
+      // Update local state
+      setComments(prevComments => 
+        prevComments.map(comment => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              replies: [...(comment.replies || []), replyWithId]
+            };
+          }
+          return comment;
+        })
+      );
+
+      setReplyContent('');
+      setReplyingTo(null);
+    } catch (error) {
+      console.error('Error adding reply:', error);
+    }
+  };
+
+  const handleReplyLike = async (commentId: string, replyId: string) => {
+    if (!user) {
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    try {
+      const replyRef = doc(db, 'comments', replyId);
+      const replyDoc = await getDoc(replyRef);
+      const replyData = replyDoc.data();
+      
+      if (!replyData) return;
+
+      const hasLiked = replyData.likedBy?.includes(user.uid);
+
+      if (hasLiked) {
+        // Unlike the reply
+        await updateDoc(replyRef, {
+          likesCounter: (replyData.likesCounter || 0) - 1,
+          likedBy: arrayRemove(user.uid)
+        });
+      } else {
+        // Like the reply
+        await updateDoc(replyRef, {
+          likesCounter: (replyData.likesCounter || 0) + 1,
+          likedBy: arrayUnion(user.uid)
+        });
+      }
+
+      // Update local state
+      setComments(prevComments => 
+        prevComments.map(comment => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              replies: comment.replies?.map(reply => {
+                if (reply.id === replyId) {
+                  return {
+                    ...reply,
+                    likesCounter: hasLiked ? (reply.likesCounter || 0) - 1 : (reply.likesCounter || 0) + 1,
+                    likedBy: hasLiked 
+                      ? (reply.likedBy || []).filter((id: string) => id !== user.uid)
+                      : [...(reply.likedBy || []), user.uid]
+                  };
+                }
+                return reply;
+              })
+            };
+          }
+          return comment;
+        })
+      );
+    } catch (error) {
+      console.error('Error updating reply like:', error);
+    }
+  };
+
+  const handleDeleteReply = async (commentId: string, replyId: string) => {
+    if (!user) return;
+
+    try {
+      // Delete the reply document
+      await deleteDoc(doc(db, 'comments', replyId));
+
+      // Update local state
+      setComments(prevComments =>
+        prevComments.map(comment => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              replies: comment.replies?.filter(reply => reply.id !== replyId) || []
+            };
+          }
+          return comment;
+        })
+      );
+    } catch (error) {
+      console.error('Error deleting reply:', error);
+    }
+  };
+
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return '';
+    try {
+      if (timestamp.toDate) {
+        return timestamp.toDate().toLocaleDateString();
+      } else if (timestamp.seconds) {
+        return new Date(timestamp.seconds * 1000).toLocaleDateString();
+      }
+      return '';
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '';
+    }
+  };
+
+  const handleLoadMoreComments = () => {
+    setVisibleComments(prev => prev + COMMENTS_PER_PAGE);
   };
 
   if (loading) {
-    return <div className="loading">Loading...</div>;
+    return <div>Loading...</div>;
   }
 
   if (!property) {
-    return <div className="error">Property not found</div>;
+    return <div>Property not found</div>;
   }
 
   return (
     <div className="property-page">
-      <div className="property-header">
-        <h1 className="property-title">{property.propertyName}</h1>
-        <div className="property-location">
-          <span>{property.propertyLocation}</span>
-          <button
-            className={`favorite-button ${id && userFavorites.includes(id) ? 'favorited' : ''}`}
-            onClick={handleFavoriteToggle}
-          >
-            {id && userFavorites.includes(id) ? '❤️' : '🤍'}
-          </button>
-        </div>
-      </div>
+      <PropertyHeader />
+      
+      {/* Back button */}
+      <button 
+        onClick={() => navigate(-1)} 
+        className="back-button"
+      >
+        ←
+      </button>
 
-      <div className="property-images-grid">
-        {property.propertyPhotos?.slice(0, 5).map((photo, index) => (
-          <img
-            key={index}
-            src={photo}
-            alt={`Property view ${index + 1}`}
-            className={index === 0 ? 'main-image' : ''}
-          />
-        ))}
-      </div>
+      {/* Favorite button */}
+      <button
+        onClick={handleFavoriteToggle}
+        className={`favorite-button-property-page ${userFavorites.includes(id || '') ? 'favorited' : ''}`}
+      >
+        ♥
+      </button>
+
+      {property && (
+        <>
+          <div className="property-header">
+            <h1 className="property-title">{property.propertyName}</h1>
+            <p className="property-location">{property.propertyLocation}</p>
+          </div>
+          <PropertyGallery photos={property.propertyPhotos} />
+        </>
+      )}
 
       <div className="property-content">
-        <div className="property-info">
-          <div className="host-section">
-            <div className="host-info">
-              <h2 className="host-name">Hosted by {host?.username || 'Host'}</h2>
-              <div className="property-stats">
-                <span>{property.bedroomCount} bedroom</span>
-                <span>•</span>
-                <span>{property.bathroomCount} bath</span>
-                <span>•</span>
-                <span>{property.viewCount} views</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="property-details">
-            <div className="section-title">About this place</div>
-            <p>{property.propertyDesc}</p>
-          </div>
-
-          <div className="amenities-section">
-            <div className="section-title">What this place offers</div>
-            <div className="amenities-grid">
-              {property.tags?.map((tag, index) => (
-                <div key={index} className="amenity-item">
-                  <span>✓</span>
-                  <span>{tag}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="house-rules-section">
-            <div className="section-title">House rules</div>
-            <div className="amenities-grid">
-              {property.houseRules?.map((rule, index) => (
-                <div key={index} className="amenity-item">
-                  <span>•</span>
-                  <span>{rule}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="booking-card">
-          <div className="price-info">
-            <span className="price">₱{property.rent}</span>
-            <span className="price-period">/month</span>
-          </div>
-
-          <div className="booking-dates">
-            <div>Available from: {new Date(property.availability?.seconds * 1000).toLocaleDateString()}</div>
-          </div>
-
-          <div className="guests-input">
-            <div>Maximum occupants: {property.maxOccupants}</div>
-          </div>
-
-          <div className="floor-level">
-            <div>Floor Level: {property.floorLevel}</div>
-          </div>
-
-          <div className="furnishing">
-            <div>Furnishing: {property.furnishing}</div>
-          </div>
-
-          <div className="pet-friendly">
-            <div>Pet Friendly: {property.petFriendly && 'Yes'}</div>
-          </div>
-
-          <div className="property-size">
-            <div>Property Size: {property.propertySize}</div>
-          </div>
-
-          <button className="interested-button">
-            Interested
-          </button>
-
-          <div className="total-calculation">
-            <div>Security Deposit: ₱{property.deposit}</div>
-            <div>Lease Term: {property.leaseTerm} months</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="comments-section">
-        <div className="comments-header">
-          <h2>Comments</h2>
-          <button 
-            className="sort-button" 
-            onClick={handleSortComments}
-          >
-            Sort by {sortOrder === 'newest' ? 'Oldest' : 'Newest'} First
-          </button>
-        </div>
-        <form onSubmit={handleCommentSubmit} className="comment-form">
-          <textarea
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            placeholder="Write a comment..."
-            required
-          />
-          <button type="submit">Post Comment</button>
-        </form>
+        <PropertyInfo property={property} host={host} />
         
-        <div className="comments-list">
-          {comments.map((comment) => (
-            <div key={comment.id} className="comment">
-              <div className="comment-header">
-                <span className="comment-author">{comment.userEmail}</span>
-                <span className="comment-date">
-                  {comment.commentDate?.toDate().toLocaleDateString()}
-                </span>
-                <span className="comment-time">
-                  {comment.commentDate?.toDate().toLocaleTimeString()}
-                </span>
-                {auth.currentUser && auth.currentUser.uid === comment.userId && (
-                  <button 
-                    className="delete-button" 
-                    onClick={() => handleDeleteComment(comment.id)}
-                  >
-                    Delete
-                  </button>
-                )}
-              </div>
-              <p className="comment-content">{comment.content}</p>
-            </div>
-          ))}
-        </div>
+        <BookingCard 
+          property={property}
+          onInterestedClick={handleInterestedClick}
+        />
       </div>
+
+      <CommentSection
+        comments={comments}
+        user={user}
+        newComment={newComment}
+        onCommentChange={(value) => setNewComment(value)}
+        onCommentSubmit={handleCommentSubmit}
+        onLikeComment={handleLikeComment}
+        onDeleteComment={handleDeleteComment}
+        onReplySubmit={handleReplySubmit}
+        onReplyLike={handleReplyLike}
+        onDeleteReply={handleDeleteReply}
+      />
+
+      <LoginPrompt 
+        show={showLoginPrompt}
+        onClose={() => setShowLoginPrompt(false)}
+      />
     </div>
   );
 };

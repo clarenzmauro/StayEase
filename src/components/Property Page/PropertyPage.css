@@ -16,8 +16,8 @@
   }
   
   .property-location {
-    font-size: 14px;
-    color: #717171;
+    font-size: 20px;
+    color: #000000;
   }
   
   .property-images-grid {
@@ -168,7 +168,6 @@
   
   .favorite-button {
     position: absolute;
-    top: 20px;
     right: 20px;
     background: white;
     width: 40px;
@@ -181,7 +180,51 @@
     z-index: 2;
     transition: all 0.3s ease;
   }
-  
+
+  .favorite-button-property-page {
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 24px;
+    transition: all 0.3s ease;
+  }
+
+  .favorite-button-property-page.favorited {
+    color: #FF385C;
+  }
+
+  .favorite-button-property-page:not(.favorited) {
+    color: #717171;
+  }
+
+  .back-button {
+    position: absolute;
+    top: 80px;
+    left: 20px;
+    background: white;
+    color: black;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 24px;
+  }
+
   .favorite-button.favorited {
     background-color: #ff385c;
     color: white;
@@ -226,7 +269,7 @@
   }
   
   .comment-form button:hover {
-    background-color: #0056b3;
+    background-color: #007bff;
   }
   
   .comments-list {
@@ -265,23 +308,52 @@
   
   .comment-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 8px;
+    margin-top: 8px;
   }
   
-  .comment-actions button {
-    padding: 0.25rem 0.5rem;
-    background-color: transparent;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    color: #666;
+  .action-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    background: white;
     cursor: pointer;
-    font-size: 0.8rem;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    font-size: 14px;
   }
   
-  .comment-actions button:hover {
-    background-color: #f0f0f0;
-    border-color: #999;
+  .action-button:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .like-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 20px;
+    background: white;
+    color: black;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+  }
+  
+  .like-button:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .like-button.liked {
+    border-color: #ff4b4b;
+    color: #ff4b4b;
+  }
+  
+  .like-button.liked:hover {
+    background-color: #fff0f0;
   }
   
   .delete-button {
@@ -296,7 +368,90 @@
   }
   
   .delete-button:hover {
-    background-color: #ff3333;
+    background-color: #ffebee;
+    border-color: #ff4b4b;
+    color: #ff4b4b;
+  }
+  
+  .reply-button {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border: 1px solid #e0e0e0;
+    color: black;
+    border-radius: 20px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+  }
+  
+  .reply-button:hover {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+    color: #2196f3;
+  }
+  
+  .reply-form {
+    margin-top: 12px;
+    margin-left: 24px;
+    border-left: 2px solid #e0e0e0;
+    padding-left: 12px;
+  }
+  
+  .reply-input {
+    width: 100%;
+    min-height: 60px;
+    padding: 8px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    resize: vertical;
+  }
+  
+  .reply-buttons {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .reply-buttons button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .submit-reply {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .submit-reply:hover {
+    background-color: #0056b3;
+  }
+  
+  .cancel-reply {
+    background-color: #f0f0f0;
+  }
+  
+  .cancel-reply:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .replies-section {
+    margin-left: 24px;
+    margin-top: 12px;
+    border-left: 2px solid #e0e0e0;
+    padding-left: 12px;
+  }
+  
+  .reply-comment {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
   }
   
   .replies {
@@ -384,19 +539,200 @@
     margin-bottom: 20px;
   }
   
+  .sort-buttons {
+    display: flex;
+    gap: 10px;
+  }
+  
   .sort-button {
-    background-color: #4a90e2;
+    padding: 8px 16px;
+    border-radius: 4px;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .sort-button:hover {
+    background: #0056b3;
+  }
+  
+  .sort-button.active {
+    background: #007bff;
+    border-color: #bbb;
+  }
+  
+  .login-prompt {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .login-prompt-content {
+    background-color: white;
+    padding: 24px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+  }
+  
+  .login-prompt-buttons {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .login-prompt-buttons button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .login-prompt-buttons button:first-child {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .login-prompt-buttons button:first-child:hover {
+    background-color: #0056b3;
+  }
+  
+  .login-prompt-buttons button:last-child {
+    background-color: #f0f0f0;
+  }
+  
+  .login-prompt-buttons button:last-child:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .login-prompt-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .login-prompt-modal {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+  }
+  
+  .login-prompt-modal h3 {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  .login-prompt-modal button {
+    margin-top: 1rem;
+    padding: 0.5rem 1.5rem;
+    background-color: #007bff;
     color: white;
     border: none;
-    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .login-prompt-modal button:hover {
+    background-color: #0056b3;
+  }
+  
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+  
+  .nav-left {
+    display: flex;
+    align-items: center;
+  }
+  
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .logo img {
+    height: 40px;
+    width: auto;
+  }
+  
+  .user-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    transition: background-color 0.2s;
+  }
+  
+  .user-icon:hover {
+    background-color: #e0e0e0;
+  }
+  
+  .user-photo {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .property-page {
+    padding-top: 80px;
+  }
+  
+  .load-more-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+  }
+  
+  .load-more-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
     border-radius: 4px;
     cursor: pointer;
     font-size: 14px;
     transition: background-color 0.2s;
   }
   
-  .sort-button:hover {
-    background-color: #357abd;
+  .load-more-button:hover {
+    background-color: #0056b3;
   }
   
   @media (max-width: 768px) {
