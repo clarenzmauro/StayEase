@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './FilterMenu.css';
 
-export function FilterMenu({ onApplyFilters, isLoading }) {
+export function FilterMenu({ onFilterChange, isLoading }) {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
   const [selectedTags, setSelectedTags] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [selectedPropertyType, setSelectedPropertyType] = useState('');
 
   const tags = [
@@ -31,28 +31,28 @@ export function FilterMenu({ onApplyFilters, isLoading }) {
     'Student Housing'
   ];
 
-  const handleTagToggle = (tag) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
-  };
-
-  const handleApply = () => {
-    onApplyFilters({
+  useEffect(() => {
+    onFilterChange({
       priceRange,
       selectedTags,
       selectedLocation,
       selectedPropertyType
     });
+  }, [priceRange, selectedTags, selectedLocation, selectedPropertyType]);
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
   };
 
   if (isLoading) {
     return (
       <div className="filter-menu">
         <h2>Filters</h2>
-        
+
         <div className="filter-section skeleton">
           <h3></h3>
           <div className="price-range">
@@ -80,11 +80,6 @@ export function FilterMenu({ onApplyFilters, isLoading }) {
           <h3></h3>
           <select disabled></select>
         </div>
-
-        <div className="filter-buttons skeleton">
-          <button className="reset-button" disabled></button>
-          <button className="apply-button" disabled></button>
-        </div>
       </div>
     );
   }
@@ -92,7 +87,7 @@ export function FilterMenu({ onApplyFilters, isLoading }) {
   return (
     <div className="filter-menu">
       <h2>Filters</h2>
-      
+
       {/* Price Range */}
       <div className="filter-section">
         <h3>Price Range</h3>
@@ -100,14 +95,16 @@ export function FilterMenu({ onApplyFilters, isLoading }) {
           <input
             type="number"
             value={priceRange.min}
-            onChange={e => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) }))}
+            onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) || 0 }))}
+            min="0"
             placeholder="Min"
           />
           <span>to</span>
           <input
             type="number"
             value={priceRange.max}
-            onChange={e => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) }))}
+            onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) || 0 }))}
+            min="0"
             placeholder="Max"
           />
         </div>
@@ -115,7 +112,7 @@ export function FilterMenu({ onApplyFilters, isLoading }) {
 
       {/* Tags */}
       <div className="filter-section">
-        <h3>Tags</h3>
+        <h3>Amenities</h3>
         <div className="tags-grid">
           {tags.map(tag => (
             <label key={tag} className="tag-checkbox">
@@ -135,7 +132,7 @@ export function FilterMenu({ onApplyFilters, isLoading }) {
         <h3>Location</h3>
         <select
           value={selectedLocation}
-          onChange={e => setSelectedLocation(e.target.value)}
+          onChange={(e) => setSelectedLocation(e.target.value)}
         >
           <option value="">All Locations</option>
           {locations.map(location => (
@@ -151,7 +148,7 @@ export function FilterMenu({ onApplyFilters, isLoading }) {
         <h3>Property Type</h3>
         <select
           value={selectedPropertyType}
-          onChange={e => setSelectedPropertyType(e.target.value)}
+          onChange={(e) => setSelectedPropertyType(e.target.value)}
         >
           <option value="">All Types</option>
           {propertyTypes.map(type => (
@@ -171,9 +168,6 @@ export function FilterMenu({ onApplyFilters, isLoading }) {
           setSelectedPropertyType('');
         }}>
           Reset
-        </button>
-        <button className="apply-button" onClick={handleApply}>
-          Apply
         </button>
       </div>
     </div>

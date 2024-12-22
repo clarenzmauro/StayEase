@@ -6,25 +6,36 @@ import { Link, useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config.js';
 import { auth } from '../../firebase/config';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from 'firebase/auth';
 import logoSvg from '../../assets/STAY.svg';
+
+interface FilterType {
+  priceRange: { min: number; max: number };
+  selectedTags: string[];
+  selectedLocation: string;
+  selectedPropertyType: string;
+}
+
+interface User {
+  uid: string;
+}
 
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [properties, setProperties] = useState([]);
-  const [filteredProperties, setFilteredProperties] = useState([]);
-  const [activeFilters, setActiveFilters] = useState({
+  const [properties, setProperties] = useState<Array<{ id: string;[key: string]: any }>>([]);
+  const [filteredProperties, setFilteredProperties] = useState<Array<{ id: string;[key: string]: any }>>([]);
+  const [activeFilters, setActiveFilters] = useState<FilterType>({
     priceRange: { min: 0, max: 50000 },
     selectedTags: [],
     selectedLocation: '',
     selectedPropertyType: ''
   });
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
-  const [user, setUser] = useState(null);
-  const [userFavorites, setUserFavorites] = useState([]);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -37,7 +48,7 @@ export function HomePage() {
   useEffect(() => {
     console.log('Setting up real-time listener for properties...');
     const propertiesCollection = collection(db, 'properties');
-    
+
     setIsLoading(true);
     // Create real-time listener
     const unsubscribe = onSnapshot(propertiesCollection, (snapshot) => {
@@ -47,9 +58,8 @@ export function HomePage() {
         ...doc.data()
       }));
       console.log('Updated properties data:', propertiesData);
-      
+
       setProperties(propertiesData);
-      setFilteredProperties(propertiesData);
       setIsLoading(false);
     }, (error) => {
       console.error('Error in real-time listener:', error);
@@ -94,7 +104,7 @@ export function HomePage() {
       filtered = filtered.filter(property =>
         property.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         property.propertyLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        property.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
         property.propertyType.toLowerCase().includes(searchQuery.toLowerCase()) ||
         property.owner.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -133,7 +143,7 @@ export function HomePage() {
   // Handle search functionality
   useEffect(() => {
     const query = searchQuery.toLowerCase().trim();
-    
+
     if (!query) {
       setFilteredProperties(properties);
       return;
@@ -142,18 +152,16 @@ export function HomePage() {
     const filtered = properties.filter(property => {
       // Search by location
       const locationMatch = property.propertyLocation.toLowerCase().includes(query);
-      
+
       // Search by tags
-      const tagMatch = property.tags.some(tag => 
-        tag.toLowerCase().includes(query)
-      );
-      
+      const tagMatch = property.tags.some((tag: string) => tag.toLowerCase().includes(query));
+
       // Search by property name
       const nameMatch = property.propertyName.toLowerCase().includes(query);
-      
+
       // Search by property type
       const typeMatch = property.propertyType.toLowerCase().includes(query);
-      
+
       // Search by owner name
       const ownerMatch = property.owner.toLowerCase().includes(query);
 
@@ -163,18 +171,18 @@ export function HomePage() {
     setFilteredProperties(filtered);
   }, [searchQuery, properties]);
 
-  // Handle filter application
-  const handleApplyFilters = (filters) => {
+  // Handle filter change
+  const handleFilterChange = (filters: FilterType) => {
     setActiveFilters(filters);
   };
 
-  const handleItemClick = (itemId) => {
+  const handleItemClick = (itemId: string) => {
     console.log('HomePage: Item clicked with id:', itemId);
     setSelectedItem(itemId);
     setIsItemDetailsOpen(true);
   };
 
-  const handleFavorite = async (e, itemId) => {
+  const handleFavorite = async (e: React.MouseEvent<HTMLElement>, itemId: string, user: { uid: string }) => {
     e.stopPropagation();
     if (!user) {
       setShowAuthOverlay(true);
@@ -205,7 +213,11 @@ export function HomePage() {
     }
   };
 
-  const createUserDocument = async (user) => {
+  interface User {
+    uid: string;
+  }
+
+  const createUserDocument = async (user: User) => {
     const accountRef = doc(db, 'accounts', user.uid);
     const accountSnap = await getDoc(accountRef);
 
@@ -218,12 +230,12 @@ export function HomePage() {
         dashboardId: "",
         dateJoined: serverTimestamp(),
         description: "",
-        email: user.email || "",
+        email: "",
         followerCount: 0,
         isOwner: false,
         itemsInterested: [],
         itemsSaved: [],
-        profilePicUrl: user.photoURL || "",
+        profilePicUrl: "",
         rating: 0,
         socials: {
           Facebook: "",
@@ -231,7 +243,7 @@ export function HomePage() {
           X: ""
         },
         testField: "",
-        username: user.displayName || user.email?.split('@')[0] || ""
+        username: ""
       };
 
       try {
@@ -255,13 +267,17 @@ export function HomePage() {
       const result = await signInWithPopup(auth, provider);
       await createUserDocument(result.user);
       handleSuccess();
-    } catch (error) {
-      setError(error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error(error.message);
+      } else {
+        console.error("An unknown error occurred");
+      }
     }
   };
 
-  const handleOverlayClick = (e) => {
-    if (e.target.className === 'auth-overlay') {
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
       setShowAuthOverlay(false);
     }
   };
@@ -279,11 +295,11 @@ export function HomePage() {
               selectedLocation: '',
               selectedPropertyType: ''
             });
-          }}> 
+          }}>
             <img src={logoSvg} alt="StayEase Logo" className="logo-image" />
           </Link>
         </div>
-        
+
         <div className="nav-links">
           <span>Properties</span>
           <span>People</span>
@@ -291,30 +307,30 @@ export function HomePage() {
 
         <div className="nav-right">
           <div className="language-switch">EN</div>
-          <div 
-            className="user-icon" 
+          <div
+            className="user-icon"
             onClick={() => {
               if (user) {
                 navigate('/account'); // Navigate to account page if user is logged in
               } else {
                 setShowAuthOverlay(true); // Open the auth overlay if not logged in
               }
-            }} 
+            }}
             role="button"
             aria-label="Account"
           >
             {user ? (
               user.photoURL ? (
-                <img 
-                  src={user.photoURL} 
-                  alt="Profile" 
-                  className="user-photo" 
+                <img
+                  src={user.photoURL}
+                  alt="Profile"
+                  className="user-photo"
                 />
               ) : (
                 user.displayName?.[0] || user.email?.[0] || '?'
               )
             ) : (
-              '👤'
+              ''
             )}
           </div>
         </div>
@@ -346,10 +362,8 @@ export function HomePage() {
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
           </div>
-          <FilterMenu 
-            isOpen={true} 
-            onClose={() => {}} 
-            onApplyFilters={handleApplyFilters}
+          <FilterMenu
+            onFilterChange={handleFilterChange}
             isLoading={isLoading}
           />
         </div>
@@ -378,20 +392,26 @@ export function HomePage() {
               </div>
             ) : (
               filteredProperties.map((item) => (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className="property-card"
                   onClick={() => window.open(`/property/${item.id}`, '_blank')}
                 >
                   <div className="property-placeholder">
-                    <img 
-                      src={item.propertyPhotos[0]} 
-                      alt={item.propertyName} 
-                      className="property-image" 
+                    <img
+                      src={item.propertyPhotos[0]}
+                      alt={item.propertyName}
+                      className="property-image"
                     />
-                    <button 
+                    <button
                       className="favorite-button"
-                      onClick={(e) => handleFavorite(e, item.id)}
+                      onClick={(e) => {
+                        if (user !== null) {
+                          handleFavorite(e, item.id, user);
+                        } else {
+                          console.error('User is not logged in.');
+                        }
+                      }}
                     >
                       {userFavorites.includes(item.id) ? '❤️' : '🤍'}
                     </button>
@@ -424,7 +444,7 @@ export function HomePage() {
                 Successfully logged in!
               </div>
             ) : (
-              <>
+              < >
                 <button className="close-button" onClick={() => setShowAuthOverlay(false)} aria-label="Close">×</button>
                 <h2>Login</h2>
                 {error && <div className="error-message">{error}</div>}
@@ -432,7 +452,7 @@ export function HomePage() {
                 <button onClick={handleGoogleAuth} className="google-button">
                   Continue with Google
                 </button>
-              </>
+              </ >
             )}
           </div>
         </div>
