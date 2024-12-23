@@ -12,7 +12,37 @@
     line-height: 1.5;
     background-color: #fff;
   }
-  
+
+  #dashboard-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .image-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Space between items */
+  }
+
+  .add-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px; /* Width of the add box */
+    height: 100px; /* Height of the add box */
+    border: 2px dashed #007bff; /* Dashed border for the add box */
+    border-radius: 8px; /* Rounded corners */
+    cursor: pointer;
+    font-size: 36px; /* Size of the "+" icon */
+    color: #007bff; /* Color of the "+" icon */
+    background-color: #f9f9f9; /* Background color */
+    transition: background-color 0.3s; /* Transition effect for hover */
+}
+
+.add-box:hover {
+    background-color: #e9ecef; /* Change background on hover */
+}
   /* Container */
   .container {
     width: 100%;
