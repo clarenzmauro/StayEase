@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import './FilterMenu.css';
 
+interface FilterMenuProps {
+  onFilterChange: (filters: {
+    priceRange: { min: number; max: number };
+    selectedTags: string[];
+    selectedLocation: string;
+    selectedPropertyType: string;
+  }) => void;
+  isLoading: boolean;
+}
+
 export function FilterMenu({ onFilterChange, isLoading }) {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
-  const [selectedTags, setSelectedTags] = useState([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [selectedPropertyType, setSelectedPropertyType] = useState('');
 
