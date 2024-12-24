@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './FilterMenu.css';
 
 interface FilterMenuProps {
@@ -7,15 +7,18 @@ interface FilterMenuProps {
     selectedTags: string[];
     selectedLocation: string;
     selectedPropertyType: string;
+    sortBy?: string;
   }) => void;
   isLoading: boolean;
 }
 
-export function FilterMenu({ onFilterChange, isLoading }) {
+export function FilterMenu({ onFilterChange, isLoading }: FilterMenuProps) {
   const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
-  const [selectedPropertyType, setSelectedPropertyType] = useState('');
+  const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
+  const [sortBy, setSortBy] = useState('most-popular');
+  const [showAllTags, setShowAllTags] = useState(false);
 
   const tags = [
     'Pet Friendly',
@@ -23,7 +26,13 @@ export function FilterMenu({ onFilterChange, isLoading }) {
     'With Security',
     'Near School',
     'With WiFi',
-    'Furnished'
+    'Furnished',
+    'With Kitchen',
+    'Near Market',
+    'Near Hospital',
+    'With Air Conditioning',
+    'With Generator',
+    'Near Church'
   ];
 
   const locations = [
@@ -41,6 +50,8 @@ export function FilterMenu({ onFilterChange, isLoading }) {
     'Student Housing'
   ];
 
+  const visibleTags = showAllTags ? tags : tags.slice(0, 6);
+
   useEffect(() => {
     onFilterChange({
       priceRange,
@@ -51,8 +62,8 @@ export function FilterMenu({ onFilterChange, isLoading }) {
   }, [priceRange, selectedTags, selectedLocation, selectedPropertyType]);
 
   const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
+    setSelectedTags(prev => 
+      prev.includes(tag) 
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
@@ -62,7 +73,7 @@ export function FilterMenu({ onFilterChange, isLoading }) {
     return (
       <div className="filter-menu">
         <h2>Filters</h2>
-
+        
         <div className="filter-section skeleton">
           <h3></h3>
           <div className="price-range">
@@ -90,6 +101,10 @@ export function FilterMenu({ onFilterChange, isLoading }) {
           <h3></h3>
           <select disabled></select>
         </div>
+
+        <div className="filter-buttons skeleton">
+          <button className="reset-button" disabled></button>
+        </div>
       </div>
     );
   }
@@ -97,6 +112,32 @@ export function FilterMenu({ onFilterChange, isLoading }) {
   return (
     <div className="filter-menu">
       <h2>Filters</h2>
+      
+      {/* Add Sort Section */}
+      <div className="sort-section">
+        <h3>Sort</h3>
+        <select 
+          className="sort-select"
+          value={sortBy}
+          onChange={(e) => {
+            setSortBy(e.target.value);
+            onFilterChange({
+              priceRange,
+              selectedTags,
+              selectedLocation,
+              selectedPropertyType,
+              sortBy: e.target.value
+            });
+          }}
+        >
+          <option value="most-popular">Most Popular</option>
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+          <option value="top-rated">Top Rated</option>
+        </select>
+      </div>
 
       {/* Price Range */}
       <div className="filter-section">
@@ -105,16 +146,14 @@ export function FilterMenu({ onFilterChange, isLoading }) {
           <input
             type="number"
             value={priceRange.min}
-            onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) || 0 }))}
-            min="0"
+            onChange={e => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) }))}
             placeholder="Min"
           />
           <span>to</span>
           <input
             type="number"
             value={priceRange.max}
-            onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) || 0 }))}
-            min="0"
+            onChange={e => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) }))}
             placeholder="Max"
           />
         </div>
@@ -122,9 +161,9 @@ export function FilterMenu({ onFilterChange, isLoading }) {
 
       {/* Tags */}
       <div className="filter-section">
-        <h3>Amenities</h3>
+        <h3>Tags</h3>
         <div className="tags-grid">
-          {tags.map(tag => (
+          {visibleTags.map(tag => (
             <label key={tag} className="tag-checkbox">
               <input
                 type="checkbox"
@@ -134,6 +173,12 @@ export function FilterMenu({ onFilterChange, isLoading }) {
               {tag}
             </label>
           ))}
+          <div 
+            className="more-tags-button"
+            onClick={() => setShowAllTags(!showAllTags)}
+          >
+            More {showAllTags ? '▲' : '▼'}
+          </div>
         </div>
       </div>
 
@@ -142,7 +187,7 @@ export function FilterMenu({ onFilterChange, isLoading }) {
         <h3>Location</h3>
         <select
           value={selectedLocation}
-          onChange={(e) => setSelectedLocation(e.target.value)}
+          onChange={e => setSelectedLocation(e.target.value)}
         >
           <option value="">All Locations</option>
           {locations.map(location => (
@@ -158,7 +203,7 @@ export function FilterMenu({ onFilterChange, isLoading }) {
         <h3>Property Type</h3>
         <select
           value={selectedPropertyType}
-          onChange={(e) => setSelectedPropertyType(e.target.value)}
+          onChange={e => setSelectedPropertyType(e.target.value)}
         >
           <option value="">All Types</option>
           {propertyTypes.map(type => (

@@ -175,107 +175,163 @@ const AccountPage = () => {
   };
 
   if (!user || !userData || !editedData) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="account-page">
+        <div className="skeleton-container">
+          <div className="skeleton-header">
+            <div className="skeleton-title skeleton"></div>
+            <div className="skeleton-buttons">
+              <div className="skeleton-button skeleton"></div>
+              <div className="skeleton-button skeleton"></div>
+            </div>
+          </div>
+
+          <div className="skeleton-section">
+            <div className="skeleton-profile">
+              <div className="skeleton-image skeleton"></div>
+              <div className="skeleton-info">
+                <div className="skeleton-field skeleton long"></div>
+                <div className="skeleton-field skeleton medium"></div>
+                <div className="skeleton-field skeleton long"></div>
+                <div className="skeleton-field skeleton short"></div>
+                <div className="skeleton-field skeleton medium"></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="skeleton-section">
+            <div className="skeleton-section-header skeleton"></div>
+            <div className="skeleton-info">
+              <div className="skeleton-field skeleton long"></div>
+              <div className="skeleton-field skeleton medium"></div>
+              <div className="skeleton-field skeleton short"></div>
+            </div>
+          </div>
+
+          <div className="skeleton-section">
+            <div className="skeleton-section-header skeleton"></div>
+            <div className="skeleton-grid">
+              {[1, 2, 3].map((index) => (
+                <div key={index} className="skeleton-card">
+                  <div className="skeleton-card-image skeleton"></div>
+                  <div className="skeleton-card-content">
+                    <div className="skeleton-card-title skeleton"></div>
+                    <div className="skeleton-card-text skeleton"></div>
+                    <div className="skeleton-card-text skeleton"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="account-page">
       <div className="account-container">
         <div className="profile-header">
-          <div className="profile-image-container">
-            {user.photoURL ? (
-              <img 
-                src={user.photoURL} 
-                alt="Profile" 
-                className="profile-image"
-              />
-            ) : (
-              <div className="profile-image-placeholder">
-                {userData.username[0].toUpperCase()}
-              </div>
-            )}
-          </div>
           <div className="profile-title">
             <h1>Account Details</h1>
-            <div className="action-buttons">
-              {editMode ? (
-                <>
-                  <button 
-                    onClick={handleSave} 
-                    className="save-button"
-                    disabled={isSaving}
-                  >
-                    {isSaving ? 'Saving...' : 'Save Changes'}
+          </div>
+          <div className="action-buttons">
+            {editMode ? (
+              <>
+                <button 
+                  onClick={handleSave} 
+                  className="save-button"
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button 
+                  onClick={handleCancel} 
+                  className="cancel-button"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={handleEdit} className="edit-button">
+                  Edit Profile
+                </button>
+                <button onClick={handleLogout} className="logout-button">
+                  Logout
+                </button>
+                {userData && userData.isOwner === false ? (
+                  <button onClick={handleApplyAsOwner} className="apply-button">
+                    Apply as Owner
                   </button>
-                  <button 
-                    onClick={handleCancel} 
-                    className="cancel-button"
-                  >
-                    Cancel
+                ) : userData && userData.isOwner === true ? (
+                  <button onClick={handleNavigateToOwnerPage} className="visit-button">
+                    Visit Owner Page
                   </button>
-                </>
-              ) : (
-                <>
-                  <button onClick={handleEdit} className="edit-button">
-                    Edit Profile
-                  </button>
-                  <button onClick={handleLogout} className="logout-button">
-                    Logout
-                  </button>
-                  {userData && userData.isOwner === false ? (
-      <button onClick={handleApplyAsOwner} className="apply-button">
-        Apply as Owner
-      </button>
-    ) : userData && userData.isOwner === true ? (
-      <button onClick={handleNavigateToOwnerPage} className="visit-button">
-        Visit Owner Page
-      </button>
-    ) : null}
-
-                </>
-              )}
-            </div>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
 
         <div className="account-section">
           <h2>Profile Information</h2>
-          <div className="info-group">
-            <label>Username</label>
-            {editMode ? (
-              <input
-                type="text"
-                value={editedData.username}
-                onChange={(e) => handleChange('username', e.target.value)}
-              />
-            ) : (
-              <p>{userData.username}</p>
-            )}
-          </div>
-          <div className="info-group">
-            <label>Email</label>
-            <p>{userData.email}</p>
-          </div>
-          <div className="info-group">
-            <label>Contact Number</label>
-            {editMode ? (
-              <input
-                type="tel"
-                value={editedData.contactNumber}
-                onChange={(e) => handleChange('contactNumber', e.target.value)}
-                placeholder="Enter contact number"
-              />
-            ) : (
-              <p>{userData.contactNumber || 'Not provided'}</p>
-            )}
-          </div>
-          <div className="info-group">
-            <label>Account Type</label>
-            <p>{userData.isOwner ? 'Property Owner' : 'Regular User'}</p>
-          </div>
-          <div className="info-group">
-            <label>Date Joined</label>
-            <p>{userData.dateJoined?.toDate().toLocaleDateString() || 'Not available'}</p>
+          <div className="profile-info-container">
+            <div className="profile-image-section">
+              <div className="profile-image-container">
+                {user.photoURL ? (
+                  <img 
+                    src={user.photoURL} 
+                    alt="Profile" 
+                    className="profile-image"
+                  />
+                ) : (
+                  <div className="profile-image-placeholder">
+                    {userData.username[0].toUpperCase()}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="profile-details-section">
+              <div className="info-group">
+                <label>Username</label>
+                {editMode ? (
+                  <input
+                    type="text"
+                    value={editedData.username}
+                    onChange={(e) => handleChange('username', e.target.value)}
+                  />
+                ) : (
+                  <p>{userData.username}</p>
+                )}
+              </div>
+              <div className="info-group">
+                <label>Email</label>
+                <p>{userData.email}</p>
+              </div>
+              <div className="info-group">
+                <label>Contact Number</label>
+                {editMode ? (
+                  <input
+                    type="tel"
+                    value={editedData.contactNumber}
+                    onChange={(e) => handleChange('contactNumber', e.target.value)}
+                    placeholder="Enter contact number"
+                  />
+                ) : (
+                  <p>{userData.contactNumber || 'Not provided'}</p>
+                )}
+              </div>
+              <div className="info-group">
+                <label>Account Type</label>
+                <p>{userData.isOwner ? 'Property Owner' : 'Regular User'}</p>
+              </div>
+              <div className="info-group">
+                <label>Date Joined</label>
+                <p>{userData.dateJoined?.toDate().toLocaleDateString() || 'Not available'}</p>
+              </div>
+            </div>
           </div>
         </div>
 

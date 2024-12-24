@@ -11,6 +11,7 @@ import PropertyInfo from './components/PropertyInfo';
 import BookingCard from './components/BookingCard';
 import CommentSection from './components/CommentSection';
 import LoginPrompt from './components/LoginPrompt';
+import PropertySkeleton from './components/PropertySkeleton';
 
 import './PropertyPage.css';
 
@@ -516,7 +517,11 @@ const PropertyPage = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="property-page">
+        <PropertySkeleton />
+      </div>
+    );
   }
 
   if (!property) {
@@ -527,29 +532,21 @@ const PropertyPage = () => {
     <div className="property-page">
       <PropertyHeader />
 
-      {/* Back button */}
-      <button
-        onClick={() => navigate(-1)}
-        className="back-button"
-      >
-        ←
-      </button>
-
       {/* Favorite button */}
       <button
         onClick={handleFavoriteToggle}
         className={`favorite-button-property-page ${userFavorites.includes(id || '') ? 'favorited' : ''}`}
       >
-        ♥
+        ❤
       </button>
 
       {property && (
         <>
           <div className="property-header">
             <h1 className="property-title">{property.propertyName}</h1>
-            <p className="property-location">{property.propertyLocation}</p>
           </div>
           <PropertyGallery photos={property.propertyPhotos} />
+          <p className="property-location">{property.propertyLocation}</p>
         </>
       )}
 

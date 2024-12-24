@@ -21,40 +21,46 @@ const BookingCard = ({ property, onInterestedClick }: BookingCardProps) => {
         <span className="price-period">/month</span>
       </div>
 
-      <div className="booking-dates">
-        <div>Available from: {new Date(property.availability?.seconds * 1000).toLocaleDateString()}</div>
+      <div className="booking-details">
+        <div className="detail-row">
+          <span>Available from:</span>
+          <span>{new Date(property.availability?.seconds * 1000).toLocaleDateString()}</span>
+        </div>
+        <div className="detail-row">
+          <span>Max occupants:</span>
+          <span>{property.maxOccupants}</span>
+        </div>
+        <div className="detail-row">
+          <span>Floor Level:</span>
+          <span>{property.floorLevel}</span>
+        </div>
+        <div className="detail-row">
+          <span>Furnishing:</span>
+          <span>{property.furnishing}</span>
+        </div>
+        <div className="detail-row">
+          <span>Pet Friendly:</span>
+          <span>{property.petFriendly ? 'Yes' : 'No'}</span>
+        </div>
+        <div className="detail-row">
+          <span>Size:</span>
+          <span>{property.propertySize}</span>
+        </div>
       </div>
 
-      <div className="guests-input">
-        <div>Maximum occupants: {property.maxOccupants}</div>
-      </div>
-
-      <div className="floor-level">
-        <div>Floor Level: {property.floorLevel}</div>
-      </div>
-
-      <div className="furnishing">
-        <div>Furnishing: {property.furnishing}</div>
-      </div>
-
-      <div className="pet-friendly">
-        <div>Pet Friendly: {property.petFriendly ? 'Yes' : 'No'}</div>
-      </div>
-
-      <div className="property-size">
-        <div>Property Size: {property.propertySize}</div>
-      </div>
-
-      <button
-        className="interested-button"
-        onClick={onInterestedClick}
-      >
+      <button className="interested-button" onClick={onInterestedClick}>
         Interested
       </button>
 
       <div className="total-calculation">
-        <div>Security Deposit: ₱{property.deposit}</div>
-        <div>Lease Term: {property.leaseTerm} months</div>
+        <div className="detail-row">
+          <span>Security Deposit:</span>
+          <span>₱{property.deposit}</span>
+        </div>
+        <div className="detail-row">
+          <span>Lease Term:</span>
+          <span>{property.leaseTerm} months</span>
+        </div>
       </div>
     </div>
   );

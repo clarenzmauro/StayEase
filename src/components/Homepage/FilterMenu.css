@@ -101,3 +101,18 @@ select {
 .apply-button:hover {
   background-color: #052746 !important;
 }
+
+.more-tags-button {
+  color: #666;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px 0;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.more-tags-button:hover {
+  color: #021526;
+}

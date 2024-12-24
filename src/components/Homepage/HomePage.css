@@ -7,14 +7,16 @@ body {
   max-width: 100vw;
   margin: 0 auto;
   background-color: #f8f8ff;
+  min-height: 100vh;
 }
 
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  background-color: #f8f8ff;
+  padding: 1rem 2rem;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .logo {
@@ -23,28 +25,38 @@ body {
 }
 
 .logo-image {
-  height: 60px;
+  height: 40px;
   width: auto;
 }
 
 .nav-links {
   display: flex;
   gap: 2rem;
-  justify-content: center;
   align-items: center;
-  font-family: 'Barlow', sans-serif;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #333;
+  font-weight: 500;
+  font-size: 1rem;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: #021526;
 }
 
 .nav-right {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  font-family: 'Barlow', sans-serif;
+  gap: 1.5rem;
 }
 
 .language-switch {
-  font-weight: bold;
-  font-family: 'Barlow', sans-serif;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
 }
 
 .user-icon {
@@ -57,13 +69,13 @@ body {
   justify-content: center;
   cursor: pointer;
   font-size: 1.2rem;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   border: 2px solid transparent;
 }
 
 .user-icon:hover {
   background-color: #e0e0e0;
-  border-color: #0e2641;
+  border-color: #021526;
 }
 
 .user-photo {
@@ -79,6 +91,7 @@ body {
   margin-bottom: 2rem;
   position: relative;
   width: 100%;
+  margin-top: 20px;
 }
 
 .search-bar {
@@ -138,44 +151,47 @@ body {
 
 .properties-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
 }
 
-.property-card {
+.properties-grid .property-card {
   position: relative;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
   cursor: pointer;
+  background: white;
+  max-width: 100%;
+  height: fit-content;
 }
 
-.property-card:hover {
+.properties-grid .property-card:hover {
   transform: translateY(-4px);
 }
 
-.property-placeholder {
+.properties-grid .property-placeholder {
   position: relative;
 }
 
-.property-image {
+.properties-grid .property-card .property-image {
   width: 100%;
-  height: 250px;
+  height: 140px !important;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 12px 12px 0 0;
 }
 
 .favorite-button {
-  font-size: 24px;
+  font-size: 20px;
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 8px;
+  right: 8px;
   background: white;
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -184,30 +200,39 @@ body {
   z-index: 1;
 }
 
-.property-info {
-  padding: 14px;
+.properties-grid .property-card .property-info {
+  padding: 8px !important;
   background: white;
 }
 
-.property-name {
+.properties-grid .property-card .property-name {
   font-weight: 600;
-  font-size: 1rem;
-  margin-bottom: 8px;
+  font-size: 0.95rem !important;
+  margin-bottom: 2px !important;
+  color: #333;
+  line-height: 1.2;
 }
 
-.property-location {
+.properties-grid .property-card .property-location {
   color: #666;
-  margin-bottom: 4px;
+  margin-bottom: 2px !important;
+  font-size: 0.85rem !important;
+  line-height: 1.2;
 }
 
-.property-type {
+.properties-grid .property-card .property-type {
   color: #666;
-  margin-bottom: 8px;
+  margin-bottom: 2px !important;
+  font-size: 0.8rem !important;
+  line-height: 1.2;
 }
 
-.property-price {
+.properties-grid .property-card .property-price {
   font-weight: 600;
   color: #333;
+  font-size: 0.95rem !important;
+  line-height: 1.2;
+  margin-top: 2px !important;
 }
 
 .no-results {
@@ -292,31 +317,40 @@ body {
 }
 
 /* Modify property card for skeleton state */
-.property-card.skeleton {
+.properties-grid .property-card.skeleton {
   background: white;
   pointer-events: none;
 }
 
-.property-card.skeleton .property-info {
-  padding: 14px;
+.properties-grid .property-card.skeleton .property-info {
+  padding: 8px !important;
 }
 
-/* Ensure skeleton animation shows through */
-.property-card.skeleton .skeleton-image,
-.property-card.skeleton .skeleton-text {
-  position: relative;
-  overflow: hidden;
+.properties-grid .property-card.skeleton .skeleton-text {
+  background-color: #eee;
+  border-radius: 4px;
+  margin-bottom: 2px !important;
 }
 
-.property-card.skeleton .skeleton-image::after,
-.property-card.skeleton .skeleton-text::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: inherit;
+.properties-grid .property-card.skeleton .skeleton-name {
+  height: 16px;
+  width: 80%;
+}
+
+.properties-grid .property-card.skeleton .skeleton-location {
+  height: 14px;
+  width: 60%;
+}
+
+.properties-grid .property-card.skeleton .skeleton-type {
+  height: 14px;
+  width: 40%;
+}
+
+.properties-grid .property-card.skeleton .skeleton-price {
+  height: 16px;
+  width: 50%;
+  margin-top: 2px;
 }
 
 .homepage-layout {
@@ -324,6 +358,7 @@ body {
   gap: 2rem;
   padding: 30px;
   padding-left: 15px;
+  margin-top: 20px;
 }
 
 .filters-sidebar {
@@ -334,6 +369,7 @@ body {
   padding: 1.2rem;
   height: fit-content;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
 }
 
 .filters-sidebar h3 {
@@ -345,6 +381,7 @@ body {
 
 .main-content {
   flex: 1;
+  margin-top: 20px;
 }
 
 /* Skeleton styles for search and filters */
@@ -397,4 +434,32 @@ body {
   animation: shimmer 2s infinite linear;
   border: none;
   color: transparent;
+}
+
+/* Add styles for the sort section */
+.sort-section {
+  margin: 20px 0;
+  width: 100%;
+}
+
+.sort-select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+  background-color: white;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: #021526;
+  box-shadow: 0 0 0 2px rgba(2, 21, 38, 0.1);
+}
+
+.sort-select:hover {
+  border-color: #021526;
 }

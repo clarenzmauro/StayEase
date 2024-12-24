@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './HomePage.css';
 import ItemsContext from './ItemsContext.jsx';
 import { FilterMenu } from './FilterMenu.jsx';
@@ -16,15 +16,12 @@ interface FilterType {
   selectedPropertyType: string;
 }
 
-interface User {
-  uid: string;
-}
-
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  // const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [selectedItem] = useState<string | null>(null);
   const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
-  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  // const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [properties, setProperties] = useState<Array<{ id: string;[key: string]: any }>>([]);
   const [filteredProperties, setFilteredProperties] = useState<Array<{ id: string;[key: string]: any }>>([]);
   const [activeFilters, setActiveFilters] = useState<FilterType>({
@@ -34,21 +31,24 @@ export function HomePage() {
     selectedPropertyType: ''
   });
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
-  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [user, setUser] = useState<FirebaseUser| null>(null);
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  // const [isLogin, setIsLogin] = useState(true);
+  // const [email, setEmail] = useState('');
+  // // const [password, setPassword] = useState('');
+  // const [error, setError] = useState('');
+  const [error] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  // const [sortBy, setSortBy] = useState('most-popular');
+  const [sortBy] = useState('most-popular');
 
   // Set up real-time listener for properties
   useEffect(() => {
     console.log('Setting up real-time listener for properties...');
     const propertiesCollection = collection(db, 'properties');
-
+    
     setIsLoading(true);
     // Create real-time listener
     const unsubscribe = onSnapshot(propertiesCollection, (snapshot) => {
@@ -58,8 +58,9 @@ export function HomePage() {
         ...doc.data()
       }));
       console.log('Updated properties data:', propertiesData);
-
+      
       setProperties(propertiesData);
+      setFilteredProperties(propertiesData);
       setIsLoading(false);
     }, (error) => {
       console.error('Error in real-time listener:', error);
@@ -95,6 +96,26 @@ export function HomePage() {
     return () => unsubscribe();
   }, []);
 
+  // Add sorting function
+  const sortProperties = (properties:any, sortType:any) => {
+    switch (sortType) {
+      case 'most-popular':
+        return [...properties].sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+      case 'newest':
+        return [...properties].sort((a, b) => b.dateAdded - a.dateAdded);
+      case 'oldest':
+        return [...properties].sort((a, b) => a.dateAdded - b.dateAdded);
+      case 'price-low':
+        return [...properties].sort((a, b) => a.rent - b.rent);
+      case 'price-high':
+        return [...properties].sort((a, b) => b.rent - a.rent);
+      case 'top-rated':
+        return [...properties].sort((a, b) => (b.ratings?.overall || 0) - (a.ratings?.overall || 0));
+      default:
+        return properties;
+    }
+  };
+
   // Filter properties based on search and filters
   useEffect(() => {
     let filtered = [...properties];
@@ -104,7 +125,7 @@ export function HomePage() {
       filtered = filtered.filter(property =>
         property.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         property.propertyLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.tags.some((tag: string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        property.tags.some((tag:string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
         property.propertyType.toLowerCase().includes(searchQuery.toLowerCase()) ||
         property.owner.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -137,13 +158,16 @@ export function HomePage() {
       );
     }
 
+    // Apply sorting
+    filtered = sortProperties(filtered, sortBy);
+
     setFilteredProperties(filtered);
-  }, [properties, searchQuery, activeFilters]);
+  }, [properties, searchQuery, activeFilters, sortBy]);
 
   // Handle search functionality
   useEffect(() => {
     const query = searchQuery.toLowerCase().trim();
-
+    
     if (!query) {
       setFilteredProperties(properties);
       return;
@@ -152,16 +176,18 @@ export function HomePage() {
     const filtered = properties.filter(property => {
       // Search by location
       const locationMatch = property.propertyLocation.toLowerCase().includes(query);
-
+      
       // Search by tags
-      const tagMatch = property.tags.some((tag: string) => tag.toLowerCase().includes(query));
-
+      const tagMatch = property.tags.some((tag:string) => 
+        tag.toLowerCase().includes(query)
+      );
+      
       // Search by property name
       const nameMatch = property.propertyName.toLowerCase().includes(query);
-
+      
       // Search by property type
       const typeMatch = property.propertyType.toLowerCase().includes(query);
-
+      
       // Search by owner name
       const ownerMatch = property.owner.toLowerCase().includes(query);
 
@@ -171,18 +197,17 @@ export function HomePage() {
     setFilteredProperties(filtered);
   }, [searchQuery, properties]);
 
-  // Handle filter change
   const handleFilterChange = (filters: FilterType) => {
     setActiveFilters(filters);
   };
 
-  const handleItemClick = (itemId: string) => {
-    console.log('HomePage: Item clicked with id:', itemId);
-    setSelectedItem(itemId);
-    setIsItemDetailsOpen(true);
-  };
+  // const handleItemClick = (itemId: string) => {
+  //   console.log('HomePage: Item clicked with id:', itemId);
+  //   setSelectedItem(itemId);
+  //   setIsItemDetailsOpen(true);
+  // };
 
-  const handleFavorite = async (e: React.MouseEvent<HTMLElement>, itemId: string, user: { uid: string }) => {
+  const handleFavorite = async (e: React.MouseEvent<HTMLElement>, itemId: string, user: {uid: string}) => {
     e.stopPropagation();
     if (!user) {
       setShowAuthOverlay(true);
@@ -295,11 +320,11 @@ export function HomePage() {
               selectedLocation: '',
               selectedPropertyType: ''
             });
-          }}>
+          }}> 
             <img src={logoSvg} alt="StayEase Logo" className="logo-image" />
           </Link>
         </div>
-
+        
         <div className="nav-links">
           <span>Properties</span>
           <span>People</span>
@@ -307,30 +332,30 @@ export function HomePage() {
 
         <div className="nav-right">
           <div className="language-switch">EN</div>
-          <div
-            className="user-icon"
+          <div 
+            className="user-icon" 
             onClick={() => {
               if (user) {
                 navigate('/account'); // Navigate to account page if user is logged in
               } else {
                 setShowAuthOverlay(true); // Open the auth overlay if not logged in
               }
-            }}
+            }} 
             role="button"
             aria-label="Account"
           >
             {user ? (
               user.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt="Profile"
-                  className="user-photo"
+                <img 
+                  src={user.photoURL} 
+                  alt="Profile" 
+                  className="user-photo" 
                 />
               ) : (
                 user.displayName?.[0] || user.email?.[0] || '?'
               )
             ) : (
-              ''
+              '👤'
             )}
           </div>
         </div>
@@ -362,8 +387,8 @@ export function HomePage() {
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
           </div>
-          <FilterMenu
-            onFilterChange={handleFilterChange}
+          <FilterMenu 
+            onFilterChange={handleFilterChange} 
             isLoading={isLoading}
           />
         </div>
@@ -392,18 +417,17 @@ export function HomePage() {
               </div>
             ) : (
               filteredProperties.map((item) => (
-                <div
-                  key={item.id}
+                <div 
+                  key={item.id} 
                   className="property-card"
-                  onClick={() => window.open(`/property/${item.id}`, '_blank')}
+                  onClick={() => navigate(`/property/${item.id}`)}
                 >
-                  <div className="property-placeholder">
-                    <img
-                      src={item.propertyPhotos[0]}
-                      alt={item.propertyName}
-                      className="property-image"
-                    />
-                    <button
+                  <img 
+                    src={item.propertyPhotos[0]} 
+                    alt={item.propertyName} 
+                    className="property-image" 
+                  />
+                  <button
                       className="favorite-button"
                       onClick={(e) => {
                         if (user !== null) {
@@ -415,12 +439,11 @@ export function HomePage() {
                     >
                       {userFavorites.includes(item.id) ? '❤️' : '🤍'}
                     </button>
-                    <div className="property-info">
-                      <div className="property-name">{item.propertyName}</div>
-                      <div className="property-location">{item.propertyLocation}</div>
-                      <div className="property-type">{item.propertyType}</div>
-                      <div className="property-price">₱{item.rent.toLocaleString()}/month</div>
-                    </div>
+                  <div className="property-info">
+                    <div className="property-name">{item.propertyName}</div>
+                    <div className="property-location">{item.propertyLocation}</div>
+                    <div className="property-type">{item.propertyType}</div>
+                    <div className="property-price">₱{item.rent.toLocaleString()}/month</div>
                   </div>
                 </div>
               ))
@@ -444,7 +467,7 @@ export function HomePage() {
                 Successfully logged in!
               </div>
             ) : (
-              < >
+              <>
                 <button className="close-button" onClick={() => setShowAuthOverlay(false)} aria-label="Close">×</button>
                 <h2>Login</h2>
                 {error && <div className="error-message">{error}</div>}
@@ -452,7 +475,7 @@ export function HomePage() {
                 <button onClick={handleGoogleAuth} className="google-button">
                   Continue with Google
                 </button>
-              </ >
+              </>
             )}
           </div>
         </div>

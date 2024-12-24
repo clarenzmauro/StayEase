@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import './ItemsContext.css';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config.js';
 
-export function ItemsContext({ isOpen, onClose, itemId }) {
-  const [item, setItem] = useState(null);
+interface ItemsContextProps {
+  isOpen: boolean;
+  onClose: () => void;
+  itemId: string | null;
+}
+
+export function ItemsContext({ isOpen, onClose, itemId }: ItemsContextProps) {
+  const [item, setItem] = useState<any>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -45,12 +51,16 @@ export function ItemsContext({ isOpen, onClose, itemId }) {
           console.log('ItemsContext: No matching property found for id:', itemId);
         }
       } catch (error) {
-        console.error('Error fetching property:', error);
-        console.error('Error details:', {
-          message: error.message,
-          code: error.code,
-          stack: error.stack
-        });
+        if (error instanceof Error) {
+          console.error('Error fetching property:', error);
+          console.error('Error details:', {
+            message: error.message,
+            code: (error as any).code,
+            stack: error.stack
+          });
+        }else {
+          console.error('An unexpected error occurred:', error);
+        }
       }
     }
 
@@ -87,7 +97,7 @@ export function ItemsContext({ isOpen, onClose, itemId }) {
           )}
 
           <div className="image-dots">
-            {item.propertyPhotos.map((_, index) => (
+            {item.propertyPhotos.map((_:any, index:any) => (
               <div
                 key={index}
                 className={`dot ${index === currentImageIndex ? 'active' : ''}`}
