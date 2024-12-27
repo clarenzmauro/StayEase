@@ -4,6 +4,7 @@ import HomePage from './components/Homepage/HomePage';
 import AccountPage from './components/Accounts/AccountPage';
 import OwnersPage from './components/Owners/OwnersPage';
 import PropertyPage from './components/Property Page/PropertyPage';
+import ListingPage from './components/Owners/ListingPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/account" element={<AccountPage />} />
           <Route path="/owner-page/:id" element={<OwnersPage/>} />
           <Route path="/property/:id" element={<PropertyPage />} />
+          <Route path="/edit" element={<ListingPage />} />
         </Routes>
       </Router>
     </div>

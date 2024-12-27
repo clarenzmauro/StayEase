@@ -103,7 +103,7 @@ const OwnersPage: React.FC = () => {
       ];
 
       const handleDashboardClick = () => {
-        setIsDashboardOpen(true);
+        setIsDashboardOpen(prevState => !prevState);
       };
       
   return (
@@ -112,7 +112,9 @@ const OwnersPage: React.FC = () => {
         <div className="header-content">
           <img src={logoSvg} alt="Airbnb" className="logo" />
           <div className="nav-buttons">
-            <button className="host-button" onClick={handleDashboardClick}>Dashboard</button>
+            <button className="host-button" onClick={handleDashboardClick}>
+              {isDashboardOpen ? 'Profile' : 'Dashboard'}
+            </button>
             <button className="globe-button">
               <svg viewBox="0 0 16 16" className="globe-icon">
                 <path d="M8 0.5C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5C3.85786 15.5 0.5 12.1421 0.5 8C0.5 3.85786 3.85786 0.5 8 0.5ZM8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5899 4.41015 14.5 8 14.5C11.5899 14.5 14.5 11.5899 14.5 8C14.5 4.41015 11.5899 1.5 8 1.5Z"/>
@@ -135,11 +137,6 @@ const OwnersPage: React.FC = () => {
               alt="Profile" 
               className="profile-image" 
               />
-              <button className="heart-badge">
-                <svg viewBox="0 0 24 24" className="heart-icon">
-                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                </svg>
-              </button>
             </div>
 
             <h1 className="profile-name">{ownerData?.username}</h1>
@@ -198,26 +195,26 @@ const OwnersPage: React.FC = () => {
                 <span>+</span>
               </div>
               {properties.map(property => (
-      <div key={property.id} className="image-container" onClick={() => window.open(`/property/${property.id}`, '_blank')}>
-        <img 
-          src={property.propertyPhotos[0] || "/placeholder.svg?height=150&width=150"} 
-          alt={property.title} 
-          className="property-image" 
-        />
-         <div className="property-info">
-                      <div className="property-name">{property.propertyName}</div>
-                      <div className="property-location">{property.propertyLocation}</div>
-                      <div className="property-type">{property.propertyType}</div>
-                      <div className="property-price">₱{property.rent.toLocaleString()}/month</div>
-          </div>
-        <div className="actions">
-          <button className="edit-btn" onClick={(e) => { e.stopPropagation(); /* Add edit functionality */ }}>✏️</button>
-          <button className="delete-btn" onClick={(e) => { e.stopPropagation(); /* Add delete functionality */ }}>🗑️</button>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
+              <div key={property.id} className="image-container" onClick={() => window.open(`/property/${property.id}`, '_blank')}>
+                <img 
+                src={property.propertyPhotos[0] || "/placeholder.svg?height=150&width=150"} 
+                alt={property.title} 
+                className="property-image" 
+                />
+                <div className="property-info">
+                  <div className="property-name">{property.propertyName}</div>
+                  <div className="property-location">{property.propertyLocation}</div>
+                  <div className="property-type">{property.propertyType}</div>
+                  <div className="property-price">₱{property.rent.toLocaleString()}/month</div>
+                </div>
+                <div className="actions">
+                  <button className="edit-btn" onClick={(e) => { e.stopPropagation(); /* Add edit functionality */ }}>✏️</button>
+                  <button className="delete-btn" onClick={(e) => { e.stopPropagation(); /* Add delete functionality */ }}>🗑️</button>
+                </div>
+              </div>
+              ))}
+            </div>
+          </div>  
         ): (
           <div className="about-section">
             <h2 className="about-title">About {firstName}</h2>
