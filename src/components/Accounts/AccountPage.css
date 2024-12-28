@@ -97,7 +97,7 @@
   gap: 0.8rem;
 }
 
-.edit-button,
+.edit-button-account,
 .save-button,
 .cancel-button,
 .logout-button,
@@ -113,12 +113,12 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.edit-button {
+.edit-button-account {
   background-color: #007bff;
   color: white;
 }
 
-.edit-button:hover {
+.edit-button-account:hover {
   background-color: #0056b3;
   transform: translateY(-1px);
 }

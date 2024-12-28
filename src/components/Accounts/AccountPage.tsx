@@ -254,7 +254,7 @@ const AccountPage = () => {
               </>
             ) : (
               <>
-                <button onClick={handleEdit} className="edit-button">
+                <button onClick={handleEdit} className="edit-button-account">
                   Edit Profile
                 </button>
                 <button onClick={handleLogout} className="logout-button">

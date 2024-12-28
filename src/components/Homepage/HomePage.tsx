@@ -106,9 +106,9 @@ export function HomePage() {
       case 'oldest':
         return [...properties].sort((a, b) => a.dateAdded - b.dateAdded);
       case 'price-low':
-        return [...properties].sort((a, b) => a.rent - b.rent);
+        return [...properties].sort((a, b) => a.propertyPrice - b.propertyPrice);
       case 'price-high':
-        return [...properties].sort((a, b) => b.rent - a.rent);
+        return [...properties].sort((a, b) => b.propertyPrice - a.propertyPrice);
       case 'top-rated':
         return [...properties].sort((a, b) => (b.ratings?.overall || 0) - (a.ratings?.overall || 0));
       default:
@@ -125,16 +125,16 @@ export function HomePage() {
       filtered = filtered.filter(property =>
         property.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
         property.propertyLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.tags.some((tag:string) => tag.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (property.propertyTags && Array.isArray(property.propertyTags) && property.propertyTags.some((tag:string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))) ||
         property.propertyType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.owner.toLowerCase().includes(searchQuery.toLowerCase())
+        (property.owner && typeof property.owner === 'string' && property.owner.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
     // Apply price range filter
     filtered = filtered.filter(property =>
-      property.rent >= activeFilters.priceRange.min &&
-      property.rent <= activeFilters.priceRange.max
+      property.propertyPrice >= activeFilters.priceRange.min &&
+      property.propertyPrice <= activeFilters.priceRange.max
     );
 
     // Apply location filter
@@ -154,7 +154,7 @@ export function HomePage() {
     // Apply tags filter
     if (activeFilters.selectedTags.length > 0) {
       filtered = filtered.filter(property =>
-        activeFilters.selectedTags.every(tag => property.tags.includes(tag))
+        activeFilters.selectedTags.every(tag => property.propertyTags.includes(tag))
       );
     }
 
@@ -178,7 +178,7 @@ export function HomePage() {
       const locationMatch = property.propertyLocation.toLowerCase().includes(query);
       
       // Search by tags
-      const tagMatch = property.tags.some((tag:string) => 
+      const tagMatch = property.propertyTags && Array.isArray(property.propertyTags) && property.propertyTags.some((tag: string) => 
         tag.toLowerCase().includes(query)
       );
       
@@ -189,7 +189,7 @@ export function HomePage() {
       const typeMatch = property.propertyType.toLowerCase().includes(query);
       
       // Search by owner name
-      const ownerMatch = property.owner.toLowerCase().includes(query);
+      const ownerMatch = property.owner && typeof property.owner === 'string' && property.owner.toLowerCase().includes(query);
 
       return locationMatch || tagMatch || nameMatch || typeMatch || ownerMatch;
     });
@@ -443,7 +443,7 @@ export function HomePage() {
                     <div className="property-name">{item.propertyName}</div>
                     <div className="property-location">{item.propertyLocation}</div>
                     <div className="property-type">{item.propertyType}</div>
-                    <div className="property-price">₱{item.rent.toLocaleString()}/month</div>
+                    <div className="property-price">₱{(item.propertyPrice ?? item.rent ?? 0).toLocaleString()}/month</div>
                   </div>
                 </div>
               ))

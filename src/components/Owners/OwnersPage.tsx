@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import './OwnersPage.css';
 import logoSvg from '../../assets/STAY.svg';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
-
 const OwnersPage: React.FC = () => {
+    const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
     const { normalDocumentId, encryptedDocumentId } = location.state || {}; // Accessing state
@@ -107,7 +107,7 @@ const OwnersPage: React.FC = () => {
       };
       
   return (
-    <div className="container">
+    <div className="container-owner">
       <header className="header">
         <div className="header-content">
           <img src={logoSvg} alt="Airbnb" className="logo" />
@@ -128,7 +128,7 @@ const OwnersPage: React.FC = () => {
         </div>
       </header>
 
-      <main className="main-content">
+      <main className="main-content-owner">
         <div className="profile-sidebar">
           <div className="profile-card">
             <div className="profile-image-container">
@@ -191,7 +191,7 @@ const OwnersPage: React.FC = () => {
         {isDashboardOpen ? (
           <div id="dashboard-section" className="dashboard-layout">
             <div className="image-section">
-              <div className="add-box">
+              <div className="add-box" onClick={() => navigate(`/owner-page/${normalDocumentId}/edit`, { state: { normalDocumentId: normalDocumentId } })}>
                 <span>+</span>
               </div>
               {properties.map(property => (
@@ -205,7 +205,7 @@ const OwnersPage: React.FC = () => {
                   <div className="property-name">{property.propertyName}</div>
                   <div className="property-location">{property.propertyLocation}</div>
                   <div className="property-type">{property.propertyType}</div>
-                  <div className="property-price">₱{property.rent.toLocaleString()}/month</div>
+                  <div className="property-price">₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month</div>
                 </div>
                 <div className="actions">
                   <button className="edit-btn" onClick={(e) => { e.stopPropagation(); /* Add edit functionality */ }}>✏️</button>
@@ -216,18 +216,18 @@ const OwnersPage: React.FC = () => {
             </div>
           </div>  
         ): (
-          <div className="about-section">
+          <div className="about-section-owner">
             <h2 className="about-title">About {firstName}</h2>
           
-            <div className="details-grid">
-              <div className="detail-item">
+            <div className="details-grid-owner">
+              <div className="detail-item-owner">
                 <span className="detail-icon work"></span>
                 <div>
                   <div className="detail-label">My work:</div>
                   <div className="detail-value">Hotelier</div>
                 </div>
               </div>
-              <div className="detail-item">
+              <div className="detail-item-owner">
                 <span className="detail-icon time"></span>
                 <div>
                   <div className="detail-label">I spend too much time:</div>
@@ -235,13 +235,13 @@ const OwnersPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="detail-item">
+            <div className="detail-item-owner">
               <span className="detail-icon birth"></span>
               <div>
                 <div className="detail-label">Born in the 80s</div>
               </div>
             </div>
-            <div className="detail-item">
+            <div className="detail-item-owner">
               <span className="detail-icon education"></span>
               <div>
                 <div className="detail-label">Where I went to school:</div>
@@ -249,7 +249,7 @@ const OwnersPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="detail-item">
+            <div className="detail-item-owner">
               <span className="detail-icon fun"></span>
               <div>
                 <div className="detail-label">Fun fact:</div>
@@ -257,7 +257,7 @@ const OwnersPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="detail-item">
+            <div className="detail-item-owner">
               <span className="detail-icon music"></span>
               <div>
                 <div className="detail-label">Favorite song in high school:</div>
@@ -265,7 +265,7 @@ const OwnersPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="detail-item">
+            <div className="detail-item-owner">
               <span className="detail-icon heart"></span>
               <div>
                 <div className="detail-label">I'm obsessed with:</div>
@@ -273,7 +273,7 @@ const OwnersPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="detail-item">
+            <div className="detail-item-owner">
               <span className="detail-icon language"></span>
               <div>
                 <div className="detail-label">Speaks</div>
@@ -290,10 +290,10 @@ const OwnersPage: React.FC = () => {
             <div className="section-header">
               <h2>{firstName}'s reviews</h2>
               <div className="navigation-buttons">
-                <button className="nav-button" aria-label="Previous">
+                <button className="nav-button-owner" aria-label="Previous">
                   <span className="arrow left"></span>
                 </button>
-                <button className="nav-button" aria-label="Next">
+                <button className="nav-button-owner" aria-label="Next">
                   <span className="arrow right"></span>
                 </button>
               </div>
@@ -321,10 +321,10 @@ const OwnersPage: React.FC = () => {
             <div className="section-header">
               <h2>{firstName}'s listings</h2>
               <div className="navigation-buttons">
-                <button className="nav-button" aria-label="Previous">
+                <button className="nav-button-owner" aria-label="Previous">
                   <span className="arrow left"></span>
                 </button>
-                <button className="nav-button" aria-label="Next">
+                <button className="nav-button-owner" aria-label="Next">
                   <span className="arrow right"></span>
                 </button>
               </div>

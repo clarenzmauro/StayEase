@@ -25,7 +25,7 @@ export function FilterMenu({ onFilterChange, isLoading }: FilterMenuProps) {
     'With Parking',
     'With Security',
     'Near School',
-    'With WiFi',
+    'With Wi-Fi',
     'Furnished',
     'With Kitchen',
     'Near Market',

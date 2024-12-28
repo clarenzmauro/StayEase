@@ -1,14 +1,16 @@
 interface BookingCardProps {
   property: {
-    rent: number;
-    availability: { seconds: number };
+    propertyPrice: number;
+    dateAvailability: { seconds: number };
     maxOccupants: number;
     floorLevel: string | number;
-    furnishing: string;
-    petFriendly: boolean;
-    propertySize: string;
-    deposit: number;
+    furnishingStatus: string;
+    propertySize: number;
+    propertyLifestyle: string;
+    propertyType: string;
+    securityDeposit: number;
     leaseTerm: number;
+    allowViewing: boolean;
   };
   onInterestedClick: () => void;
 }
@@ -17,14 +19,14 @@ const BookingCard = ({ property, onInterestedClick }: BookingCardProps) => {
   return (
     <div className="booking-card">
       <div className="price-info">
-        <span className="price">₱{property.rent}</span>
+        <span className="price">₱{property.propertyPrice}</span>
         <span className="price-period">/month</span>
       </div>
 
       <div className="booking-details">
         <div className="detail-row">
           <span>Available from:</span>
-          <span>{new Date(property.availability?.seconds * 1000).toLocaleDateString()}</span>
+          <span>{new Date(property.dateAvailability?.seconds * 1000).toLocaleDateString()}</span>
         </div>
         <div className="detail-row">
           <span>Max occupants:</span>
@@ -36,15 +38,19 @@ const BookingCard = ({ property, onInterestedClick }: BookingCardProps) => {
         </div>
         <div className="detail-row">
           <span>Furnishing:</span>
-          <span>{property.furnishing}</span>
+          <span>{property.furnishingStatus}</span>
         </div>
         <div className="detail-row">
-          <span>Pet Friendly:</span>
-          <span>{property.petFriendly ? 'Yes' : 'No'}</span>
+          <span>Lifestyle:</span>
+          <span>{property.propertyLifestyle}</span>
         </div>
         <div className="detail-row">
           <span>Size:</span>
           <span>{property.propertySize}</span>
+        </div>
+        <div className="detail-row">
+          <span>Lifestyle:</span>
+          <span>{property.allowViewing ? 'Yes' : 'No'}</span>
         </div>
       </div>
 
@@ -55,7 +61,7 @@ const BookingCard = ({ property, onInterestedClick }: BookingCardProps) => {
       <div className="total-calculation">
         <div className="detail-row">
           <span>Security Deposit:</span>
-          <span>₱{property.deposit}</span>
+          <span>₱{property.securityDeposit}</span>
         </div>
         <div className="detail-row">
           <span>Lease Term:</span>

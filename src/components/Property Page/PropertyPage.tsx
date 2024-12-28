@@ -17,27 +17,40 @@ import './PropertyPage.css';
 
 interface Property {
   id: string;
-  propertyName: string;
-  propertyLocation: string;
-  propertyPhotos: string[];
-  propertyDesc: string;
-  propertySize: string;
-  tags: string[];
-  houseRules: string[];
-  bedroomCount: number;
+  allowChat: boolean;
+  allowViewing: boolean;
   bathroomCount: number;
-  viewCount: number;
-  rent: number;
-  availability: any;
-  maxOccupants: number;
-  floorLevel: string | number;
-  furnishing: string;
-  deposit: number;
-  leaseTerm: number;
-  ownerId: string;
-  petFriendly: boolean;
-  furnished: string;
+  bedroomCount: number;
   comments: any[];
+  dateAvailability: any;
+  datePosted: any;
+  floorLevel: string | number;
+  furnishingStatus: string;
+  houseRules: string[];
+  interestedApplicants: string[];
+  interestedCount: number;
+  isVerified: boolean;
+  leaseTerm: number;
+  maxOccupants: number;
+  ownerId: string;
+  propertyDesc: string;
+  propertyLifestyle: string;
+  propertyLocation: string;
+  propertyLocationGeo: any;
+  propertyName: string;
+  propertyPhotos: {
+    count: number;
+    [key: string]: {
+      pictureUrl: string;
+      label: string;
+    } | number;
+  };
+  propertyPrice: number;
+  propertySize: number;
+  propertyTags: string[];
+  propertyType: string;
+  securityDeposit: number;
+  viewCount: number;
 }
 
 interface Comment {

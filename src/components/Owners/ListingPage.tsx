@@ -1,6 +1,11 @@
 'use client'
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { db } from '../../firebase/config';
+import { doc, getDoc, updateDoc, addDoc, collection, query, where, GeoPoint, arrayUnion } from 'firebase/firestore';
+import { storage } from '../../firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import './ListingPage.css';
 
 interface Image {
@@ -34,7 +39,7 @@ interface PropertyDetails {
 const propertyTypes = ['dorm', 'apartment', 'room', 'house', 'condo'];
 
 const tagCategories = {
-  'Basic Amenities': ['Pet Friendly', 'With Parking', 'With Wifi', 'With Aircon', 'With Kitchen', 'With Laundry'],
+  'Basic Amenities': ['Pet Friendly', 'With Parking', 'With Wi-fi', 'With Aircon', 'With Kitchen', 'With Laundry'],
   'Proximity': ['Near Campus', 'Near Grocery', 'Near Church', 'Near Hospital', 'Near Restaurant', 'Near Gym', 'Near Park', 'Near Public Transpo'],
   'Room Features': ['Single Room', 'Shared Room', 'With Balcony', 'With Storage', 'With Study Desk'],
   'Safety': ['With Guard', 'With CCTV', 'With Curfew'],
@@ -42,9 +47,11 @@ const tagCategories = {
 };
 
 export function ListingPage() {
+  const { id } = useParams<{ id: string }>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [images, setImages] = useState<Image[]>([]);
+  const [houseRules, setHouseRules] = useState<string[]>([]);
   const [details, setDetails] = useState<PropertyDetails>({
     name: "Lester's Diddy Party",
     location: "Batangas City",
@@ -52,7 +59,7 @@ export function ListingPage() {
     bedrooms: 69,
     bathrooms: 420,
     description: 'orange na bahay haha',
-    tags: ['Pet Friendly', 'With Wifi', 'Near Campus'],
+    tags: ['Pet Friendly', 'With Wi-fi', 'Near Campus'],
     views: 69420,
     price: 10,
     availableFrom: "12/2/2024",
@@ -63,10 +70,118 @@ export function ListingPage() {
     allowViewing: true,
     size: 0,
     securityDeposit: 0,
-    leaseTerm: 0
+    leaseTerm: 0,
+    lifestyle: "Mixed Gender"
   });
   const [isEditing, setIsEditing] = useState(false);
-  //const [location, setLocation] = useState("Batangas City");
+
+  const handleSubmit = async () => {
+    try {
+
+      const propertyData = {
+        propertyName: details.name,
+        propertyLocation: details.location,
+        propertyLocationGeo: new GeoPoint(0, 0),
+        propertyDesc: details.description,
+        propertyType: details.type,
+        ownerId: id,
+        datePosted: new Date(),
+        bedroomCount: details.bedrooms,
+        bathroomCount: details.bathrooms,
+        propertyPrice: details.price,
+        dateAvailability: new Date(details.availableFrom),
+        maxOccupants: details.maxOccupants,
+        floorLevel: details.floorLevel,
+        furnishingStatus: details.furnishing,
+        propertyLifestyle: details.lifestyle,
+        propertySize: details.size,
+        securityDeposit: details.securityDeposit,
+        leaseTerm: details.leaseTerm,
+        allowViewing: details.allowViewing,
+        allowChat: true,
+        isVerified: false,
+        viewCount: 0,
+        interestedCount: 0,
+        interestedApplicants: [],
+        comments: [],
+        propertyPhotos: {
+          count: images.length,
+        },
+        propertyTags: details.tags,
+        houseRules: houseRules
+      };
+
+      const propertyRef = collection(db, 'properties');
+      const docRef = await addDoc(propertyRef, propertyData);
+
+      const imagesData: { [key: string]: { pictureUrl: string; label: string } } = {};
+      for (let i =0; i < images.length; i++) {
+        const image = images[i];
+        if(image.file){
+        const imageRef = ref(storage, `properties.${docRef.id}/photo${i}`);
+
+        await uploadBytes(imageRef, image.file);
+        const url = await getDownloadURL(imageRef);
+
+        imagesData[`photo${i}`] = {
+          pictureUrl: url,
+          label: image.label
+        };
+      }else{
+        console.warn('No file selected for image', i);
+      }
+      }
+
+      await updateDoc(docRef, {
+        propertyPhotos: imagesData,
+        count: images.length
+      });
+      
+      console.log('Document written with ID: ', docRef.id);
+  alert('Property added successfully!');
+
+  if (!id) {
+    throw new Error('Owner ID is undefined or invalid.');
+  }
+
+  const ownerDoc = await getDoc(doc(db, 'accounts', id));
+  if (ownerDoc.exists()) {
+    const ownerData = ownerDoc.data();
+    const dashboardId = ownerData.dashboardId;
+
+    if (dashboardId) {
+      const dashboardRef = doc(db, 'dashboards', dashboardId);
+
+      await updateDoc(dashboardRef, {
+        listedDorms: arrayUnion(docRef.id),
+      });
+
+      console.log('Dashboard updated successfully!');
+    } else {
+      console.error('Dashboard ID not found.');
+    }
+  } else {
+    console.error('Owner document does not exist.');
+  }
+} catch (error) {
+  console.error('Error adding document: ', error);
+  alert('Error adding property. Please try again.');
+}
+  };
+
+  const handleAddRule = () => {
+    setHouseRules([...houseRules, '']);
+  };
+
+  const handleRemoveRule = (index: number) => {
+    setHouseRules(houseRules.filter((_, i) => i !== index));
+  };
+
+  const handleRuleChange = (index: number, value: string) => {
+    const newRules = [...houseRules];
+    newRules[index] = value;
+    setHouseRules(newRules);
+  };
 
   const handleImageSave = () => {
     setIsModalOpen(false);
@@ -122,7 +237,7 @@ export function ListingPage() {
             placeholder="Location"
           />
         </div>
-        <button className="heart-button">♡</button>
+        <button className="complete-button" onClick={handleSubmit}>Submit Listing</button>
       </div>
 
       <div className="image-grid">
@@ -190,6 +305,22 @@ export function ListingPage() {
             </div>
           </div>
         </div>
+
+        <div className="house-rules-section">
+  <h2>House Rules</h2>
+  {houseRules.map((rule, index) => (
+    <div key={index} className="house-rule-item">
+      <input
+        type="text"
+        value={rule}
+        onChange={(e) => handleRuleChange(index, e.target.value)}
+        placeholder="Enter house rule"
+      />
+      <button onClick={() => handleRemoveRule(index)}>Remove</button>
+    </div>
+  ))}
+  <button onClick={handleAddRule}>Add House Rule</button>
+</div>
 
         <div className="sidebar">
           <div className="price-card">

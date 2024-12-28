@@ -5,7 +5,7 @@ interface PropertyInfoProps {
     bathroomCount: number;
     viewCount: number;
     propertyDesc: string;
-    tags?: string[];
+    propertyTags?: string[];
     houseRules?: string[];
   };
   host: {
@@ -37,7 +37,7 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
       <div className="amenities-section">
         <div className="section-title">What this place offers</div>
         <div className="amenities-grid">
-          {property.tags?.map((tag, index) => (
+          {property.propertyTags?.map((tag, index) => (
             <div key={`tag-${index}`} className="amenity-item">
               <span>✓</span>
               <span>{tag}</span>

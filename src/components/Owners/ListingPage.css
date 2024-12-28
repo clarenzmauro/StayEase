@@ -41,16 +41,18 @@
   }
   
   
-  .heart-button {
-    background: none;
-    border: none;
+  .complete-button {
+    background-color: white;
+    color: #28a745;
+    border: 2px solid black;
     font-size: 1.5rem;
     cursor: pointer;
     padding: 0.5rem;
   }
   
-  .heart-button:hover {
-    color: red;
+  .complete-button:hover {
+    color: white;
+    background-color: #28a745;
   }
   
   .image-grid {
