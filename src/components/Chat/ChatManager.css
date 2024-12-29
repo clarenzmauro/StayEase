@@ -1,0 +1,15 @@
+.chat-manager {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  padding: 20px;
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 20px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.chat-manager > * {
+  pointer-events: auto;
+}
