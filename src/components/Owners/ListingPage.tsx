@@ -1,11 +1,10 @@
 'use client'
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { db } from '../../firebase/config';
-import { doc, getDoc, updateDoc, addDoc, collection, query, where, GeoPoint, arrayUnion } from 'firebase/firestore';
-import { storage } from '../../firebase/config';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion } from 'firebase/firestore';
+import { supabase } from '../../supabase/supabase';
 import './ListingPage.css';
 
 interface Image {
@@ -29,14 +28,14 @@ interface PropertyDetails {
   floorLevel: number;
   furnishing: string;
   allowViewing: boolean;
-  petFriendly: boolean;
+  allowChat: boolean;
   size: number;
   securityDeposit: number;
   leaseTerm: number;
   lifestyle?: string;
 }
 
-const propertyTypes = ['dorm', 'apartment', 'room', 'house', 'condo'];
+const propertyTypes = ['Dormitory', 'Apartment', 'Room', 'House', 'Condo'];
 
 const tagCategories = {
   'Basic Amenities': ['Pet Friendly', 'With Parking', 'With Wi-fi', 'With Aircon', 'With Kitchen', 'With Laundry'],
@@ -53,21 +52,21 @@ export function ListingPage() {
   const [images, setImages] = useState<Image[]>([]);
   const [houseRules, setHouseRules] = useState<string[]>([]);
   const [details, setDetails] = useState<PropertyDetails>({
-    name: "Lester's Diddy Party",
-    location: "Batangas City",
-    type: 'dorm',
-    bedrooms: 69,
-    bathrooms: 420,
-    description: 'orange na bahay haha',
-    tags: ['Pet Friendly', 'With Wi-fi', 'Near Campus'],
-    views: 69420,
-    price: 10,
-    availableFrom: "12/2/2024",
-    maxOccupants: 999,
-    floorLevel: 100,
-    furnishing: "hello world",
-    petFriendly: true,
+    name: "Enter Property Name",
+    location: "Enter Property Location",
+    type: 'Dormitory',
+    bedrooms: 0,
+    bathrooms: 0,
+    description: 'Enter Property Description',
+    tags: [],
+    views: 0,
+    price: 0,
+    availableFrom: "Enter Date of Availability",
+    maxOccupants: 0,
+    floorLevel: 0,
+    furnishing: "Enter Furnishing Status",
     allowViewing: true,
+    allowChat: true,
     size: 0,
     securityDeposit: 0,
     leaseTerm: 0,
@@ -115,21 +114,39 @@ export function ListingPage() {
       const docRef = await addDoc(propertyRef, propertyData);
 
       const imagesData: { [key: string]: { pictureUrl: string; label: string } } = {};
-      for (let i =0; i < images.length; i++) {
+      for (let i = 0; i < images.length; i++) {
         const image = images[i];
-        if(image.file){
-        const imageRef = ref(storage, `properties.${docRef.id}/photo${i}`);
-
-        await uploadBytes(imageRef, image.file);
-        const url = await getDownloadURL(imageRef);
-
-        imagesData[`photo${i}`] = {
-          pictureUrl: url,
-          label: image.label
-        };
-      }else{
-        console.warn('No file selected for image', i);
-      }
+        if (image.file) {
+          try {
+            // Upload to Supabase
+            const filePath = `${docRef.id}/photo${i}`;
+            const { error } = await supabase.storage
+              .from('properties')
+              .upload(filePath, image.file, {
+                cacheControl: '3600',
+                upsert: false // Set to true if you want to allow overwriting
+              });
+      
+            if (error) {
+              throw error;
+            }
+      
+            // Get the public URL
+            const { data: { publicUrl } } = supabase.storage
+              .from('properties')
+              .getPublicUrl(filePath);
+      
+            imagesData[`photo${i}`] = {
+              pictureUrl: publicUrl,
+              label: image.label
+            };
+          } catch (error) {
+            console.error('Error uploading image:', error);
+            // Handle error appropriately
+          }
+        } else {
+          console.warn('No file selected for image', i);
+        }
       }
 
       await updateDoc(docRef, {

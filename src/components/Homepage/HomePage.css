@@ -10,6 +10,14 @@ body {
   min-height: 100vh;
 }
 
+.image-container {
+  position: relative;
+  width: 100%;
+  height: 200px; /* or whatever height you want */
+  overflow: hidden;
+}
+
+
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -29,6 +37,22 @@ body {
   width: auto;
 }
 
+.nav-button {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.nav-button:hover {
+  background: rgba(0, 0, 0, 0.7);
+}
+
 .nav-links {
   display: flex;
   gap: 2rem;
@@ -46,6 +70,17 @@ body {
 .nav-link:hover {
   color: #021526;
 }
+
+.prev {
+  left: 0;
+  border-radius: 0 3px 3px 0;
+}
+
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
 
 .nav-right {
   display: flex;
@@ -164,7 +199,7 @@ body {
   cursor: pointer;
   background: white;
   max-width: 100%;
-  height: fit-content;
+  height: auto;
 }
 
 .properties-grid .property-card:hover {
@@ -175,12 +210,13 @@ body {
   position: relative;
 }
 
-.properties-grid .property-card .property-image {
+.property-image {
   width: 100%;
-  height: 140px !important;
+  height: 100%;
   object-fit: cover;
-  border-radius: 12px 12px 0 0;
+  transition: all 0.3s ease;
 }
+
 
 .favorite-button {
   font-size: 20px;
@@ -201,8 +237,11 @@ body {
 }
 
 .properties-grid .property-card .property-info {
-  padding: 8px !important;
+  padding: 16px !important; /* Increased padding */
   background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .properties-grid .property-card .property-name {
@@ -211,6 +250,15 @@ body {
   margin-bottom: 2px !important;
   color: #333;
   line-height: 1.2;
+  display: block;
+}
+
+.properties-grid .property-card .property-location,
+.properties-grid .property-card .property-type {
+  color: #666;
+  font-size: 0.9rem !important;
+  line-height: 1.2;
+  display: block; /* Ensure visibility */
 }
 
 .properties-grid .property-card .property-location {
@@ -233,6 +281,7 @@ body {
   font-size: 0.95rem !important;
   line-height: 1.2;
   margin-top: 2px !important;
+  display: block;
 }
 
 .no-results {

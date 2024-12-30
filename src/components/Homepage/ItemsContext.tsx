@@ -68,6 +68,14 @@ export function ItemsContext({ isOpen, onClose, itemId }: ItemsContextProps) {
   }, [isOpen, itemId]);
 
   if (!isOpen || !item) return null;
+  
+  const imageUrl = item.propertyPhotos?.[`photo${currentImageIndex}`]?.pictureUrl;
+  console.log('Image Data:', {
+    item: item,
+    propertyPhotos: item.propertyPhotos,
+    currentIndex: currentImageIndex,
+    imageUrl: imageUrl
+  });
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % item.propertyPhotos.length);
@@ -107,9 +115,13 @@ export function ItemsContext({ isOpen, onClose, itemId }: ItemsContextProps) {
 
           {/* Display the current photo */}
           <img 
-            src={item.propertyPhotos[currentImageIndex]} 
-            alt={`${item.propertyName} - Photo ${currentImageIndex + 1}`}
+            src={imageUrl || 'https://via.placeholder.com/400'} 
+            alt={`${item.propertyName} - ${item.propertyPhotos[`photo${currentImageIndex}`]?.label || `Photo ${currentImageIndex + 1}`}`}
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            onError={(e) => {
+              console.error('Image failed to load:', imageUrl);
+              console.error('Error event:', e);
+            }}
           />
         </div>
 

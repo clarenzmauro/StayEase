@@ -43,6 +43,25 @@ export function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   // const [sortBy, setSortBy] = useState('most-popular');
   const [sortBy] = useState('most-popular');
+  const [currentImageIndices, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
+
+  const getNextImage = (e: React.MouseEvent, itemId: string, direction: 'next' | 'prev') => {
+    e.stopPropagation();
+
+    setCurrentImageIndices(prev => {
+      const currentIndex = prev[itemId] || 0;
+      const totalImages = Object.keys(filteredProperties.find(p => p.id === itemId)?.propertyPhotos || {})
+      .filter(key => key.startsWith('photo')).length;
+
+      let newIndex;
+      if (direction === 'next') {
+        newIndex = (currentIndex + 1) % totalImages;
+      } else {
+        newIndex = (currentIndex - 1 + totalImages) % totalImages;
+      }
+      return {...prev, [itemId]: newIndex};
+    });
+  };
 
   // Set up real-time listener for properties
   useEffect(() => {
@@ -422,11 +441,13 @@ export function HomePage() {
                   className="property-card"
                   onClick={() => navigate(`/property/${item.id}`)}
                 >
-                  <img 
-                    src={item.propertyPhotos[0]} 
-                    alt={item.propertyName} 
-                    className="property-image" 
-                  />
+                  <div className="image-container">
+    <img 
+      src={item.propertyPhotos?.[`photo${currentImageIndices[item.id] || 0}`]?.pictureUrl} 
+      alt={item.propertyName} 
+      className="property-image" 
+    />
+    </div>
                   <button
                       className="favorite-button"
                       onClick={(e) => {
@@ -445,12 +466,31 @@ export function HomePage() {
                     <div className="property-type">{item.propertyType}</div>
                     <div className="property-price">₱{(item.propertyPrice ?? item.rent ?? 0).toLocaleString()}/month</div>
                   </div>
+                  
+                  {Object.keys(item.propertyPhotos || {}).filter(key => key.startsWith('photo')).length > 1 && (
+      <>
+        <button 
+          className="nav-button prev"
+          onClick={(e) => getNextImage(e, item.id, 'prev')}
+        >
+          ‹
+        </button>
+        <button 
+          className="nav-button next"
+          onClick={(e) => getNextImage(e, item.id, 'next')}
+        >
+          ›
+        </button>
+      </>
+    )}
                 </div>
               ))
             )}
           </div>
         </div>
       </div>
+
+      
 
       {/* Item Details Overlay */}
       <ItemsContext
