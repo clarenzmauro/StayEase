@@ -12,6 +12,7 @@ import BookingCard from './components/BookingCard';
 import CommentSection from './components/CommentSection';
 import LoginPrompt from './components/LoginPrompt';
 import PropertySkeleton from './components/PropertySkeleton';
+import OwnerSection from './components/OwnerSection';
 
 import './PropertyPage.css';
 
@@ -584,7 +585,13 @@ const PropertyPage = () => {
         onReplyLike={handleReplyLike}
         onDeleteReply={handleDeleteReply}
       />
-
+      {property && (
+        <OwnerSection
+          ownerId={property.ownerId}
+          onViewProfile={() => navigate(`/profile/${property.ownerId}`)}
+          onMessage={() => navigate(`/messages/${property.ownerId}`)}
+        />
+      )}
       <LoginPrompt
         show={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}

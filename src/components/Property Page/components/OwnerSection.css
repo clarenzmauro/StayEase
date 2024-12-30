@@ -1,0 +1,81 @@
+.owner-section {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  margin: 24px 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.owner-content {
+  display: flex;
+  gap: 24px;
+}
+
+.owner-image {
+  flex-shrink: 0;
+}
+
+.owner-image img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.owner-info {
+  flex-grow: 1;
+}
+
+.owner-info h3 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.owner-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 12px;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.owner-description {
+  margin: 12px 0;
+  color: #444;
+  line-height: 1.5;
+}
+
+.owner-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.owner-buttons button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-profile-btn {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  color: #333;
+}
+
+.view-profile-btn:hover {
+  background-color: #eee;
+}
+
+.message-btn {
+  background-color: #007bff;
+  border: none;
+  color: white;
+}
+
+.message-btn:hover {
+  background-color: #0056b3;
+}

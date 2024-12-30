@@ -17,7 +17,7 @@ interface AuthHook {
 }
 
 export function useAuth(): AuthHook {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
