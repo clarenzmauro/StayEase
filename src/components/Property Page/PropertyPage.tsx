@@ -22,9 +22,10 @@ interface Property {
   allowViewing: boolean;
   bathroomCount: number;
   bedroomCount: number;
-  comments: any[];
-  dateAvailability: any;
-  datePosted: any;
+  comments: string[];
+  count: number;
+  dateAvailability: string;
+  datePosted: string;
   floorLevel: string | number;
   furnishingStatus: string;
   houseRules: string[];
@@ -40,7 +41,6 @@ interface Property {
   propertyLocationGeo: any;
   propertyName: string;
   propertyPhotos: {
-    count: number;
     [key: string]: {
       pictureUrl: string;
       label: string;
@@ -99,7 +99,16 @@ const PropertyPage = () => {
         const propertyDoc = await getDoc(doc(db, 'properties', id));
         if (propertyDoc.exists()) {
           const propertyData = { id: propertyDoc.id, ...propertyDoc.data() } as Property;
-          setProperty(propertyData);
+          
+          const formattedPhotos = {
+            count: propertyData.count, // Directly reference the count field
+            ...propertyData.propertyPhotos // Spread the propertyPhotos map
+          };
+
+      setProperty({
+        ...propertyData,
+        propertyPhotos: formattedPhotos // Update the propertyPhotos structure
+      });
 
           // Fetch host data using ownerId
           if (propertyData.ownerId) {
