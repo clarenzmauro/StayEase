@@ -147,7 +147,9 @@ const OwnersPage: React.FC = () => {
     <div className="container-owner">
       <header className="header">
         <div className="header-content">
-          <img src={logoSvg} alt="Airbnb" className="logo" />
+          <div className="logo-container">
+            <img src={logoSvg} alt="Stayverse" className="logo" />
+          </div>
           <div className="nav-buttons">
             <button className="host-button" onClick={handleDashboardClick}>
               {isDashboardOpen ? 'Profile' : 'Dashboard'}

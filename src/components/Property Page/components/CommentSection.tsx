@@ -1,6 +1,6 @@
 import '../PropertyPage.css';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface Comment {
   id: string;
@@ -41,27 +41,36 @@ const CommentSection = ({
   const [dateSort, setDateSort] = useState<'newest' | 'oldest'>('newest');
   const [likeSort, setLikeSort] = useState<'mostLiked' | 'leastLiked'>('mostLiked');
   const [activeSortType, setActiveSortType] = useState<'date' | 'likes'>('date');
-  const [visibleComments, setVisibleComments] = useState(5);
+  const [visibleComments, setVisibleComments] = useState(4);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
-  const COMMENTS_PER_PAGE = 5;
+  const COMMENTS_PER_PAGE = 4;
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleDateSort = () => {
-    if (activeSortType !== 'date') {
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleSortChange = (sortType: 'date' | 'likes', value: 'newest' | 'oldest' | 'mostLiked' | 'leastLiked') => {
+    if (sortType === 'date') {
+      setDateSort(value as 'newest' | 'oldest');
       setActiveSortType('date');
-      setDateSort('newest');
     } else {
-      setDateSort(prev => prev === 'newest' ? 'oldest' : 'newest');
-    }
-  };
-
-  const handleLikeSort = () => {
-    if (activeSortType !== 'likes') {
+      setLikeSort(value as 'mostLiked' | 'leastLiked');
       setActiveSortType('likes');
-      setLikeSort('mostLiked');
-    } else {
-      setLikeSort(prev => prev === 'mostLiked' ? 'leastLiked' : 'mostLiked');
     }
+    setIsDropdownOpen(false);
   };
 
   const formatDate = (timestamp: any) => {
@@ -81,6 +90,10 @@ const CommentSection = ({
 
   const handleLoadMoreComments = () => {
     setVisibleComments(prev => prev + COMMENTS_PER_PAGE);
+  };
+
+  const handleSeeLessComments = () => {
+    setVisibleComments(COMMENTS_PER_PAGE);
   };
 
   const renderComments = () => {
@@ -195,44 +208,81 @@ const CommentSection = ({
     <div className="comments-section">
       <div className="comments-header">
         <h2>Comments ({comments.length})</h2>
-        <div className="sort-buttons">
+        <div className="sort-buttons" ref={dropdownRef}>
           <button 
-            className={`sort-button ${activeSortType === 'date' ? 'active' : ''}`}
-            onClick={handleDateSort}
+            className="sort-dropdown-button"
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            Sort by {dateSort === 'newest' ? 'Oldest' : 'Newest'}
+            Sort by: {activeSortType === 'date' 
+              ? `Date (${dateSort})` 
+              : `Likes (${likeSort})`}
           </button>
-          <button 
-            className={`sort-button ${activeSortType === 'likes' ? 'active' : ''}`}
-            onClick={handleLikeSort}
-          >
-            Sort by {likeSort === 'mostLiked' ? 'Least' : 'Most'} Liked
-          </button>
+          <div className={`sort-dropdown-content ${isDropdownOpen ? 'show' : ''}`}>
+            <div 
+              className={`sort-option ${activeSortType === 'date' && dateSort === 'newest' ? 'active' : ''}`}
+              onClick={() => handleSortChange('date', 'newest')}
+            >
+              Newest First
+            </div>
+            <div 
+              className={`sort-option ${activeSortType === 'date' && dateSort === 'oldest' ? 'active' : ''}`}
+              onClick={() => handleSortChange('date', 'oldest')}
+            >
+              Oldest First
+            </div>
+            <div 
+              className={`sort-option ${activeSortType === 'likes' && likeSort === 'mostLiked' ? 'active' : ''}`}
+              onClick={() => handleSortChange('likes', 'mostLiked')}
+            >
+              Most Liked
+            </div>
+            <div 
+              className={`sort-option ${activeSortType === 'likes' && likeSort === 'leastLiked' ? 'active' : ''}`}
+              onClick={() => handleSortChange('likes', 'leastLiked')}
+            >
+              Least Liked
+            </div>
+          </div>
         </div>
       </div>
-      <form onSubmit={onCommentSubmit} className="comment-form">
-        <textarea
-          value={newComment}
-          onChange={(e) => onCommentChange(e.target.value)}
-          placeholder="Write a comment..."
-          required
-        />
-        <button type="submit">Post Comment</button>
-      </form>
-      
+
       <div className="comments-list">
         {renderComments()}
-        {comments.length > visibleComments && (
-          <div className="load-more-container">
+        <div className="load-more-container">
+          {comments.length > visibleComments ? (
             <button 
               className="load-more-button"
               onClick={handleLoadMoreComments}
             >
               See more comments ({comments.length - visibleComments} remaining)
             </button>
-          </div>
-        )}
+          ) : comments.length > COMMENTS_PER_PAGE ? (
+            <button 
+              className="load-more-button"
+              onClick={handleSeeLessComments}
+            >
+              See less comments
+            </button>
+          ) : null}
+        </div>
       </div>
+
+      <form onSubmit={onCommentSubmit} className="comment-form">
+        <textarea
+          value={newComment}
+          onChange={(e) => onCommentChange(e.target.value)}
+          placeholder="Share your thoughts about this property..."
+          required
+        />
+        <div className="comment-form-footer">
+          <span className="comment-guidelines">
+            Please keep comments respectful and relevant to the property
+          </span>
+          <button type="submit">
+            Post Comment
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

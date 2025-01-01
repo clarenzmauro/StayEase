@@ -166,9 +166,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Type a message..."
           />
-          <button type="submit" disabled={!newMessage.trim()}>
-            Send
-          </button>
+          <button type="submit" disabled={!newMessage.trim()} />
         </form>
       </div>
     </div>

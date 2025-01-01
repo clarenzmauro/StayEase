@@ -81,11 +81,11 @@ const PropertyPage = () => {
   const [dateSort, setDateSort] = useState<'newest' | 'oldest'>('newest');
   const [likeSort, setLikeSort] = useState<'mostLiked' | 'leastLiked'>('mostLiked');
   const [activeSortType, setActiveSortType] = useState<'date' | 'likes'>('date');
-  const [visibleComments, setVisibleComments] = useState(5);
+  const [visibleComments, setVisibleComments] = useState(4);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
-  const COMMENTS_PER_PAGE = 5;
+  const COMMENTS_PER_PAGE = 4;
 
   useEffect(() => {
     const fetchPropertyData = async () => {

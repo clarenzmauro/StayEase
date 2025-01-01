@@ -238,22 +238,6 @@ export function ListingPage() {
   return (
     <div className="property-container">
       <div className="header">
-        <div className="title-section">
-          <input
-            type="text"
-            value={details.name}
-            onChange={(e) => setDetails({...details, name: e.target.value})}
-            className="title-input"
-            placeholder="Property Title"
-          />
-          <input
-            type="text"
-            value={details.location}
-            onChange={(e) => setDetails({...details, location: e.target.value})}
-            className="location-input"
-            placeholder="Location"
-          />
-        </div>
         <button className="complete-button" onClick={handleSubmit}>Submit Listing</button>
       </div>
 
@@ -289,6 +273,23 @@ export function ListingPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="title-section">
+        <input
+          type="text"
+          value={details.name}
+          onChange={(e) => setDetails({...details, name: e.target.value})}
+          className="title-input"
+          placeholder="Enter Property Name"
+        />
+        <input
+          type="text"
+          value={details.location}
+          onChange={(e) => setDetails({...details, location: e.target.value})}
+          className="location-input"
+          placeholder="Enter Property Location"
+        />
       </div>
 
       <div className="content-wrapper">
