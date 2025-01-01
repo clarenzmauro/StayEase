@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import './OwnersPage.css';
 import logoSvg from '../../assets/STAY.svg';
-import { doc, getDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
 const OwnersPage: React.FC = () => {
@@ -14,6 +14,43 @@ const OwnersPage: React.FC = () => {
     const [isDashboardOpen, setIsDashboardOpen] = useState(false);
     const [properties, setProperties] = useState<any[]>([]);
     const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner'; // Default to 'Owner' if username is not available
+
+    const handleDeleteProperty = async (propertyId: string) =>{
+      const confirmDelete = window.confirm("Are you sure you want to delete this property?");;
+      if(!confirmDelete) return;
+
+      try {
+        const userDocRef = doc(db, 'accounts', normalDocumentId);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (userDocSnap.exists()){
+          const userData = userDocSnap.data();
+          const dashboardId = userData.dashboardId;
+
+          const dashboardRef = doc(db, 'dashboards', dashboardId);
+          const dashboardDocSnap = await getDoc(dashboardRef);
+
+          if (dashboardDocSnap.exists()){
+            const dashboardData = dashboardDocSnap.data();
+            const listedDorms = dashboardData.listedDorms || [];
+
+            const updateDorms = listedDorms.filter((dormId:string) => dormId !== propertyId);
+            await updateDoc(dashboardRef, { listedDorms: updateDorms});
+
+            const propertyDocRef = doc(db, 'properties', propertyId);
+            await deleteDoc(propertyDocRef);
+
+            alert("Property deleted successfully!");
+          } else{
+            console.error("Dashboard not found");
+          }
+        } else {
+          console.error("User not found");
+        }
+      } catch(error){
+        console.error("Error deleting property: ", error);
+      }
+    }
 
     useEffect(() => {
         const fetchOwnerData = async () => {
@@ -191,16 +228,11 @@ const OwnersPage: React.FC = () => {
         {isDashboardOpen ? (
           <div id="dashboard-section" className="dashboard-layout">
             <div className="image-section">
-              <div className="add-box" onClick={() => navigate(`/owner-page/${normalDocumentId}/edit`, { state: { normalDocumentId: normalDocumentId } })}>
+              <div className="add-box" onClick={() => navigate(`/owner-page/${normalDocumentId}/add-property`, { state: { normalDocumentId: normalDocumentId } })}>
                 <span>+</span>
               </div>
               {properties.map(property => (
               <div key={property.id} className="image-container" onClick={() => window.open(`/property/${property.id}`, '_blank')}>
-                <img 
-                src={property.propertyPhotos[0] || "/placeholder.svg?height=150&width=150"} 
-                alt={property.title} 
-                className="property-image" 
-                />
                 <div className="property-info">
                   <div className="property-name">{property.propertyName}</div>
                   <div className="property-location">{property.propertyLocation}</div>
@@ -209,8 +241,13 @@ const OwnersPage: React.FC = () => {
                 </div>
                 <div className="actions">
                   <button className="edit-btn" onClick={(e) => { e.stopPropagation(); /* Add edit functionality */ }}>✏️</button>
-                  <button className="delete-btn" onClick={(e) => { e.stopPropagation(); /* Add delete functionality */ }}>🗑️</button>
+                  <button className="delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}>  🗑️</button>
                 </div>
+                <img 
+                src={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].pictureUrl : "/placeholder.svg?height=150&width=150"} 
+                alt={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].label : "Placeholder"} 
+                className="property-image" 
+              />
               </div>
               ))}
             </div>

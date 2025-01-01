@@ -407,9 +407,9 @@ export function ListingPage() {
                     onChange={(e) => setDetails({...details, furnishing: e.target.value})}
                     className="detail-input"
                   >
-                    <option value="not furnished">Not furnished</option>
-                    <option value="semi-furnished">Semi-furnished</option>
-                    <option value="fully furnished">Fully furnished</option>
+                    <option value="Not Furnished">Not furnished</option>
+                    <option value="Semi-Furnished">Semi-furnished</option>
+                    <option value="Fully Furnished">Fully furnished</option>
                   </select>
                 ) : (
                   <span className="detail-value">{details.furnishing}</span>

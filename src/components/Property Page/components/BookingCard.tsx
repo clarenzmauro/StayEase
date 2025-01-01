@@ -49,7 +49,7 @@ const BookingCard = ({ property, onInterestedClick }: BookingCardProps) => {
           <span>{property.propertySize}</span>
         </div>
         <div className="detail-row">
-          <span>Lifestyle:</span>
+          <span>Allow Viewing:</span>
           <span>{property.allowViewing ? 'Yes' : 'No'}</span>
         </div>
       </div>
