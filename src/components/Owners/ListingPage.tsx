@@ -6,6 +6,7 @@ import { db } from '../../firebase/config';
 import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion } from 'firebase/firestore';
 import { supabase } from '../../supabase/supabase';
 import './ListingPage.css';
+import ListingOwnerSection from './ListingOwnerSection';
 
 interface Image {
   url: string;
@@ -292,9 +293,9 @@ export function ListingPage() {
         />
       </div>
 
-      <div className="content-wrapper">
-        <button className="edit-button" onClick={() => setIsEditModalOpen(true)}>Edit Property</button>
-        <div className="main-content">
+      <div className="main-content">
+        
+      <button className="edit-button" onClick={() => setIsEditModalOpen(true)}>Edit Property Details</button>
           <div className="host-section">
             <h2>Hosted by Mann Lester Magbuhos</h2>
             <div className="property-stats">
@@ -303,7 +304,7 @@ export function ListingPage() {
               <span>{details.bathrooms} bath</span>
               <span>•</span>
               <span>{details.views} views</span>
-            </div>
+            </div>  
           </div>
 
           <div className="about-section">
@@ -323,6 +324,8 @@ export function ListingPage() {
             </div>
           </div>
         </div>
+      <div className="content-wrapper">
+       
 
         <div className="house-rules-section">
   <h2>House Rules</h2>
@@ -492,6 +495,7 @@ export function ListingPage() {
       {details.allowViewing ? "Yes" : "No"} {/* Display as readable text */}
     </span>
   )}
+  
 </div>
             </div>
 
@@ -515,8 +519,13 @@ export function ListingPage() {
                 Clear
               </button>
             </div>
+            
           </div>
+          
         </div>
+        <ListingOwnerSection
+          ownerId= { id || '' }
+        />
       </div>
 
       {isModalOpen && (
