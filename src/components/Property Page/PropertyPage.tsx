@@ -85,6 +85,7 @@ const PropertyPage = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
+  const [allowChat, setAllowChat] = useState(false);
   const COMMENTS_PER_PAGE = 4;
 
   useEffect(() => {
@@ -100,6 +101,7 @@ const PropertyPage = () => {
         if (propertyDoc.exists()) {
           const propertyData = { id: propertyDoc.id, ...propertyDoc.data() } as Property;
           
+          setAllowChat(propertyData.allowChat);
           const formattedPhotos = {
             count: propertyData.count, // Directly reference the count field
             ...propertyData.propertyPhotos // Spread the propertyPhotos map
@@ -599,6 +601,7 @@ const PropertyPage = () => {
           ownerId={property.ownerId}
           onViewProfile={() => navigate(`/profile/${property.ownerId}`)}
           onMessage={() => navigate(`/messages/${property.ownerId}`)}
+          allowChat={allowChat}
         />
       )}
       <LoginPrompt

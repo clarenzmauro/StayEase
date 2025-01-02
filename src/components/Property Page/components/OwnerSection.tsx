@@ -16,12 +16,14 @@ interface OwnerSectionProps {
   ownerId: string;
   onViewProfile: () => void;
   onMessage: () => void;
+  allowChat: boolean;
 }
 
 const OwnerSection: React.FC<OwnerSectionProps> = ({
   ownerId,
   onViewProfile,
   onMessage,
+  allowChat,
 }) => {
   const [ownerData, setOwnerData] = useState<OwnerData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -74,9 +76,11 @@ const OwnerSection: React.FC<OwnerSectionProps> = ({
             <button className="view-profile-btn" onClick={onViewProfile}>
               View Profile
             </button>
-            <button className="message-btn" onClick={() => setIsChatOpen(true)}>
-              Message
-            </button>
+            {allowChat && ( // Conditionally render the Message button
+              <button className="message-btn" onClick={onMessage}>
+                Message
+              </button>
+            )}
           </div>
         </div>
       </div>
