@@ -37,7 +37,8 @@ interface PropertyDetails {
 }
 
 const propertyTypes = ['Dormitory', 'Apartment', 'Room', 'House', 'Condo'];
-
+const furnishingOptions = ['Not Furnished', 'Semi-Furnished', 'Fully Furnished'];
+const lifestyleOptions = ['Male', 'Female', 'Mixed Gender'];
 const tagCategories = {
   'Basic Amenities': ['Pet Friendly', 'With Parking', 'With Wi-fi', 'With Aircon', 'With Kitchen', 'With Laundry'],
   'Proximity': ['Near Campus', 'Near Grocery', 'Near Church', 'Near Hospital', 'Near Restaurant', 'Near Gym', 'Near Park', 'Near Public Transpo'],
@@ -49,9 +50,11 @@ const tagCategories = {
 export function ListingPage() {
   const { id } = useParams<{ id: string }>();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [allowChatting, setAllowChatting] = useState(false);
   const [images, setImages] = useState<Image[]>([]);
   const [houseRules, setHouseRules] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState('Basic Amenities');
   const [details, setDetails] = useState<PropertyDetails>({
     name: "Enter Property Name",
     location: "Enter Property Location",
@@ -98,7 +101,7 @@ export function ListingPage() {
         securityDeposit: details.securityDeposit,
         leaseTerm: details.leaseTerm,
         allowViewing: details.allowViewing,
-        allowChat: true,
+        allowChat: allowChatting,
         isVerified: false,
         viewCount: 0,
         interestedCount: 0,
@@ -107,7 +110,7 @@ export function ListingPage() {
         propertyPhotos: {
           count: images.length,
         },
-        propertyTags: details.tags,
+        propertyTags: selectedTags,
         houseRules: houseRules
       };
 
@@ -231,17 +234,247 @@ export function ListingPage() {
     setImages(newImages);
   };
 
-  const handleEditSubmit = (updatedDetails: PropertyDetails) => {
-    setDetails(updatedDetails);
-    setIsEditModalOpen(false);
+  const handleChange = (name: string, value: string | number | boolean) => {
+    setDetails(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleTagChange = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
   };
 
   return (
     <div className="property-container">
+    {/* For Submit Button */}
       <div className="header">
         <button className="complete-button" onClick={handleSubmit}>Submit Listing</button>
       </div>
 
+    {/* Left Side - Property Form */}
+    <div className="property-form">
+        <div className="card">
+          <h2>Property Details</h2>
+          <div className="form-group">
+            <label htmlFor="name">Property Name</label>
+            <input
+              id="name"
+              value={details.name}
+              onChange={(e) => handleChange('name', e.target.value)}
+              placeholder="Enter property name"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="location">Property Location</label>
+            <input
+              id="location"
+              value={details.location}
+              onChange={(e) => handleChange('location', e.target.value)}
+              placeholder="Enter property location"
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="description">Property Description</label>
+            <textarea
+              id="description"
+              value={details.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              placeholder="Enter property description"
+            />
+          </div>
+        </div>
+
+        <div className="card">
+          <h2>Additional Info</h2>
+          <div className="form-grid">
+            <div className="form-group">
+              <label htmlFor="type">Property Type</label>
+              <select
+                id="type"
+                value={details.type}
+                onChange={(e) => handleChange('type', e.target.value)}
+              >
+                {propertyTypes.map((type) => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="availableFrom">Available From</label>
+              <input
+                id="availableFrom"
+                type="date"
+                value={details.availableFrom}
+                onChange={(e) => handleChange('availableFrom', e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="maxOccupants">Max Occupants</label>
+              <input
+                id="maxOccupants"
+                type="number"
+                value={details.maxOccupants}
+                onChange={(e) => handleChange('maxOccupants', parseInt(e.target.value))}
+                min={1}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="floorLevel">Floor Level</label>
+              <input
+                id="floorLevel"
+                type="number"
+                value={details.floorLevel}
+                onChange={(e) => handleChange('floorLevel', parseInt(e.target.value))}
+                min={1}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="furnishing">Furnishing</label>
+              <select
+                id="furnishing"
+                value={details.furnishing}
+                onChange={(e) => handleChange('furnishing', e.target.value)}
+              >
+                {furnishingOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="lifestyle">Lifestyle</label>
+              <select
+                id="lifestyle"
+                value={details.lifestyle}
+                onChange={(e) => handleChange('lifestyle', e.target.value)}
+              >
+                {lifestyleOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label htmlFor="size">Size (sqm)</label>
+              <input
+                id="size"
+                type="number"
+                value={details.size}
+                onChange={(e) => handleChange('size', parseInt(e.target.value))}
+                min={0}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="bedroomCount">Bedroom Count</label>
+              <input
+                id="bedroomCount"
+                type="number"
+                value={details.bedrooms}
+                onChange={(e) => handleChange('bedrooms', parseInt(e.target.value))}
+                min={0}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="bathroomCount">Bathroom Count</label>
+              <input
+                id="bathroomCount"
+                type="number"
+                value={details.bathrooms}
+                onChange={(e) => handleChange('bathrooms', parseInt(e.target.value))}
+                min={0}
+              />
+            </div>
+            <div className="form-group checkbox-group">
+              <input
+                id="allowViewing"
+                type="checkbox"
+                checked={details.allowViewing}
+                onChange={(e) => handleChange('allowViewing', e.target.checked)}
+              />
+              <label htmlFor="allowViewing">Allow Viewing</label>
+            </div>
+          </div>
+        </div>
+
+        <div className="card">
+          <h2>What the Place Offers</h2>
+          <div className="tabs">
+            {Object.keys(tagCategories).map((category) => (
+              <button
+                key={category}
+                className={`tab ${activeTab === category ? 'active' : ''}`}
+                onClick={() => setActiveTab(category)}
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+          <div className="tag-grid">
+            {tagCategories[activeTab as keyof typeof tagCategories].map((tag) => (
+              <div key={tag} className="tag-item">
+                <input
+                  type="checkbox"
+                  id={tag}
+                  checked={selectedTags.includes(tag)}
+                  onChange={() => handleTagChange(tag)}
+                />
+                <label htmlFor={tag}>{tag}</label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="card">
+        <h2>House Rules</h2>
+          {houseRules.map((rule, index) => (
+            <div key={index} className="house-rule-item">
+              <input
+                type="text"
+                value={rule}
+                onChange={(e) => handleRuleChange(index, e.target.value)}
+                placeholder="Enter house rule"
+              />
+              <button onClick={() => handleRemoveRule(index)}>Remove</button>
+            </div>
+          ))}
+          <button onClick={handleAddRule}>Add House Rule</button>
+        </div>
+
+        <div className="card">
+          <h2>Pricing</h2>
+          <div className="form-group">
+            <label htmlFor="price">Price per Month</label>
+            <input
+              id="price"
+              type="number"
+              value={details.price}
+              onChange={(e) => handleChange('price', parseInt(e.target.value))}
+              min={0}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="securityDeposit">Security Deposit</label>
+            <input
+              id="securityDeposit"
+              type="number"
+              value={details.securityDeposit}
+              onChange={(e) => handleChange('securityDeposit', parseInt(e.target.value))}
+              min={0}
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="leaseTerm">Lease Term (months)</label>
+            <input
+              id="leaseTerm"
+              type="number"
+              value={details.leaseTerm}
+              onChange={(e) => handleChange('leaseTerm', parseInt(e.target.value))}
+              min={1}
+            />
+          </div>
+        </div>
+      </div>
+    {/* Left Side - Property Form */}
+    
+    {/* For the image */}
       <div className="image-grid">
         <div
           onClick={() => setIsModalOpen(true)}
@@ -274,263 +507,12 @@ export function ListingPage() {
           ))}
         </div>
       </div>
-
-      <div className="title-section">
-        <input
-          type="text"
-          value={details.name}
-          onChange={(e) => setDetails({...details, name: e.target.value})}
-          className="title-input"
-          placeholder="Enter Property Name"
-        />
-        <input
-          type="text"
-          value={details.location}
-          onChange={(e) => setDetails({...details, location: e.target.value})}
-          className="location-input"
-          placeholder="Enter Property Location"
-        />
-      </div>
-
-      <div className="main-content">
-        <button className="edit-button" onClick={() => setIsEditModalOpen(true)}>Edit Property Details</button>
-        <div className="host-section">
-          <h2>Hosted by Mann Lester Magbuhos</h2>
-          <div className="property-stats">
-            <span>{details.bedrooms} bedroom</span>
-            <span>•</span>
-            <span>{details.bathrooms} bath</span>
-            <span>•</span>
-            <span>{details.views} views</span>
-          </div>  
-        </div>
-
-        <div className="about-section">
-          <h2>About this place</h2>
-          <p>{details.description}</p>
-        </div>
-
-        <div className="offers-section">
-          <h2>What this place offers</h2>
-          <div className="amenities-grid">
-            {details.tags.map((tag, index) => (
-              <div key={index} className="amenity-item">
-                <span className="checkmark">✓</span>
-                {tag}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="content-wrapper">
-        <div className="house-rules-section">
-          <h2>House Rules</h2>
-          {houseRules.map((rule, index) => (
-            <div key={index} className="house-rule-item">
-              <input
-                type="text"
-                value={rule}
-                onChange={(e) => handleRuleChange(index, e.target.value)}
-                placeholder="Enter house rule"
-              />
-              <button onClick={() => handleRemoveRule(index)}>Remove</button>
-            </div>
-          ))}
-          <button onClick={handleAddRule}>Add House Rule</button>
-        </div>
-
-        <div className="sidebar">
-          <div className="price-card">
-            <div className="price-header">
-              <span className="price">₱{details.price}</span>
-              <span className="price-period">/month</span>
-            </div>
-
-            <div className="details-grid">
-              <div className="detail-item">
-                <span className="detail-label">Price:</span>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    value={details.price}
-                    onChange={(e) => setDetails({...details, price: Number(e.target.value)})}
-                    className="detail-input"
-                  />
-                ) : (
-                  <span className="detail-value">₱{details.price}/month</span>
-                )}
-              </div>
-
-              <div className="detail-item">
-                <span className="detail-label">Available from:</span>
-                {isEditing ? (
-                  <input
-                    type="date"
-                    value={details.availableFrom}
-                    onChange={(e) => setDetails({...details, availableFrom: e.target.value})}
-                    className="detail-input"
-                  />
-                ) : (
-                  <span className="detail-value">{details.availableFrom}</span>
-                )}
-              </div>
-
-              <div className="detail-item">
-                <span className="detail-label">Max occupants:</span>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    value={details.maxOccupants}
-                    onChange={(e) => setDetails({...details, maxOccupants: Number(e.target.value)})}
-                    className="detail-input"
-                  />
-                ) : (
-                  <span className="detail-value">{details.maxOccupants}</span>
-                )}
-              </div>
-
-              <div className="detail-item">
-                <span className="detail-label">Floor Level:</span>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    value={details.floorLevel}
-                    onChange={(e) => setDetails({...details, floorLevel: Number(e.target.value)})}
-                    className="detail-input"
-                  />
-                ) : (
-                  <span className="detail-value">{details.floorLevel}</span>
-                )}
-              </div>
-
-              <div className="detail-item">
-                <span className="detail-label">Furnishing:</span>
-                {isEditing ? (
-                  <select
-                    value={details.furnishing}
-                    onChange={(e) => setDetails({...details, furnishing: e.target.value})}
-                    className="detail-input"
-                  >
-                    <option value="Not Furnished">Not furnished</option>
-                    <option value="Semi-Furnished">Semi-furnished</option>
-                    <option value="Fully Furnished">Fully furnished</option>
-                  </select>
-                ) : (
-                  <span className="detail-value">{details.furnishing}</span>
-                )}
-              </div>
-
-              <div className="detail-item">
-                <span className="detail-label">Lifestyle:</span>
-                {isEditing ? (
-                  <select
-                    value={details.lifestyle || 'Mixed Gender'}
-                    onChange={(e) => setDetails({...details, lifestyle: e.target.value})}
-                    className="detail-input"
-                  >
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Mixed Gender">Mixed Gender</option>
-                  </select>
-                ) : (
-                  <span className="detail-value">{details.lifestyle || 'Mixed Gender'}</span>
-                )}
-              </div>
-
-              <div className="detail-item">
-                <span className="detail-label">Size:</span>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    value={details.size}
-                    onChange={(e) => setDetails({...details, size: Number(e.target.value)})}
-                    className="detail-input"
-                  />
-                ) : (
-                  <span className="detail-value">{details.size}</span>
-                )}
-              </div>
-
-              <div className="detail-item">
-                <span className="detail-label">Security Deposit:</span>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    value={details.securityDeposit}
-                    onChange={(e) => setDetails({...details, securityDeposit: Number(e.target.value)})}
-                    className="detail-input"
-                  />
-                ) : (
-                  <span className="detail-value">₱{details.securityDeposit}</span>
-                )}
-              </div>
-
-              <div className="detail-item">
-                <span className="detail-label">Lease Term:</span>
-                {isEditing ? (
-                  <input
-                    type="number"
-                    value={details.leaseTerm}
-                    onChange={(e) => setDetails({...details, leaseTerm: Number(e.target.value)})}
-                    className="detail-input"
-                  />
-                ) : (
-                  <span className="detail-value">{details.leaseTerm} months</span>
-                )}
-              </div>
-
-              <div className="detail-item">
-                <span className="detail-label">Allow Viewing:</span>
-                {isEditing ? (
-                  <select
-                    value={details.allowViewing ? "true" : "false"} // Map boolean to string for value
-                    onChange={(e) =>
-                      setDetails({
-                        ...details,
-                        allowViewing: e.target.value === "true", // Convert string back to boolean
-                      })
-                    }
-                    className="detail-input"
-                  >
-                    <option value="true">Yes</option>
-                    <option value="false">No</option>
-                  </select>
-                ) : (
-                  <span className="detail-value">
-                    {details.allowViewing ? "Yes" : "No"} {/* Display as readable text */}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="button-group">
-              <button 
-                className="edit-button" 
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                {isEditing ? 'Save' : 'Edit'}
-              </button>
-              <button 
-                className="clear-button" 
-                onClick={() => {
-                  if (isEditing) {
-                    // Reset to original values
-                    setDetails({...details});
-                  }
-                  setIsEditing(false);
-                }}
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-        </div>
+    {/* For the image */}
         
         <ListingOwnerSection
           ownerId= { id || '' }
+          onAllowChattingChange={setAllowChatting}
         />
-      </div>
 
       {isModalOpen && (
         <div className="modal-overlay">
@@ -584,158 +566,8 @@ export function ListingPage() {
           </div>
         </div>
       )}
-
-      {isEditModalOpen && (
-        <EditPropertyModal
-          details={details}
-          onClose={() => setIsEditModalOpen(false)}
-          onSubmit={handleEditSubmit}
-        />
-      )}
-    </div>
-  );
-}
-
-interface EditPropertyModalProps {
-  details: PropertyDetails;
-  onClose: () => void;
-  onSubmit: (updatedDetails: PropertyDetails) => void;
-}
-
-function EditPropertyModal({ details, onClose, onSubmit }: EditPropertyModalProps) {
-  const [formData, setFormData] = useState<PropertyDetails>(details);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: parseInt(value) || 0 }));
-  };
-
-  const handleTagChange = (tag: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.includes(tag)
-        ? prev.tags.filter(t => t !== tag)
-        : [...prev.tags, tag]
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  return (
-    <div className="modal-overlay">
-      <div className="modal edit-modal">
-        <div className="modal-header">
-          <h2>Edit Property</h2>
-          <button className="close-button" onClick={onClose}>×</button>
-        </div>
-        <form onSubmit={handleSubmit} className="edit-form">
-          <div className="form-group">
-            <label htmlFor="name">Property Name:</label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="location">Location:</label>
-            <input
-              type="text"
-              id="location"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="type">Property Type:</label>
-            <select
-              id="type"
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              required
-            >
-              {propertyTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group">
-            <label htmlFor="bedrooms">Bedroom Count:</label>
-            <input
-              type="number"
-              id="bedrooms"
-              name="bedrooms"
-              value={formData.bedrooms}
-              onChange={handleNumberChange}
-              min="0"
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="bathrooms">Bathroom Count:</label>
-            <input
-              type="number"
-              id="bathrooms"
-              name="bathrooms"
-              value={formData.bathrooms}
-              onChange={handleNumberChange}
-              min="0"
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="description">Description:</label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label>Tags:</label>
-            <div className="tags-container">
-              {Object.entries(tagCategories).map(([category, tags]) => (
-                <div key={category} className="tag-category">
-                  <h4>{category}</h4>
-                  {tags.map(tag => (
-                    <label key={tag} className="tag-label">
-                      <input
-                        type="checkbox"
-                        checked={formData.tags.includes(tag)}
-                        onChange={() => handleTagChange(tag)}
-                      />
-                      {tag}
-                    </label>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="form-actions">
-            <button type="submit" className="save-button">Save Changes</button>
-            <button type="button" className="cancel-button" onClick={onClose}>Cancel</button>
-          </div>
-        </form>
-      </div>
     </div>
   );
 }
 
 export default ListingPage;
-

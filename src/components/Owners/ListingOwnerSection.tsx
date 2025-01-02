@@ -14,10 +14,12 @@ interface OwnerData {
 
 interface OwnerSectionProps {
   ownerId: string;
+  onAllowChattingChange: (value: boolean) => void;
 }
 
 const ListingOwnerSection: React.FC<OwnerSectionProps> = ({
   ownerId,
+  onAllowChattingChange,
 }) => {
   const [ownerData, setOwnerData] = useState<OwnerData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,11 @@ const ListingOwnerSection: React.FC<OwnerSectionProps> = ({
               <input
                 type="checkbox"
                 checked={allowChatting}
-                onChange={(e) => setAllowChatting(e.target.checked)}
+                onChange={(e) => {
+                    const newValue = e.target.checked;
+                    setAllowChatting(newValue);
+                    onAllowChattingChange(newValue); // Call the passed function
+                  }}
               />
               <span className="slider"></span>
             </label>
