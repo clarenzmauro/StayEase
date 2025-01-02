@@ -156,35 +156,35 @@ export function ListingPage() {
       });
       
       console.log('Document written with ID: ', docRef.id);
-  alert('Property added successfully!');
+      alert('Property added successfully!');
 
-  if (!id) {
-    throw new Error('Owner ID is undefined or invalid.');
-  }
+      if (!id) {
+        throw new Error('Owner ID is undefined or invalid.');
+      }
 
-  const ownerDoc = await getDoc(doc(db, 'accounts', id));
-  if (ownerDoc.exists()) {
-    const ownerData = ownerDoc.data();
-    const dashboardId = ownerData.dashboardId;
+      const ownerDoc = await getDoc(doc(db, 'accounts', id));
+      if (ownerDoc.exists()) {
+        const ownerData = ownerDoc.data();
+        const dashboardId = ownerData.dashboardId;
 
-    if (dashboardId) {
-      const dashboardRef = doc(db, 'dashboards', dashboardId);
+        if (dashboardId) {
+          const dashboardRef = doc(db, 'dashboards', dashboardId);
 
-      await updateDoc(dashboardRef, {
-        listedDorms: arrayUnion(docRef.id),
-      });
+          await updateDoc(dashboardRef, {
+          listedDorms: arrayUnion(docRef.id),
+          });
 
-      console.log('Dashboard updated successfully!');
-    } else {
-      console.error('Dashboard ID not found.');
+          console.log('Dashboard updated successfully!');
+        } else {
+          console.error('Dashboard ID not found.');
+        }
+      } else {
+        console.error('Owner document does not exist.');
+      }
+    } catch (error) {
+      console.error('Error adding document: ', error);
+      alert('Error adding property. Please try again.');
     }
-  } else {
-    console.error('Owner document does not exist.');
-  }
-} catch (error) {
-  console.error('Error adding document: ', error);
-  alert('Error adding property. Please try again.');
-}
   };
 
   const handleAddRule = () => {
@@ -245,8 +245,7 @@ export function ListingPage() {
       <div className="image-grid">
         <div
           onClick={() => setIsModalOpen(true)}
-          className="main-image"
-        >
+          className="main-image">
           {images[0] ? (
             <img
               src={images[0].url}
@@ -257,13 +256,13 @@ export function ListingPage() {
             <p className="placeholder-text">Click to add images</p>
           )}
         </div>
+
         <div className="thumbnail-grid">
           {[1, 2, 3, 4].map((index) => (
             <div
               key={index}
               onClick={() => setIsModalOpen(true)}
-              className="thumbnail"
-            >
+              className="thumbnail">
               {images[index] && (
                 <img
                   src={images[index].url}
@@ -294,54 +293,52 @@ export function ListingPage() {
       </div>
 
       <div className="main-content">
-        
-      <button className="edit-button" onClick={() => setIsEditModalOpen(true)}>Edit Property Details</button>
-          <div className="host-section">
-            <h2>Hosted by Mann Lester Magbuhos</h2>
-            <div className="property-stats">
-              <span>{details.bedrooms} bedroom</span>
-              <span>•</span>
-              <span>{details.bathrooms} bath</span>
-              <span>•</span>
-              <span>{details.views} views</span>
-            </div>  
-          </div>
+        <button className="edit-button" onClick={() => setIsEditModalOpen(true)}>Edit Property Details</button>
+        <div className="host-section">
+          <h2>Hosted by Mann Lester Magbuhos</h2>
+          <div className="property-stats">
+            <span>{details.bedrooms} bedroom</span>
+            <span>•</span>
+            <span>{details.bathrooms} bath</span>
+            <span>•</span>
+            <span>{details.views} views</span>
+          </div>  
+        </div>
 
-          <div className="about-section">
-            <h2>About this place</h2>
-            <p>{details.description}</p>
-          </div>
+        <div className="about-section">
+          <h2>About this place</h2>
+          <p>{details.description}</p>
+        </div>
 
-          <div className="offers-section">
-            <h2>What this place offers</h2>
-            <div className="amenities-grid">
-              {details.tags.map((tag, index) => (
-                <div key={index} className="amenity-item">
-                  <span className="checkmark">✓</span>
-                  {tag}
-                </div>
-              ))}
-            </div>
+        <div className="offers-section">
+          <h2>What this place offers</h2>
+          <div className="amenities-grid">
+            {details.tags.map((tag, index) => (
+              <div key={index} className="amenity-item">
+                <span className="checkmark">✓</span>
+                {tag}
+              </div>
+            ))}
           </div>
         </div>
-      <div className="content-wrapper">
-       
+      </div>
 
+      <div className="content-wrapper">
         <div className="house-rules-section">
-  <h2>House Rules</h2>
-  {houseRules.map((rule, index) => (
-    <div key={index} className="house-rule-item">
-      <input
-        type="text"
-        value={rule}
-        onChange={(e) => handleRuleChange(index, e.target.value)}
-        placeholder="Enter house rule"
-      />
-      <button onClick={() => handleRemoveRule(index)}>Remove</button>
-    </div>
-  ))}
-  <button onClick={handleAddRule}>Add House Rule</button>
-</div>
+          <h2>House Rules</h2>
+          {houseRules.map((rule, index) => (
+            <div key={index} className="house-rule-item">
+              <input
+                type="text"
+                value={rule}
+                onChange={(e) => handleRuleChange(index, e.target.value)}
+                placeholder="Enter house rule"
+              />
+              <button onClick={() => handleRemoveRule(index)}>Remove</button>
+            </div>
+          ))}
+          <button onClick={handleAddRule}>Add House Rule</button>
+        </div>
 
         <div className="sidebar">
           <div className="price-card">
@@ -364,6 +361,7 @@ export function ListingPage() {
                   <span className="detail-value">₱{details.price}/month</span>
                 )}
               </div>
+
               <div className="detail-item">
                 <span className="detail-label">Available from:</span>
                 {isEditing ? (
@@ -377,6 +375,7 @@ export function ListingPage() {
                   <span className="detail-value">{details.availableFrom}</span>
                 )}
               </div>
+
               <div className="detail-item">
                 <span className="detail-label">Max occupants:</span>
                 {isEditing ? (
@@ -390,6 +389,7 @@ export function ListingPage() {
                   <span className="detail-value">{details.maxOccupants}</span>
                 )}
               </div>
+
               <div className="detail-item">
                 <span className="detail-label">Floor Level:</span>
                 {isEditing ? (
@@ -403,6 +403,7 @@ export function ListingPage() {
                   <span className="detail-value">{details.floorLevel}</span>
                 )}
               </div>
+
               <div className="detail-item">
                 <span className="detail-label">Furnishing:</span>
                 {isEditing ? (
@@ -419,6 +420,7 @@ export function ListingPage() {
                   <span className="detail-value">{details.furnishing}</span>
                 )}
               </div>
+
               <div className="detail-item">
                 <span className="detail-label">Lifestyle:</span>
                 {isEditing ? (
@@ -435,6 +437,7 @@ export function ListingPage() {
                   <span className="detail-value">{details.lifestyle || 'Mixed Gender'}</span>
                 )}
               </div>
+
               <div className="detail-item">
                 <span className="detail-label">Size:</span>
                 {isEditing ? (
@@ -448,6 +451,7 @@ export function ListingPage() {
                   <span className="detail-value">{details.size}</span>
                 )}
               </div>
+
               <div className="detail-item">
                 <span className="detail-label">Security Deposit:</span>
                 {isEditing ? (
@@ -461,6 +465,7 @@ export function ListingPage() {
                   <span className="detail-value">₱{details.securityDeposit}</span>
                 )}
               </div>
+
               <div className="detail-item">
                 <span className="detail-label">Lease Term:</span>
                 {isEditing ? (
@@ -474,29 +479,29 @@ export function ListingPage() {
                   <span className="detail-value">{details.leaseTerm} months</span>
                 )}
               </div>
+
               <div className="detail-item">
-  <span className="detail-label">Allow Viewing:</span>
-  {isEditing ? (
-    <select
-      value={details.allowViewing ? "true" : "false"} // Map boolean to string for value
-      onChange={(e) =>
-        setDetails({
-          ...details,
-          allowViewing: e.target.value === "true", // Convert string back to boolean
-        })
-      }
-      className="detail-input"
-    >
-      <option value="true">Yes</option>
-      <option value="false">No</option>
-    </select>
-  ) : (
-    <span className="detail-value">
-      {details.allowViewing ? "Yes" : "No"} {/* Display as readable text */}
-    </span>
-  )}
-  
-</div>
+                <span className="detail-label">Allow Viewing:</span>
+                {isEditing ? (
+                  <select
+                    value={details.allowViewing ? "true" : "false"} // Map boolean to string for value
+                    onChange={(e) =>
+                      setDetails({
+                        ...details,
+                        allowViewing: e.target.value === "true", // Convert string back to boolean
+                      })
+                    }
+                    className="detail-input"
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                ) : (
+                  <span className="detail-value">
+                    {details.allowViewing ? "Yes" : "No"} {/* Display as readable text */}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="button-group">
@@ -519,10 +524,9 @@ export function ListingPage() {
                 Clear
               </button>
             </div>
-            
           </div>
-          
         </div>
+        
         <ListingOwnerSection
           ownerId= { id || '' }
         />
