@@ -265,24 +265,27 @@
 }
 
 .listing-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .listing-card:hover {
   transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .listing-image {
   width: 100%;
-  aspect-ratio: 3/2;
+  aspect-ratio: 16/9;
   object-fit: cover;
-  border-radius: 12px;
-  margin-bottom: 12px;
 }
 
 .listing-info {
-  padding: 4px;
+  padding: 16px;
 }
 
 .listing-header {
@@ -293,9 +296,9 @@
 }
 
 .listing-type {
-  font-size: 15px;
-  font-weight: 600;
-  color: #222222;
+  font-size: 14px;
+  color: #717171;
+  margin-bottom: 12px;
 }
 
 .listing-rating {
@@ -311,11 +314,62 @@
 }
 
 .listing-title {
-  font-size: 14px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 8px;
+}
+
+.listing-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: #222222;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.listing-price span {
   color: #717171;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
+  font-weight: normal;
+  font-size: 14px;
+}
+
+/* Action buttons */
+.listing-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.action-button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-button {
+  background: #f7f7f7;
+  border: 1px solid #ddd;
+  color: #222222;
+}
+
+.edit-button:hover {
+  background: #efefef;
+  border-color: #c7c7c7;
+}
+
+.share-button {
+  background: #1a365d;
+  border: none;
+  color: white;
+}
+
+.share-button:hover {
+  background: #2c5282;
 }
 
 /* Navigation buttons (reusing from reviews section but with specific adjustments) */

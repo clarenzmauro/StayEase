@@ -246,274 +246,279 @@ export function ListingPage() {
 
   return (
     <div className="property-container">
-    {/* For Submit Button */}
+      {/* Header with submit button */}
       <div className="header">
         <button className="complete-button" onClick={handleSubmit}>Submit Listing</button>
       </div>
 
-    {/* Left Side - Property Form */}
-    <div className="property-form">
-        <div className="card">
-          <h2>Property Details</h2>
-          <div className="form-group">
-            <label htmlFor="name">Property Name</label>
-            <input
-              id="name"
-              value={details.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              placeholder="Enter property name"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="location">Property Location</label>
-            <input
-              id="location"
-              value={details.location}
-              onChange={(e) => handleChange('location', e.target.value)}
-              placeholder="Enter property location"
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="description">Property Description</label>
-            <textarea
-              id="description"
-              value={details.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              placeholder="Enter property description"
-            />
-          </div>
-        </div>
+      {/* Main content wrapper */}
+      <div className="content-wrapper">
+        {/* Left Side - Property Form */}
+        <div className="property-form">
+          <div className="property-details">
+            <h2>Property Details</h2>
+            
+            <div className="form-group">
+              <label htmlFor="propertyName">Property Name</label>
+              <input
+                id="propertyName"
+                type="text"
+                placeholder="Enter Property Name"
+                value={details.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+              />
+            </div>
 
-        <div className="card">
-          <h2>Additional Info</h2>
-          <div className="form-grid">
             <div className="form-group">
-              <label htmlFor="type">Property Type</label>
-              <select
-                id="type"
-                value={details.type}
-                onChange={(e) => handleChange('type', e.target.value)}
-              >
-                {propertyTypes.map((type) => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label htmlFor="availableFrom">Available From</label>
+              <label htmlFor="propertyLocation">Property Location</label>
               <input
-                id="availableFrom"
-                type="date"
-                value={details.availableFrom}
-                onChange={(e) => handleChange('availableFrom', e.target.value)}
+                id="propertyLocation"
+                type="text"
+                placeholder="Enter Property Location"
+                value={details.location}
+                onChange={(e) => handleChange('location', e.target.value)}
               />
             </div>
-            <div className="form-group">
-              <label htmlFor="maxOccupants">Max Occupants</label>
-              <input
-                id="maxOccupants"
-                type="number"
-                value={details.maxOccupants}
-                onChange={(e) => handleChange('maxOccupants', parseInt(e.target.value))}
-                min={1}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="floorLevel">Floor Level</label>
-              <input
-                id="floorLevel"
-                type="number"
-                value={details.floorLevel}
-                onChange={(e) => handleChange('floorLevel', parseInt(e.target.value))}
-                min={1}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="furnishing">Furnishing</label>
-              <select
-                id="furnishing"
-                value={details.furnishing}
-                onChange={(e) => handleChange('furnishing', e.target.value)}
-              >
-                {furnishingOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label htmlFor="lifestyle">Lifestyle</label>
-              <select
-                id="lifestyle"
-                value={details.lifestyle}
-                onChange={(e) => handleChange('lifestyle', e.target.value)}
-              >
-                {lifestyleOptions.map((option) => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label htmlFor="size">Size (sqm)</label>
-              <input
-                id="size"
-                type="number"
-                value={details.size}
-                onChange={(e) => handleChange('size', parseInt(e.target.value))}
-                min={0}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="bedroomCount">Bedroom Count</label>
-              <input
-                id="bedroomCount"
-                type="number"
-                value={details.bedrooms}
-                onChange={(e) => handleChange('bedrooms', parseInt(e.target.value))}
-                min={0}
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="bathroomCount">Bathroom Count</label>
-              <input
-                id="bathroomCount"
-                type="number"
-                value={details.bathrooms}
-                onChange={(e) => handleChange('bathrooms', parseInt(e.target.value))}
-                min={0}
-              />
-            </div>
-            <div className="form-group checkbox-group">
-              <input
-                id="allowViewing"
-                type="checkbox"
-                checked={details.allowViewing}
-                onChange={(e) => handleChange('allowViewing', e.target.checked)}
-              />
-              <label htmlFor="allowViewing">Allow Viewing</label>
-            </div>
-          </div>
-        </div>
 
-        <div className="card">
-          <h2>What the Place Offers</h2>
-          <div className="tabs">
-            {Object.keys(tagCategories).map((category) => (
-              <button
-                key={category}
-                className={`tab ${activeTab === category ? 'active' : ''}`}
-                onClick={() => setActiveTab(category)}
-              >
-                {category}
-              </button>
-            ))}
+            <div className="form-group">
+              <label htmlFor="propertyDescription">Property Description</label>
+              <textarea
+                id="propertyDescription"
+                placeholder="Enter Property Description"
+                value={details.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+              />
+            </div>
           </div>
-          <div className="tag-grid">
-            {tagCategories[activeTab as keyof typeof tagCategories].map((tag) => (
-              <div key={tag} className="tag-item">
+
+          <div className="card">
+            <h2>Additional Info</h2>
+            <div className="form-grid">
+              <div className="form-group">
+                <label htmlFor="type">Property Type</label>
+                <select
+                  id="type"
+                  value={details.type}
+                  onChange={(e) => handleChange('type', e.target.value)}
+                >
+                  {propertyTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="availableFrom">Available From</label>
                 <input
-                  type="checkbox"
-                  id={tag}
-                  checked={selectedTags.includes(tag)}
-                  onChange={() => handleTagChange(tag)}
+                  id="availableFrom"
+                  type="date"
+                  value={details.availableFrom}
+                  onChange={(e) => handleChange('availableFrom', e.target.value)}
                 />
-                <label htmlFor={tag}>{tag}</label>
+              </div>
+              <div className="form-group">
+                <label htmlFor="maxOccupants">Max Occupants</label>
+                <input
+                  id="maxOccupants"
+                  type="number"
+                  value={details.maxOccupants}
+                  onChange={(e) => handleChange('maxOccupants', parseInt(e.target.value))}
+                  min={1}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="floorLevel">Floor Level</label>
+                <input
+                  id="floorLevel"
+                  type="number"
+                  value={details.floorLevel}
+                  onChange={(e) => handleChange('floorLevel', parseInt(e.target.value))}
+                  min={1}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="furnishing">Furnishing</label>
+                <select
+                  id="furnishing"
+                  value={details.furnishing}
+                  onChange={(e) => handleChange('furnishing', e.target.value)}
+                >
+                  {furnishingOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="lifestyle">Lifestyle</label>
+                <select
+                  id="lifestyle"
+                  value={details.lifestyle}
+                  onChange={(e) => handleChange('lifestyle', e.target.value)}
+                >
+                  {lifestyleOptions.map((option) => (
+                    <option key={option} value={option}>{option}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="size">Size (sqm)</label>
+                <input
+                  id="size"
+                  type="number"
+                  value={details.size}
+                  onChange={(e) => handleChange('size', parseInt(e.target.value))}
+                  min={0}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="bedroomCount">Bedroom Count</label>
+                <input
+                  id="bedroomCount"
+                  type="number"
+                  value={details.bedrooms}
+                  onChange={(e) => handleChange('bedrooms', parseInt(e.target.value))}
+                  min={0}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="bathroomCount">Bathroom Count</label>
+                <input
+                  id="bathroomCount"
+                  type="number"
+                  value={details.bathrooms}
+                  onChange={(e) => handleChange('bathrooms', parseInt(e.target.value))}
+                  min={0}
+                />
+              </div>
+              <div className="form-group checkbox-group">
+                <input
+                  id="allowViewing"
+                  type="checkbox"
+                  checked={details.allowViewing}
+                  onChange={(e) => handleChange('allowViewing', e.target.checked)}
+                />
+                <label htmlFor="allowViewing">Allow Viewing</label>
+              </div>
+            </div>
+          </div>
+
+          <div className="card">
+            <h2>What the Place Offers</h2>
+            <div className="tabs">
+              {Object.keys(tagCategories).map((category) => (
+                <button
+                  key={category}
+                  className={`tab ${activeTab === category ? 'active' : ''}`}
+                  onClick={() => setActiveTab(category)}
+                >
+                  {category}
+                </button>
+              ))}
+            </div>
+            <div className="tag-grid">
+              {tagCategories[activeTab as keyof typeof tagCategories].map((tag) => (
+                <div key={tag} className="tag-item">
+                  <input
+                    type="checkbox"
+                    id={tag}
+                    checked={selectedTags.includes(tag)}
+                    onChange={() => handleTagChange(tag)}
+                  />
+                  <label htmlFor={tag}>{tag}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="card">
+          <h2>House Rules</h2>
+            {houseRules.map((rule, index) => (
+              <div key={index} className="house-rule-item">
+                <input
+                  type="text"
+                  value={rule}
+                  onChange={(e) => handleRuleChange(index, e.target.value)}
+                  placeholder="Enter house rule"
+                />
+                <button onClick={() => handleRemoveRule(index)}>Remove</button>
+              </div>
+            ))}
+            <button className="add-house-rule-button" onClick={handleAddRule}>Add House Rule</button>
+          </div>
+
+          <div className="card">
+            <h2>Pricing</h2>
+            <div className="form-group">
+              <label htmlFor="price">Price per Month</label>
+              <input
+                id="price"
+                type="number"
+                value={details.price}
+                onChange={(e) => handleChange('price', parseInt(e.target.value))}
+                min={0}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="securityDeposit">Security Deposit</label>
+              <input
+                id="securityDeposit"
+                type="number"
+                value={details.securityDeposit}
+                onChange={(e) => handleChange('securityDeposit', parseInt(e.target.value))}
+                min={0}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="leaseTerm">Lease Term (months)</label>
+              <input
+                id="leaseTerm"
+                type="number"
+                value={details.leaseTerm}
+                onChange={(e) => handleChange('leaseTerm', parseInt(e.target.value))}
+                min={1}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Image Grid */}
+        <div className="image-section">
+          <h2>Property Image</h2>
+          <div className="main-image" onClick={() => setIsModalOpen(true)}>
+            {images[0] ? (
+              <img src={images[0].url} alt={images[0].label} />
+            ) : (
+              <div className="placeholder-text">
+                Click to add images
+              </div>
+            )}
+          </div>
+          <div className="thumbnail-grid">
+            {[1, 2, 3, 4].map((index) => (
+              <div 
+                key={index} 
+                className="thumbnail"
+                onClick={() => setIsModalOpen(true)}
+              >
+                {images[index] ? (
+                  <img src={images[index].url} alt={images[index].label} />
+                ) : (
+                  <div className="placeholder-text">+</div>
+                )}
               </div>
             ))}
           </div>
         </div>
-
-        <div className="card">
-        <h2>House Rules</h2>
-          {houseRules.map((rule, index) => (
-            <div key={index} className="house-rule-item">
-              <input
-                type="text"
-                value={rule}
-                onChange={(e) => handleRuleChange(index, e.target.value)}
-                placeholder="Enter house rule"
-              />
-              <button onClick={() => handleRemoveRule(index)}>Remove</button>
-            </div>
-          ))}
-          <button onClick={handleAddRule}>Add House Rule</button>
-        </div>
-
-        <div className="card">
-          <h2>Pricing</h2>
-          <div className="form-group">
-            <label htmlFor="price">Price per Month</label>
-            <input
-              id="price"
-              type="number"
-              value={details.price}
-              onChange={(e) => handleChange('price', parseInt(e.target.value))}
-              min={0}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="securityDeposit">Security Deposit</label>
-            <input
-              id="securityDeposit"
-              type="number"
-              value={details.securityDeposit}
-              onChange={(e) => handleChange('securityDeposit', parseInt(e.target.value))}
-              min={0}
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="leaseTerm">Lease Term (months)</label>
-            <input
-              id="leaseTerm"
-              type="number"
-              value={details.leaseTerm}
-              onChange={(e) => handleChange('leaseTerm', parseInt(e.target.value))}
-              min={1}
-            />
-          </div>
-        </div>
       </div>
-    {/* Left Side - Property Form */}
-    
-    {/* For the image */}
-      <div className="image-grid">
-        <div
-          onClick={() => setIsModalOpen(true)}
-          className="main-image">
-          {images[0] ? (
-            <img
-              src={images[0].url}
-              alt={images[0].label}
-              className="image"
-            />
-          ) : (
-            <p className="placeholder-text">Click to add images</p>
-          )}
-        </div>
 
-        <div className="thumbnail-grid">
-          {[1, 2, 3, 4].map((index) => (
-            <div
-              key={index}
-              onClick={() => setIsModalOpen(true)}
-              className="thumbnail">
-              {images[index] && (
-                <img
-                  src={images[index].url}
-                  alt={images[index].label}
-                  className="image"
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    {/* For the image */}
-        
+      {/* Owner Section at the bottom */}
+      <div className="owner-section-wrapper">
         <ListingOwnerSection
-          ownerId= { id || '' }
+          ownerId={id || ''}
           onAllowChattingChange={setAllowChatting}
         />
+      </div>
 
+      {/* Image Upload Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal">
