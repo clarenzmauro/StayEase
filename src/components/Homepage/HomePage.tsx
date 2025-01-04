@@ -3,7 +3,7 @@ import './HomePage.css';
 import ItemsContext from './ItemsContext.jsx';
 import { FilterMenu } from './FilterMenu.jsx';
 import { Link, useNavigate } from 'react-router-dom';
-import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '../../firebase/config.js';
 import { auth } from '../../firebase/config';
 import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from 'firebase/auth';
@@ -326,6 +326,38 @@ export function HomePage() {
     }
   };
 
+  const handlePropertyClick = async (itemId: string) => {
+    if (!auth.currentUser) {
+      navigate(`/property/${itemId}`);
+      return;
+    }
+
+    try {
+      const userRef = doc(db, 'accounts', auth.currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      const propertyRef = doc(db, 'properties', itemId);
+      
+      if (userDoc.exists()) {
+        const viewedProperties = userDoc.data().viewedProperties || [];
+        if (!viewedProperties.includes(itemId)) {
+          await Promise.all([
+            updateDoc(userRef, { viewedProperties: arrayUnion(itemId) }),
+            updateDoc(propertyRef, { viewCount: increment(1) })
+          ]);
+        }
+      } else {
+        await Promise.all([
+          setDoc(userRef, { viewedProperties: [itemId] }, { merge: true }),
+          updateDoc(propertyRef, { viewCount: increment(1) })
+        ]);
+      }
+    } catch (error) {
+      console.error('Error updating view count:', error);
+    }
+    
+    navigate(`/property/${itemId}`);
+  };
+
   return (
     <div className="homepage-container">
       {/* Navigation Bar */}
@@ -439,7 +471,7 @@ export function HomePage() {
                 <div 
                   key={item.id} 
                   className="property-card"
-                  onClick={() => navigate(`/property/${item.id}`)}
+                  onClick={() => handlePropertyClick(item.id)}
                 >
                   <div className="image-container">
     <img 
@@ -467,8 +499,10 @@ export function HomePage() {
                     <div className="property-price">₱{(item.propertyPrice ?? item.rent ?? 0).toLocaleString()}/month</div>
                   </div>
                   
+
                   {Object.keys(item.propertyPhotos || {}).filter(key => key.startsWith('photo')).length > 1 && (
       <>
+
         <button 
           className="nav-button prev"
           onClick={(e) => getNextImage(e, item.id, 'prev')}
@@ -482,6 +516,7 @@ export function HomePage() {
           ›
         </button>
       </>
+
     )}
                 </div>
               ))
@@ -489,8 +524,6 @@ export function HomePage() {
           </div>
         </div>
       </div>
-
-      
 
       {/* Item Details Overlay */}
       <ItemsContext
@@ -508,6 +541,7 @@ export function HomePage() {
               </div>
             ) : (
               <>
+
                 <button className="close-button" onClick={() => setShowAuthOverlay(false)} aria-label="Close">×</button>
                 <h2>Login</h2>
                 {error && <div className="error-message">{error}</div>}
@@ -516,6 +550,7 @@ export function HomePage() {
                   Continue with Google
                 </button>
               </>
+
             )}
           </div>
         </div>

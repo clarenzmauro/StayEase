@@ -13,6 +13,7 @@ import CommentSection from './components/CommentSection';
 import LoginPrompt from './components/LoginPrompt';
 import PropertySkeleton from './components/PropertySkeleton';
 import OwnerSection from './components/OwnerSection';
+import PropertyMap from './components/PropertyMap';
 
 import './PropertyPage.css';
 
@@ -229,7 +230,32 @@ const PropertyPage = () => {
       setShowLoginPrompt(true);
       return;
     }
-    // ... rest of the interested logic
+    if (!auth.currentUser || !id) return;
+
+    try {
+      const propertyRef = doc(db, 'properties', id);
+      const userRef = doc(db, 'accounts', auth.currentUser.uid);
+
+      // Update property's interestedApplicantsa
+      await updateDoc(propertyRef, {
+        interestedApplicants: arrayUnion(auth.currentUser.uid),
+        interestedCount: (property?.interestedCount || 0) + 1
+      });
+
+      // Update user's itemsInterested
+      await updateDoc(userRef, {
+        itemsInterested: arrayUnion(id)
+      });
+
+      // Update local state
+      setProperty(prev => prev ? {
+        ...prev,
+        interestedApplicants: [...(prev.interestedApplicants || []), auth.currentUser.uid],
+        interestedCount: (prev.interestedCount || 0) + 1
+      } : null);
+    } catch (error) {
+      console.error('Error updating interested status:', error);
+    }
   };
 
   const handleCommentSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -596,6 +622,7 @@ const PropertyPage = () => {
         onReplyLike={handleReplyLike}
         onDeleteReply={handleDeleteReply}
       />
+      <PropertyMap locationGeo={property.propertyLocationGeo} />
       {property && (
         <OwnerSection
           ownerId={property.ownerId}
