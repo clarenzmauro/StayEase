@@ -242,7 +242,7 @@ const OwnersPage: React.FC = () => {
                   <div className="property-price">₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month</div>
                 </div>
                 <div className="actions">
-                  <button className="edit-btn" onClick={(e) => { e.stopPropagation(); /* Add edit functionality */ }}>✏️</button>
+                  <button className="edit-btn" onClick={(e) => { e. stopPropagation(); navigate(`/property/${property.id}/dashboard`); }}>View</button>
                   <button className="delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}>  🗑️</button>
                 </div>
                 <img 
@@ -257,69 +257,6 @@ const OwnersPage: React.FC = () => {
         ): (
           <div className="about-section-owner">
             <h2 className="about-title">About {firstName}</h2>
-          
-            <div className="details-grid-owner">
-              <div className="detail-item-owner">
-                <span className="detail-icon work"></span>
-                <div>
-                  <div className="detail-label">My work:</div>
-                  <div className="detail-value">Hotelier</div>
-                </div>
-              </div>
-              <div className="detail-item-owner">
-                <span className="detail-icon time"></span>
-                <div>
-                  <div className="detail-label">I spend too much time:</div>
-                  <div className="detail-value">Listening to music</div>
-              </div>
-            </div>
-
-            <div className="detail-item-owner">
-              <span className="detail-icon birth"></span>
-              <div>
-                <div className="detail-label">Born in the 80s</div>
-              </div>
-            </div>
-            <div className="detail-item-owner">
-              <span className="detail-icon education"></span>
-              <div>
-                <div className="detail-label">Where I went to school:</div>
-                <div className="detail-value">Goldsmiths, London, UK</div>
-              </div>
-            </div>
-
-            <div className="detail-item-owner">
-              <span className="detail-icon fun"></span>
-              <div>
-                <div className="detail-label">Fun fact:</div>
-                <div className="detail-value">I'm a fire dancer!</div>
-              </div>
-            </div>
-
-            <div className="detail-item-owner">
-              <span className="detail-icon music"></span>
-              <div>
-                <div className="detail-label">Favorite song in high school:</div>
-                <div className="detail-value">Freebird, Lynyrd Skynyrd</div>
-              </div>
-            </div>
-
-            <div className="detail-item-owner">
-              <span className="detail-icon heart"></span>
-              <div>
-                <div className="detail-label">I'm obsessed with:</div>
-                <div className="detail-value">Design & music</div>
-              </div>
-            </div>
-
-            <div className="detail-item-owner">
-              <span className="detail-icon language"></span>
-              <div>
-                <div className="detail-label">Speaks</div>
-                <div className="detail-value">English, Filipino, and Spanish</div>
-              </div>
-            </div>
-          </div>
 
           <p className="bio">
             {ownerData?.description}

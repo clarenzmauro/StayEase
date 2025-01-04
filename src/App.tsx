@@ -14,7 +14,9 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/account" element={<AccountPage />} />
           <Route path="/owner-page/:id" element={<OwnersPage/>} />
+          <Route path="/profile/:id" element={<OwnersPage/>} />
           <Route path="/property/:id" element={<PropertyPage />} />
+          <Route path="/property/:id/dashboard" element={<PropertyPage />} />
           <Route path="/owner-page/:id/add-property" element={<ListingPage />} />
         </Routes>
         <ChatManager />
