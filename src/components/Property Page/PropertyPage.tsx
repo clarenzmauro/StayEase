@@ -89,6 +89,7 @@ const PropertyPage = () => {
   const [allowChat, setAllowChat] = useState(false);
   const COMMENTS_PER_PAGE = 4;
 
+
   useEffect(() => {
     const fetchPropertyData = async () => {
       try {
@@ -347,6 +348,19 @@ const PropertyPage = () => {
     }
   };
 
+  const caesarCipher = (text: string, key: number): string => {
+    return text.split('').map(char => {
+      const code = char.charCodeAt(0);
+
+      if (code >= 65 && code <= 90) {
+        return String.fromCharCode(((code - 65 + key) % 26) + 65);
+      } else if (code >= 97 && code <= 122) {
+        return String.fromCharCode(((code - 97 + key) % 26) + 97);
+      }
+      return char;
+    }).join('');
+  };
+
   const handleDateSort = () => {
     setDateSort(prev => prev === 'newest' ? 'oldest' : 'newest');
     setActiveSortType('date');
@@ -579,6 +593,11 @@ const PropertyPage = () => {
     return <div>Property not found</div>;
   }
 
+  
+  const key = new Date().getDate();
+  const normalDocumentId = property.ownerId;
+  const encryptedDocumentId = caesarCipher(normalDocumentId, key);
+
   return (
     <div className="property-page">
       <PropertyHeader />
@@ -626,7 +645,7 @@ const PropertyPage = () => {
       {property && (
         <OwnerSection
           ownerId={property.ownerId}
-          onViewProfile={() => navigate(`/profile/${property.ownerId}`)}
+          onViewProfile={() => navigate(`/owner-page/${normalDocumentId}`, { state: { normalDocumentId: normalDocumentId, encryptedDocumentId: encryptedDocumentId } })}
           onMessage={() => navigate(`/messages/${property.ownerId}`)}
           allowChat={allowChat}
         />

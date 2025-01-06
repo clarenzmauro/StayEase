@@ -13,6 +13,20 @@ const OwnersPage: React.FC = () => {
     const [ownerData, setOwnerData] = useState<any>(null);
     const [isDashboardOpen, setIsDashboardOpen] = useState(false);
     const [properties, setProperties] = useState<any[]>([]);
+    const [isOwnerViewing, setIsOwnerViewing] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [newReview, setNewReview] = useState({ text: '', rating: 0 });
+    const [setReviews] = useState<any[]>([
+      // Sample reviews for demonstration
+      {
+          id: 1,
+          text: "Great place!",
+          author: "User1",
+          date: "January 2023", 
+          avatar: "/placeholder.svg?height=56&width=56"
+      }
+  ]);
+
     const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner'; // Default to 'Owner' if username is not available
 
     const handleDeleteProperty = async (propertyId: string) =>{
@@ -95,6 +109,7 @@ const OwnersPage: React.FC = () => {
     useEffect(() => {
       if (encryptedDocumentId && id === encryptedDocumentId) {
           alert('Owner is viewing!');
+          setIsOwnerViewing(true);
       }
     }, [id, encryptedDocumentId]);
 
@@ -142,6 +157,20 @@ const OwnersPage: React.FC = () => {
       const handleDashboardClick = () => {
         setIsDashboardOpen(prevState => !prevState);
       };
+
+      const handleReviewSubmit = () => {
+        // Add the new review to the reviews array
+        const newReviewData = {
+            id: reviews.length + 1, // Simple ID generation
+            text: newReview.text,
+            author: "Anonymous", // You can replace this with actual user data
+            date: new Date().toLocaleDateString(),
+            avatar: "/placeholder.svg?height=56&width=56"
+        };
+        setReviews([...reviews, newReviewData]);
+        setNewReview({ text: '', rating: 0 }); // Reset the new review state
+        setIsModalOpen(false); // Close the modal
+    };
       
   return (
     <div className="container-owner">
@@ -151,9 +180,12 @@ const OwnersPage: React.FC = () => {
             <img src={logoSvg} alt="Stayverse" className="logo" />
           </div>
           <div className="nav-buttons">
+
+            { isOwnerViewing && (
             <button className="host-button" onClick={handleDashboardClick}>
               {isDashboardOpen ? 'Profile' : 'Dashboard'}
             </button>
+            )}
             <button className="globe-button">
               <svg viewBox="0 0 16 16" className="globe-icon">
                 <path d="M8 0.5C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5C3.85786 15.5 0.5 12.1421 0.5 8C0.5 3.85786 3.85786 0.5 8 0.5ZM8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5899 4.41015 14.5 8 14.5C11.5899 14.5 14.5 11.5899 14.5 8C14.5 4.41015 11.5899 1.5 8 1.5Z"/>
@@ -276,6 +308,11 @@ const OwnersPage: React.FC = () => {
             </div>
 
             <div className="reviews-grid">
+            {!isOwnerViewing && (
+                                    <div className="review-card empty-review" onClick={() => setIsModalOpen(true)}>
+                                        <p>Click here to leave a review!</p>
+                                    </div>
+                                )}
               {reviews.map(review => (
                 <div key={review.id} className="review-card">
                   <p className="review-text">{review.text}</p>
@@ -324,6 +361,33 @@ const OwnersPage: React.FC = () => {
         </div>
         )}
       </main>
+
+      {isModalOpen && (
+                <div className="modal-overlay">
+                    <div className="modal-content">
+                        <h3>Leave a Review</h3>
+                        <textarea
+                            value={newReview.text}
+                            onChange={(e) => setNewReview({ ...newReview, text: e.target.value })}
+                            placeholder="Write your review here..."
+                        />
+                        <div className="rating">
+                            <span>Rating: </span>
+                            {[1, 2, 3, 4, 5].map(star => (
+                                <span
+                                    key={star}
+                                    onClick={() => setNewReview({ ...newReview, rating: star })}
+                                    style={{ cursor: 'pointer', color: newReview.rating >= star ? 'gold' : 'gray' }}
+                                >
+                                    ★
+                                </span>
+                            ))}
+                        </div>
+                        <button onClick={handleReviewSubmit}>Submit</button>
+                        <button onClick={() => setIsModalOpen(false)}>Cancel</button>
+                    </div>
+                </div>
+      )}
     </div>
   );
 };
