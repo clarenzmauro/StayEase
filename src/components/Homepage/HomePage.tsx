@@ -269,7 +269,9 @@ export function HomePage() {
       const accountData = {
         chatMates: {},
         convoId: "",
-        comments: [],
+        comments: {
+          commentCounter: 0, // Initialize the comment counter
+      },
         contactNumber: "",
         dashboardId: "",
         dateJoined: serverTimestamp(),

@@ -3,19 +3,22 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import './OwnersPage.css';
 import logoSvg from '../../assets/STAY.svg';
 import { deleteDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
 
 const OwnersPage: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
+    const [currentUser, setCurrentUser] = useState<any>(null);
     const { normalDocumentId, encryptedDocumentId } = location.state || {}; // Accessing state
     const [ownerData, setOwnerData] = useState<any>(null);
     const [isDashboardOpen, setIsDashboardOpen] = useState(false);
     const [properties, setProperties] = useState<any[]>([]);
     const [isOwnerViewing, setIsOwnerViewing] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newReview, setNewReview] = useState({ text: '', rating: 0 });
+    const [newReview, setNewReview] = useState({ content: '', rating: 0 });
+    const [comments, setComments] = useState<any[]>([]);
     const [setReviews] = useState<any[]>([
       // Sample reviews for demonstration
       {
@@ -65,6 +68,26 @@ const OwnersPage: React.FC = () => {
         console.error("Error deleting property: ", error);
       }
     }
+    useEffect(() => {
+      const auth = getAuth();
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (user) {
+              // User is signed in
+              setCurrentUser({
+                  uid: user.uid,
+                  displayName: user.displayName,
+                  email: user.email,
+                  profilePic: user.photoURL
+              });
+          } else {
+              // User is signed out
+              setCurrentUser(null);
+          }
+      });
+  
+      // Cleanup subscription on unmount
+      return () => unsubscribe();
+  }, []);
 
     useEffect(() => {
         const fetchOwnerData = async () => {
@@ -75,6 +98,7 @@ const OwnersPage: React.FC = () => {
                 if (docSnap.exists()) {
                     setOwnerData(docSnap.data()); // Store the document data in state
                     fetchDahsboardData(docSnap.data().dashboardId);
+                    fetchComments(docSnap.data());
                 } else {
                     console.log('No such document!');
                 }
@@ -83,6 +107,60 @@ const OwnersPage: React.FC = () => {
 
         fetchOwnerData();
     }, [normalDocumentId]);
+
+    const fetchComments = async (ownerData: any) => {
+      const commentsData = ownerData.comments || {};
+      const commentCounter = commentsData.commentCounter || 0;
+      const fetchedComments = [];
+
+      for (let i = 0; i < commentCounter; i++) {
+          const commentKey = `comment${i + 1}`;
+          if (commentsData[commentKey]) {
+              fetchedComments.push({
+                  content: commentsData[commentKey].commentContent,
+                  user: commentsData[commentKey].commentUser,
+                  username: commentsData[commentKey].commentUsername,
+                  date: commentsData[commentKey].commentDate,
+                  rating: commentsData[commentKey].commentRating,
+              });
+          }
+      }
+
+      setComments(fetchedComments);
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!currentUser) {
+      console.error("User is not logged in.");
+      return; // Exit if no user is logged in
+  }
+
+    const commentCounterRef = doc(db, 'accounts', normalDocumentId);
+    const commentCounterSnap = await getDoc(commentCounterRef);
+    const currentCounter = commentCounterSnap.exists() ? commentCounterSnap.data().comments.commentCounter : 0;
+
+    const newCommentData = {
+        commentContent: newReview.content,
+        commentUser: currentUser?.uid || "Unknown User", // Replace with actual user document ID from Google Auth
+        commentUsername: currentUser?.displayName || "Anonymous", // Replace with actual username from Google Auth
+        commentDate: new Date().toISOString(),
+        commentRating: newReview.rating,
+    };
+
+    // Update the comments field in Firestore
+    await updateDoc(commentCounterRef, {
+        [`comments.comment${currentCounter + 1}`]: newCommentData,
+        'comments.commentCounter': currentCounter + 1,
+    });
+
+    // Update local state
+    setComments(prevComments => [
+      ...prevComments,
+      { ...newCommentData, date: new Date(newCommentData.commentDate).toLocaleDateString() }
+  ]);
+    setNewReview({ content: '', rating: 0 }); // Reset the new comment state
+    setIsModalOpen(false); // Close the modal
+};
 
     const fetchDahsboardData = async (dashboardId: string) => {
       const dashboardRef = doc(db, 'dashboards', dashboardId);
@@ -113,23 +191,6 @@ const OwnersPage: React.FC = () => {
       }
     }, [id, encryptedDocumentId]);
 
-    const reviews = [
-        {
-          id: 1,
-          text: "...BEAUTIFUL UNIT. The host was very accomodating ang proactive...",
-          author: "Jam",
-          date: "December 2024",
-          avatar: "/placeholder.svg?height=56&width=56"
-        },
-        {
-          id: 2,
-          text: "...Paulina was a lovely and responsive host! The apartment was gorgeous, super clean and had great amenities. Although I only stayed one night I would definitely return!...",
-          author: "Alphonsus Ezekiel",
-          date: "December 2024",
-          avatar: "/placeholder.svg?height=56&width=56"
-        }
-      ];
-
       const listings = [
         {
           id: 1,
@@ -157,20 +218,6 @@ const OwnersPage: React.FC = () => {
       const handleDashboardClick = () => {
         setIsDashboardOpen(prevState => !prevState);
       };
-
-      const handleReviewSubmit = () => {
-        // Add the new review to the reviews array
-        const newReviewData = {
-            id: reviews.length + 1, // Simple ID generation
-            text: newReview.text,
-            author: "Anonymous", // You can replace this with actual user data
-            date: new Date().toLocaleDateString(),
-            avatar: "/placeholder.svg?height=56&width=56"
-        };
-        setReviews([...reviews, newReviewData]);
-        setNewReview({ text: '', rating: 0 }); // Reset the new review state
-        setIsModalOpen(false); // Close the modal
-    };
       
   return (
     <div className="container-owner">
@@ -313,18 +360,22 @@ const OwnersPage: React.FC = () => {
                                         <p>Click here to leave a review!</p>
                                     </div>
                                 )}
-              {reviews.map(review => (
-                <div key={review.id} className="review-card">
-                  <p className="review-text">{review.text}</p>
-                  <div className="review-author">
-                    <img src={review.avatar} alt={review.author} className="author-avatar" />
-                    <div className="author-info">
-                      <h3>{review.author}</h3>
-                      <p>{review.date}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
+               {comments.map((comment, index) => (
+                                    <div key={index} className="review-card">
+                                        <p className="review-text">{comment.content}</p>
+                                        <div className="review-author">
+                                        <img 
+    src={currentUser?.profilePic || "/placeholder.svg?height=150&width=150"} 
+    alt="Profile" 
+    className="profile-image" 
+/>
+                                            <div className="author-info">
+                                                <h3>{comment.username}</h3>
+                                                <p>{new Date(comment.date).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
             </div>
 
             <button className="show-more-button">Show more reviews</button>
@@ -367,8 +418,8 @@ const OwnersPage: React.FC = () => {
                     <div className="modal-content">
                         <h3>Leave a Review</h3>
                         <textarea
-                            value={newReview.text}
-                            onChange={(e) => setNewReview({ ...newReview, text: e.target.value })}
+                            value={newReview.content}
+                            onChange={(e) => setNewReview({ ...newReview, content: e.target.value })}
                             placeholder="Write your review here..."
                         />
                         <div className="rating">
@@ -383,13 +434,13 @@ const OwnersPage: React.FC = () => {
                                 </span>
                             ))}
                         </div>
-                        <button onClick={handleReviewSubmit}>Submit</button>
+                        <button onClick={handleCommentSubmit}>Submit</button>
                         <button onClick={() => setIsModalOpen(false)}>Cancel</button>
                     </div>
                 </div>
-      )}
-    </div>
-  );
+            )}
+        </div>
+    );
 };
 
 export default OwnersPage;
