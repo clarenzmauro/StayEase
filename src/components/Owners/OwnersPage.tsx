@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import './OwnersPage.css';
 import logoSvg from '../../assets/STAY.svg';
-import { deleteDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
 
@@ -89,27 +89,28 @@ const OwnersPage: React.FC = () => {
       return () => unsubscribe();
   }, []);
 
-    useEffect(() => {
-        const fetchOwnerData = async () => {
-            if (normalDocumentId) {
-                const docRef = doc(db, 'accounts', normalDocumentId); // Assuming 'accounts' is the collection name
-                const docSnap = await getDoc(docRef);
-                
-                if (docSnap.exists()) {
-                    setOwnerData(docSnap.data()); // Store the document data in state
-                    fetchDahsboardData(docSnap.data().dashboardId);
-                    fetchComments(docSnap.data());
-                } else {
-                    console.log('No such document!');
-                }
+  useEffect(() => {
+    const fetchOwnerData = async () => {
+        const docRef = doc(db, 'accounts', normalDocumentId);
+        const unsubscribe = onSnapshot(docRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const ownerData = docSnap.data();
+                setOwnerData(ownerData);
+                fetchComments(ownerData); // Fetch comments whenever ownerData changes
+            } else {
+                console.log('No such document!');
             }
-        };
+        });
 
-        fetchOwnerData();
-    }, [normalDocumentId]);
+        // Cleanup subscription on unmount
+        return () => unsubscribe();
+    };
+
+    fetchOwnerData();
+}, [normalDocumentId]);
 
     const fetchComments = async (ownerData: any) => {
-      const commentsData = ownerData.comments || {};
+      const commentsData = ownerData?.comments || {};
       const commentCounter = commentsData.commentCounter || 0;
       const fetchedComments = [];
 
@@ -154,10 +155,10 @@ const OwnersPage: React.FC = () => {
     });
 
     // Update local state
-    setComments(prevComments => [
-      ...prevComments,
-      { ...newCommentData, date: new Date(newCommentData.commentDate).toLocaleDateString() }
-  ]);
+  //   setComments(prevComments => [
+  //     ...prevComments,
+  //     { ...newCommentData, date: new Date(newCommentData.commentDate).toLocaleDateString() }
+  // ]);
     setNewReview({ content: '', rating: 0 }); // Reset the new comment state
     setIsModalOpen(false); // Close the modal
 };
