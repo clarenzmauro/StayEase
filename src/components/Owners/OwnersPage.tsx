@@ -177,13 +177,27 @@ const OwnersPage: React.FC = () => {
       }
     };
 
-    const fetchProperties = async (dormIds: string[]) => {
-      const propertiesPromises = dormIds.map(id => getDoc(doc(db,
-        'properties', id)));
-      const propertiesDocs = await Promise.all(propertiesPromises);
-      const propertiesData = propertiesDocs.map(doc => ({ id: doc.id, ...doc.data() }));    
-      setProperties(propertiesData);
-    };
+    const fetchProperties = async (dashboardId: string) => {
+      const dashboardRef = doc(db, 'dashboards', dashboardId);
+      const dashboardSnap = await getDoc(dashboardRef);
+      console.log("Dashboard Id:", dashboardId);
+      if (dashboardSnap.exists()) {
+          const dashboardData = dashboardSnap.data();
+          if (dashboardData?.listedDorms) {
+              const propertiesPromises = dashboardData.listedDorms.map(id => getDoc(doc(db, 'properties', id)));
+              const propertiesDocs = await Promise.all(propertiesPromises);
+              const propertiesData = propertiesDocs.map(doc => ({ id: doc.id, ...doc.data() }));
+  
+              // Log the fetched properties
+              console.log("Fetched Properties:", propertiesData);
+              console.log("Dashboard Id:", dashboardId);
+  
+              setProperties(propertiesData);
+          }
+      } else {
+          console.log('No such document!');
+      }
+  };
 
     useEffect(() => {
       if (encryptedDocumentId && id === encryptedDocumentId) {
@@ -192,32 +206,11 @@ const OwnersPage: React.FC = () => {
       }
     }, [id, encryptedDocumentId]);
 
-      const listings = [
-        {
-          id: 1,
-          title: "Alto Retro NY Inspired Greenbel...",
-          type: "Loft",
-          rating: 4.95,
-          image: "/placeholder.svg?height=200&width=300"
-        },
-        {
-          id: 2,
-          title: "2BR | 2BA Main Villa @ The...",
-          type: "Villa",
-          rating: 5.0,
-          image: "/placeholder.svg?height=200&width=300"
-        },
-        {
-          id: 3,
-          title: "2BR | 1BA Sunset Villa @ The...",
-          type: "Villa",
-          rating: 5.0,
-          image: "/placeholder.svg?height=200&width=300"
-        }
-      ];
-
       const handleDashboardClick = () => {
         setIsDashboardOpen(prevState => !prevState);
+        if (!isDashboardOpen) {
+          fetchProperties(ownerData.dashboardId); // Fetch properties only when opening the dashboard
+      }
       };
       
   return (
@@ -322,7 +315,7 @@ const OwnersPage: React.FC = () => {
                   <div className="property-price">₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month</div>
                 </div>
                 <div className="actions">
-                  <button className="edit-btn" onClick={(e) => { e. stopPropagation(); navigate(`/property/${property.id}/dashboard`); }}>View</button>
+                  <button className="edit-btn" onClick={(e) => { e. stopPropagation(); navigate(`/property/${property.id}/${normalDocumentId}/view-property`); }}>View</button>
                   <button className="delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}>  🗑️</button>
                 </div>
                 <img 
