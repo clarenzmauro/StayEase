@@ -381,35 +381,6 @@ const OwnersPage: React.FC = () => {
 
             <button className="show-more-button">Show more reviews</button>
           </section>
-
-          <section className="listings-section">
-            <div className="section-header">
-              <h2>{firstName}'s listings</h2>
-              <div className="navigation-buttons">
-                <button className="nav-button-owner" aria-label="Previous">
-                  <span className="arrow left"></span>
-                </button>
-                <button className="nav-button-owner" aria-label="Next">
-                  <span className="arrow right"></span>
-                </button>
-              </div>
-            </div>
-
-            <div className="listings-grid">
-              {listings.map(listing => (
-                <div key={listing.id} className="listing-card">
-                  <img src={listing.image} alt={listing.title} className="listing-image" />
-                  <div className="listing-info">
-                    <div className="listing-header">
-                  <span className="listing-type">{listing.type}</span>
-                  <span className="listing-rating">★ {listing.rating}</span>
-                </div>
-                <h3 className="listing-title">{listing.title}</h3>
-              </div>
-            </div>
-              ))}
-            </div>
-          </section>
         </div>
         )}
       </main>
