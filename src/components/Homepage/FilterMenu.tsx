@@ -7,41 +7,20 @@ interface FilterMenuProps {
     selectedTags: string[];
     selectedLocation: string;
     selectedPropertyType: string;
-    sortBy?: string;
+    sortBy: string;
   }) => void;
   isLoading: boolean;
+  availableTags: string[];
+  availableLocations: string[];
 }
 
-export function FilterMenu({ onFilterChange, isLoading }: FilterMenuProps) {
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
+export function FilterMenu({ onFilterChange, isLoading, availableTags, availableLocations }: FilterMenuProps) {
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000000 });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
   const [sortBy, setSortBy] = useState('most-popular');
   const [showAllTags, setShowAllTags] = useState(false);
-
-  const tags = [
-    'Pet Friendly',
-    'With Parking',
-    'With Security',
-    'Near School',
-    'With Wi-Fi',
-    'Furnished',
-    'With Kitchen',
-    'Near Market',
-    'Near Hospital',
-    'With Air Conditioning',
-    'With Generator',
-    'Near Church'
-  ];
-
-  const locations = [
-    'Alangilan',
-    'Poblacion',
-    'Gulod',
-    'Kumintang',
-    'Pallocan'
-  ];
 
   const propertyTypes = [
     'Dormitory',
@@ -50,16 +29,17 @@ export function FilterMenu({ onFilterChange, isLoading }: FilterMenuProps) {
     'Student Housing'
   ];
 
-  const visibleTags = showAllTags ? tags : tags.slice(0, 6);
+  const visibleTags = showAllTags ? availableTags : availableTags.slice(0, 6);
 
   useEffect(() => {
     onFilterChange({
       priceRange,
       selectedTags,
       selectedLocation,
-      selectedPropertyType
+      selectedPropertyType,
+      sortBy
     });
-  }, [priceRange, selectedTags, selectedLocation, selectedPropertyType]);
+  }, [priceRange, selectedTags, selectedLocation, selectedPropertyType, sortBy]);
 
   const handleTagToggle = (tag: string) => {
     setSelectedTags(prev => 
@@ -119,16 +99,7 @@ export function FilterMenu({ onFilterChange, isLoading }: FilterMenuProps) {
         <select 
           className="sort-select"
           value={sortBy}
-          onChange={(e) => {
-            setSortBy(e.target.value);
-            onFilterChange({
-              priceRange,
-              selectedTags,
-              selectedLocation,
-              selectedPropertyType,
-              sortBy: e.target.value
-            });
-          }}
+          onChange={(e) => setSortBy(e.target.value)}
         >
           <option value="most-popular">Most Popular</option>
           <option value="newest">Newest</option>
@@ -173,12 +144,14 @@ export function FilterMenu({ onFilterChange, isLoading }: FilterMenuProps) {
               {tag}
             </label>
           ))}
-          <div 
-            className="more-tags-button"
-            onClick={() => setShowAllTags(!showAllTags)}
-          >
-            More {showAllTags ? '▲' : '▼'}
-          </div>
+          {availableTags.length > 6 && (
+            <div 
+              className="more-tags-button"
+              onClick={() => setShowAllTags(!showAllTags)}
+            >
+              More {showAllTags ? '▲' : '▼'}
+            </div>
+          )}
         </div>
       </div>
 
@@ -190,7 +163,7 @@ export function FilterMenu({ onFilterChange, isLoading }: FilterMenuProps) {
           onChange={e => setSelectedLocation(e.target.value)}
         >
           <option value="">All Locations</option>
-          {locations.map(location => (
+          {availableLocations.map(location => (
             <option key={location} value={location}>
               {location}
             </option>
@@ -214,19 +187,21 @@ export function FilterMenu({ onFilterChange, isLoading }: FilterMenuProps) {
         </select>
       </div>
 
-      {/* Buttons */}
+      {/* Reset Button */}
       <div className="filter-buttons">
-        <button className="reset-button" onClick={() => {
-          setPriceRange({ min: 0, max: 50000 });
-          setSelectedTags([]);
-          setSelectedLocation('');
-          setSelectedPropertyType('');
-        }}>
-          Reset
+        <button
+          className="reset-button"
+          onClick={() => {
+            setPriceRange({ min: 0, max: 1000000 });
+            setSelectedTags([]);
+            setSelectedLocation('');
+            setSelectedPropertyType('');
+            setSortBy('most-popular');
+          }}
+        >
+          Reset Filters
         </button>
       </div>
     </div>
   );
 }
-
-export default FilterMenu;

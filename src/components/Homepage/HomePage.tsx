@@ -16,19 +16,39 @@ interface FilterType {
   selectedPropertyType: string;
 }
 
+interface PropertyType {
+  id: string;
+  propertyName: string;
+  propertyLocation: string;
+  propertyPrice: number;
+  propertyType: string;
+  propertyTags: string[];
+  owner?: string;
+  datePosted?: {
+    toMillis: () => number;
+  };
+  viewCount?: number;
+  interestedCount?: number;
+  propertyPhotos?: { [key: string]: { pictureUrl: string } };
+  [key: string]: any;
+}
+
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   // const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [selectedItem] = useState<string | null>(null);
   const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
   // const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
-  const [properties, setProperties] = useState<Array<{ id: string;[key: string]: any }>>([]);
-  const [filteredProperties, setFilteredProperties] = useState<Array<{ id: string;[key: string]: any }>>([]);
-  const [activeFilters, setActiveFilters] = useState<FilterType>({
-    priceRange: { min: 0, max: 50000 },
+  const [properties, setProperties] = useState<PropertyType[]>([]);
+  const [filteredProperties, setFilteredProperties] = useState<PropertyType[]>([]);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
+  const [activeFilters, setActiveFilters] = useState<FilterType & { sortBy: string }>({
+    priceRange: { min: 0, max: 1000000 },
     selectedTags: [],
     selectedLocation: '',
-    selectedPropertyType: ''
+    selectedPropertyType: '',
+    sortBy: 'most-popular'
   });
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
   const [user, setUser] = useState<FirebaseUser| null>(null);
@@ -42,7 +62,6 @@ export function HomePage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   // const [sortBy, setSortBy] = useState('most-popular');
-  const [sortBy] = useState('most-popular');
   const [currentImageIndices, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
 
   const getNextImage = (e: React.MouseEvent, itemId: string, direction: 'next' | 'prev') => {
@@ -75,9 +94,23 @@ export function HomePage() {
       const propertiesData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      }));
+      })) as PropertyType[];
       console.log('Updated properties data:', propertiesData);
       
+      // Extract unique tags and locations from all properties
+      const allTags = new Set<string>();
+      const allLocations = new Set<string>();
+      propertiesData.forEach(property => {
+        if (Array.isArray(property.propertyTags)) {
+          property.propertyTags.forEach(tag => allTags.add(tag));
+        }
+        if (property.propertyLocation) {
+          allLocations.add(property.propertyLocation);
+        }
+      });
+      
+      setAvailableTags(Array.from(allTags).sort());
+      setAvailableLocations(Array.from(allLocations).sort());
       setProperties(propertiesData);
       setFilteredProperties(propertiesData);
       setIsLoading(false);
@@ -116,20 +149,34 @@ export function HomePage() {
   }, []);
 
   // Add sorting function
-  const sortProperties = (properties:any, sortType:any) => {
+  const sortProperties = (properties: PropertyType[], sortType: string) => {
     switch (sortType) {
       case 'most-popular':
-        return [...properties].sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+        // Sort by viewCount (highest to lowest)
+        return [...properties].sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
       case 'newest':
-        return [...properties].sort((a, b) => b.dateAdded - a.dateAdded);
+        // Sort by datePosted (newest to oldest)
+        return [...properties].sort((a, b) => {
+          const dateA = a.datePosted?.toMillis() || 0;
+          const dateB = b.datePosted?.toMillis() || 0;
+          return dateB - dateA;
+        });
       case 'oldest':
-        return [...properties].sort((a, b) => a.dateAdded - b.dateAdded);
+        // Sort by datePosted (oldest to newest)
+        return [...properties].sort((a, b) => {
+          const dateA = a.datePosted?.toMillis() || 0;
+          const dateB = b.datePosted?.toMillis() || 0;
+          return dateA - dateB;
+        });
       case 'price-low':
-        return [...properties].sort((a, b) => a.propertyPrice - b.propertyPrice);
+        // Sort by propertyPrice (lowest to highest)
+        return [...properties].sort((a, b) => (a.propertyPrice || 0) - (b.propertyPrice || 0));
       case 'price-high':
-        return [...properties].sort((a, b) => b.propertyPrice - a.propertyPrice);
+        // Sort by propertyPrice (highest to lowest)
+        return [...properties].sort((a, b) => (b.propertyPrice || 0) - (a.propertyPrice || 0));
       case 'top-rated':
-        return [...properties].sort((a, b) => (b.ratings?.overall || 0) - (a.ratings?.overall || 0));
+        // Sort by interestedCount (highest to lowest)
+        return [...properties].sort((a, b) => (b.interestedCount || 0) - (a.interestedCount || 0));
       default:
         return properties;
     }
@@ -178,10 +225,10 @@ export function HomePage() {
     }
 
     // Apply sorting
-    filtered = sortProperties(filtered, sortBy);
+    filtered = sortProperties(filtered, activeFilters.sortBy);
 
     setFilteredProperties(filtered);
-  }, [properties, searchQuery, activeFilters, sortBy]);
+  }, [properties, searchQuery, activeFilters]);
 
   // Handle search functionality
   useEffect(() => {
@@ -216,7 +263,7 @@ export function HomePage() {
     setFilteredProperties(filtered);
   }, [searchQuery, properties]);
 
-  const handleFilterChange = (filters: FilterType) => {
+  const handleFilterChange = (filters: FilterType & { sortBy: string }) => {
     setActiveFilters(filters);
   };
 
@@ -368,10 +415,11 @@ export function HomePage() {
           <Link to="/" onClick={() => {
             setSearchQuery('');
             setActiveFilters({
-              priceRange: { min: 0, max: 50000 },
+              priceRange: { min: 0, max: 1000000 },
               selectedTags: [],
               selectedLocation: '',
-              selectedPropertyType: ''
+              selectedPropertyType: '',
+              sortBy: 'most-popular'
             });
           }}> 
             <img src={logoSvg} alt="StayEase Logo" className="logo-image" />
@@ -443,6 +491,8 @@ export function HomePage() {
           <FilterMenu 
             onFilterChange={handleFilterChange} 
             isLoading={isLoading}
+            availableTags={availableTags}
+            availableLocations={availableLocations}
           />
         </div>
 
