@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { collection, doc, addDoc, serverTimestamp, getDoc, getDocs, query, where, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase/config';
 import { DocumentData } from 'firebase/firestore';
@@ -16,6 +16,7 @@ import OwnerSection from './components/OwnerSection';
 import PropertyMap from './components/PropertyMap';
 
 import './PropertyPage.css';
+import ApplicantDetails from './ApplicantDetails';
 
 interface Property {
   id: string;
@@ -71,6 +72,7 @@ interface Comment {
 
 const PropertyPage = () => {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [property, setProperty] = useState<Property | null>(null);
@@ -87,8 +89,20 @@ const PropertyPage = () => {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState('');
   const [allowChat, setAllowChat] = useState(false);
+  const [editChecker, setEditChecker] = useState(false);
   const COMMENTS_PER_PAGE = 4;
 
+  useEffect(() => {
+    // Log the current pathname to identify which URL is used
+    console.log('Current URL:', location.pathname);
+    if (location.pathname.includes('/property/') && location.pathname.includes('/view-property') && !editChecker) {
+      setEditChecker(true);
+    }
+  }, [location, editChecker]);
+
+  useEffect(() => {
+    console.log(editChecker);
+  });
 
   useEffect(() => {
     const fetchPropertyData = async () => {
@@ -600,6 +614,47 @@ const PropertyPage = () => {
 
   return (
     <div className="property-page">
+      {editChecker ? (
+        <>
+        <PropertyHeader />
+
+        {property && (
+        <>
+          <div className="property-header">
+            <h1 className="property-title">{property.propertyName}</h1>
+          </div>
+          <PropertyGallery photos={property.propertyPhotos} />
+          <p className="property-location">{property.propertyLocation}</p>
+
+          <div className="host-info">
+          <h2 className="host-name">Hosted by {host?.username || 'Host'}</h2>
+          <div className="property-stats">
+            <span>{property.viewCount} views</span>
+            <span>•</span>
+            <span>{property.interestedCount} interested</span>
+            <span>•</span>
+          </div>
+          </div>
+
+          <section>
+            <h2>Interested Applicants</h2>
+            {property.interestedApplicants && property.interestedApplicants.length > 0 ? (
+      <ul className="interested-applicants-list">
+        {property.interestedApplicants.map((applicantId) => (
+          <li key={applicantId} className="applicant-item">
+            <ApplicantDetails applicantId={applicantId} />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p>No interested applicants for this property</p>
+    )}
+          </section>
+        </>
+      )}
+        </>
+      ) : (
+        <>
       <PropertyHeader />
 
       {/* Favorite button */}
@@ -654,7 +709,10 @@ const PropertyPage = () => {
         show={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
       />
+      </>
+    )}
     </div>
+    
   );
 };
 
