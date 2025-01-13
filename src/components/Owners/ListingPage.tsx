@@ -5,6 +5,7 @@ import { useParams } from 'react-router-dom';
 import { db } from '../../firebase/config';
 import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion } from 'firebase/firestore';
 import { supabase } from '../../supabase/supabase';
+import axios from 'axios'; // Import axios
 import './ListingPage.css';
 import ListingOwnerSection from './ListingOwnerSection';
 
@@ -17,6 +18,7 @@ interface Image {
 interface PropertyDetails {
   name: string;
   location: string;
+  mapsLink: string; // Add this new field
   type: string;
   bedrooms: number;
   bathrooms: number;
@@ -58,6 +60,7 @@ export function ListingPage() {
   const [details, setDetails] = useState<PropertyDetails>({
     name: "Enter Property Name",
     location: "Enter Property Location",
+    mapsLink: "", // Add this new field
     type: 'Dormitory',
     bedrooms: 0,
     bathrooms: 0,
@@ -80,11 +83,23 @@ export function ListingPage() {
 
   const handleSubmit = async () => {
     try {
+      // Extract coordinates from the maps link if available
+      let geoPoint = new GeoPoint(0, 0);
+      if (details.mapsLink) {
+        try {
+          const response = await axios.get(`/api/expand-maps-url?url=${encodeURIComponent(details.mapsLink)}`);
+          const coordinates = response.data;
+          geoPoint = new GeoPoint(coordinates.latitude, coordinates.longitude);
+        } catch (error) {
+          console.error('Error extracting coordinates from Maps link:', error);
+        }
+      }
 
       const propertyData = {
         propertyName: details.name,
         propertyLocation: details.location,
-        propertyLocationGeo: new GeoPoint(0, 0),
+        propertyMapsLink: details.mapsLink,
+        propertyLocationGeo: geoPoint,
         propertyDesc: details.description,
         propertyType: details.type,
         ownerId: id,
@@ -278,6 +293,18 @@ export function ListingPage() {
                 value={details.location}
                 onChange={(e) => handleChange('location', e.target.value)}
               />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="propertyMapsLink">Google Maps Link</label>
+              <input
+                id="propertyMapsLink"
+                type="text"
+                placeholder="Enter Google Maps Link"
+                value={details.mapsLink}
+                onChange={(e) => handleChange('mapsLink', e.target.value)}
+              />
+              <small className="input-help">Paste a Google Maps link to help display your property's location on the map</small>
             </div>
 
             <div className="form-group">
