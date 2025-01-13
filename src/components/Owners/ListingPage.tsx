@@ -1,13 +1,15 @@
 'use client'
 
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../../firebase/config';
-import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion, Timestamp } from 'firebase/firestore';
 import { supabase } from '../../supabase/supabase';
 import axios from 'axios'; // Import axios
 import './ListingPage.css';
 import ListingOwnerSection from './ListingOwnerSection';
+import { get } from 'firebase/database';
+import PropertyPage from '../Property Page/PropertyPage';
 
 interface Image {
   url: string;
@@ -68,7 +70,7 @@ export function ListingPage() {
     tags: [],
     views: 0,
     price: 0,
-    availableFrom: "Enter Date of Availability",
+    availableFrom: "",
     maxOccupants: 0,
     floorLevel: 0,
     furnishing: "Enter Furnishing Status",
@@ -81,8 +83,98 @@ export function ListingPage() {
   });
   const [isEditing, setIsEditing] = useState(false);
 
+  useEffect(() => {
+    if (window.location.pathname === `/property/${id}/edit-property`) {
+      console.log("Is editing");
+      setIsEditing(true);
+      fetchPropertyData(id);
+    }
+  }, [id]);
+
+  const fetchPropertyData = async (propertyId? : string) => {
+    try{
+      if (!propertyId) {
+        alert('Property ID is undefined.');
+        return; // Exit the function if propertyId is not defined
+      }
+      
+      const docRef = doc(db, 'properties', propertyId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const propertyData = docSnap.data();
+        
+        const parseDate = (dateValue: any) => {
+          if (dateValue instanceof Timestamp) {
+            return dateValue.toDate(); // Convert Firestore Timestamp to Date
+          } else if (typeof dateValue === 'string') {
+            const parsedDate = new Date(dateValue);
+            if (isNaN(parsedDate.getTime())) {
+              throw new Error('Invalid date format');
+            }
+            return parsedDate;
+          } else {
+            console.error('Invalid date format:', dateValue);
+            return new Date(); // Fallback to current date if parsing fails
+          }
+        };
+  
+        const availableDate = propertyData.dateAvailability 
+        ? parseDate(propertyData.dateAvailability) 
+        : new Date();
+
+        const photos = [];
+for (let i = 0; i < propertyData.count; i++) {
+  const photo = propertyData.propertyPhotos[`photo${i}`];
+  if (photo) {
+    photos.push({
+      label: photo.label,
+      url: photo.pictureUrl,
+      file: null, // Set file to null if not available
+    });
+  }
+}
+
+
+        setDetails({
+          name: propertyData.propertyName || "Enter Property Name",
+          location: propertyData.propertyLocation || "Enter Property Location",
+          mapsLink: propertyData.propertyLocationGeoPoint || "",
+          type: propertyData.propertyType || 'Dormitory',
+          bedrooms: propertyData.bedroomCount || 0,
+          bathrooms: propertyData.bathroomCount || 0,
+          description: propertyData.propertyDesc || 'Enter Property Description',
+          tags: propertyData.propertyTags || [],
+          views: propertyData.viewCount || 0,
+          price: propertyData.propertyPrice || 0,
+          availableFrom: availableDate.toISOString().split('T')[0],
+          maxOccupants: propertyData.maxOccupants || 0,
+          floorLevel: propertyData.floorLevel || 0,
+          furnishing: propertyData.furnishingStatus || "Enter Furnishing Status",
+          allowViewing: propertyData.allowViewing !== undefined ? propertyData.allowViewing : true,
+          allowChat: propertyData.allowChat !== undefined ? propertyData.allowChat : true,
+          size: propertyData.propertySize || 0,
+          securityDeposit: propertyData.securityDeposit || 0,
+          leaseTerm: propertyData.leaseTerm || 0,
+          lifestyle: propertyData.lifestyle || "Mixed Gender",
+        });
+
+
+        setImages(photos);
+        setHouseRules(propertyData.houseRules || []);
+        setSelectedTags(propertyData.propertyTags || []);
+      } else {
+        alert('No such Property');
+      }
+    }catch (error){
+      console.error('Error fetching', error);
+      alert("Error fetching");
+    }
+  }
+
   const handleSubmit = async () => {
     try {
+      let docRef;
       // Extract coordinates from the maps link if available
       let geoPoint = new GeoPoint(0, 0);
       if (details.mapsLink) {
@@ -128,53 +220,23 @@ export function ListingPage() {
         propertyTags: selectedTags,
         houseRules: houseRules
       };
-
-      const propertyRef = collection(db, 'properties');
-      const docRef = await addDoc(propertyRef, propertyData);
-
-      const imagesData: { [key: string]: { pictureUrl: string; label: string } } = {};
-      for (let i = 0; i < images.length; i++) {
-        const image = images[i];
-        if (image.file) {
-          try {
-            // Upload to Supabase
-            const filePath = `${docRef.id}/photo${i}`;
-            const { error } = await supabase.storage
-              .from('properties')
-              .upload(filePath, image.file, {
-                cacheControl: '3600',
-                upsert: false // Set to true if you want to allow overwriting
-              });
-      
-            if (error) {
-              throw error;
-            }
-      
-            // Get the public URL
-            const { data: { publicUrl } } = supabase.storage
-              .from('properties')
-              .getPublicUrl(filePath);
-      
-            imagesData[`photo${i}`] = {
-              pictureUrl: publicUrl,
-              label: image.label
-            };
-          } catch (error) {
-            console.error('Error uploading image:', error);
-            // Handle error appropriately
-          }
-        } else {
-          console.warn('No file selected for image', i);
+      if (isEditing) {
+        if (!id) {
+          alert('Property ID is undefined. Cannot update property.');
+          return;
         }
+        // Update existing property
+        docRef = doc(db, 'properties', id); // Use the existing ID
+        await updateDoc(docRef, propertyData);
+        alert('Property updated successfully!');
+      } else {
+        // Add new property
+        const propertyRef = collection(db, 'properties');
+        docRef = await addDoc(propertyRef, propertyData);
+        alert('Property added successfully!');
       }
-
-      await updateDoc(docRef, {
-        propertyPhotos: imagesData,
-        count: images.length
-      });
-      
-      console.log('Document written with ID: ', docRef.id);
-      alert('Property added successfully!');
+         // Handle image uploads
+        await handleImageUploads(docRef.id);
 
       if (!id) {
         throw new Error('Owner ID is undefined or invalid.');
@@ -204,6 +266,49 @@ export function ListingPage() {
       alert('Error adding property. Please try again.');
     }
   };
+
+  const handleImageUploads = async (propertyId: string) => {
+    const imagesData: { [key: string]: { pictureUrl: string; label: string } } = {};
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i];
+      if (image.file) {
+        try {
+          // Upload to Supabase
+          const filePath = `${propertyId}/photo${i}`;
+          const { error } = await supabase.storage
+            .from('properties')
+            .upload(filePath, image.file, {
+              cacheControl: '3600',
+              upsert: false // Set to true if you want to allow overwriting
+            });
+  
+          if (error) {
+            throw error;
+          }
+  
+          // Get the public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('properties')
+            .getPublicUrl(filePath);
+  
+          imagesData[`photo${i}`] = {
+            pictureUrl: publicUrl,
+            label: image.label
+          };
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          // Handle error appropriately
+        }
+      } else {
+        console.warn('No file selected for image', i);
+    }
+  }
+
+  await updateDoc(doc(db, 'properties', propertyId), {
+    propertyPhotos: imagesData,
+    count: images.length
+  });
+};
 
   const handleAddRule = () => {
     setHouseRules([...houseRules, '']);
@@ -263,7 +368,9 @@ export function ListingPage() {
     <div className="property-container">
       {/* Header with submit button */}
       <div className="header">
-        <button className="complete-button" onClick={handleSubmit}>Submit Listing</button>
+        <button className="complete-button" onClick={handleSubmit}>
+          {isEditing ? 'Save Edit' : 'Submit Listing'}
+        </button>
       </div>
 
       {/* Main content wrapper */}
@@ -281,6 +388,7 @@ export function ListingPage() {
                 placeholder="Enter Property Name"
                 value={details.name}
                 onChange={(e) => handleChange('name', e.target.value)}
+                required
               />
             </div>
 
@@ -296,7 +404,7 @@ export function ListingPage() {
             </div>
 
             <div className="form-group">
-              <label htmlFor="propertyMapsLink">Google Maps Link</label>
+              <label htmlFor="propertyMapsLink">Google Maps Link (optional)</label>
               <input
                 id="propertyMapsLink"
                 type="text"

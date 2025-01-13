@@ -201,7 +201,6 @@ const OwnersPage: React.FC = () => {
 
     useEffect(() => {
       if (encryptedDocumentId && id === encryptedDocumentId) {
-          alert('Owner is viewing!');
           setIsOwnerViewing(true);
       }
     }, [id, encryptedDocumentId]);

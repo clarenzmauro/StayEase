@@ -636,6 +636,11 @@ const PropertyPage = () => {
           </div>
           </div>
 
+          {/* New Edit Property button */}
+  <button className="edit-property-button" onClick={() => {navigate(`/property/${id}/edit-property`)}}>
+    Edit Property
+  </button>
+
           <section>
             <h2>Interested Applicants</h2>
             {property.interestedApplicants && property.interestedApplicants.length > 0 ? (
