@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.47.12",
+    "@supabase/supabase-js": "^2.47.13",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "axios": "^1.7.9",

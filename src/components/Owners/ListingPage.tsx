@@ -97,6 +97,7 @@ export function ListingPage() {
   });
   const [isEditing, setIsEditing] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
+  const [ownerId, setOwnerId] = useState<string|null>(null);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
@@ -156,6 +157,9 @@ export function ListingPage() {
       console.log("Is editing");
       setIsEditing(true);
       fetchPropertyData(id);
+    }else{
+      setIsEditing(false);
+      setOwnerId(id || null);
     }
   }, [id]);
 
@@ -286,8 +290,10 @@ for (let i = 0; i < propertyData.count; i++) {
 
 
         setImages(photos);
+        setAllowChatting(propertyData.allowChat !== undefined ? propertyData.allowChat : false);
         setHouseRules(propertyData.houseRules || []);
         setSelectedTags(propertyData.propertyTags || []);
+        setOwnerId(propertyData.ownerId); // Extract ownerId
       } else {
         alert('No such Property');
       }
@@ -301,7 +307,7 @@ for (let i = 0; i < propertyData.count; i++) {
     try {
       let docRef;
       // Extract coordinates from the maps link if available
-      let geoPoint = details.coordinates 
+      const geoPoint = details.coordinates 
         ? new GeoPoint(details.coordinates.latitude, details.coordinates.longitude)
         : new GeoPoint(0, 0);
 
@@ -311,7 +317,7 @@ for (let i = 0; i < propertyData.count; i++) {
         propertyLocationGeo: geoPoint,
         propertyDesc: details.description,
         propertyType: details.type,
-        ownerId: id,
+        ownerId: isEditing ? ownerId : id,
         datePosted: new Date(),
         bedroomCount: details.bedrooms,
         bathroomCount: details.bathrooms,
@@ -449,7 +455,7 @@ for (let i = 0; i < propertyData.count; i++) {
     setImages([...images, { url: '', label: '', file: null }]);
   };
 
-  const handleRemove = (index: number) => {
+  const  handleRemove = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
   };
 
@@ -718,6 +724,15 @@ for (let i = 0; i < propertyData.count; i++) {
                 />
                 <label htmlFor="allowViewing">Allow Viewing</label>
               </div>
+              <div className="form-group checkbox-group">
+                <input
+                    id="allowChatting"
+                    type="checkbox"
+                    checked={allowChatting}
+                    onChange={(e) => setAllowChatting(e.target.checked)}
+                />
+                <label htmlFor="allowChatting">Allow Chatting</label>
+            </div>
             </div>
           </div>
 
@@ -828,14 +843,6 @@ for (let i = 0; i < propertyData.count; i++) {
             ))}
           </div>
         </div>
-      </div>
-
-      {/* Owner Section at the bottom */}
-      <div className="owner-section-wrapper">
-        <ListingOwnerSection
-          ownerId={id || ''}
-          onAllowChattingChange={setAllowChatting}
-        />
       </div>
 
       {/* Image Upload Modal */}
