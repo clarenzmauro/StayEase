@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { db } from '../../firebase/config';
 import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion, Timestamp } from 'firebase/firestore';
@@ -10,6 +10,17 @@ import './ListingPage.css';
 import ListingOwnerSection from './ListingOwnerSection';
 import { get } from 'firebase/database';
 import PropertyPage from '../Property Page/PropertyPage';
+import 'ol/ol.css';
+import Map from 'ol/Map';
+import View from 'ol/View';
+import TileLayer from 'ol/layer/Tile';
+import OSM from 'ol/source/OSM';
+import { fromLonLat, transform } from 'ol/proj';
+import Feature from 'ol/Feature';
+import Point from 'ol/geom/Point';
+import { Vector as VectorLayer } from 'ol/layer';
+import { Vector as VectorSource } from 'ol/source';
+import { Style, Icon } from 'ol/style';
 
 interface Image {
   url: string;
@@ -20,7 +31,10 @@ interface Image {
 interface PropertyDetails {
   name: string;
   location: string;
-  mapsLink: string; // Add this new field
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  } | null;
   type: string;
   bedrooms: number;
   bathrooms: number;
@@ -62,7 +76,7 @@ export function ListingPage() {
   const [details, setDetails] = useState<PropertyDetails>({
     name: "Enter Property Name",
     location: "Enter Property Location",
-    mapsLink: "", // Add this new field
+    coordinates: null,
     type: 'Dormitory',
     bedrooms: 0,
     bathrooms: 0,
@@ -82,6 +96,60 @@ export function ListingPage() {
     lifestyle: "Mixed Gender"
   });
   const [isEditing, setIsEditing] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<Map | null>(null);
+  const markerLayerRef = useRef<VectorLayer<VectorSource>| null>(null);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+
+    // Initialize map
+    const map = new Map({
+      target: mapRef.current,
+      layers: [
+        new TileLayer({
+          source: new OSM()
+        })
+      ],
+      view: new View({
+        center: fromLonLat([121.0244, 14.5547]), // Center on Philippines
+        zoom: 13
+      })
+    });
+
+    // Create vector layer for the marker
+    const vectorSource = new VectorSource();
+    const vectorLayer = new VectorLayer({
+      source: vectorSource,
+      style: new Style({
+        image: new Icon({
+          anchor: [0.5, 1],
+          anchorXUnits: 'fraction',
+          anchorYUnits: 'fraction',
+          src: '/marker-icon.svg',
+          scale: 1,
+          color: '#FF385C'
+        })
+      })
+    });
+    map.addLayer(vectorLayer);
+    markerLayerRef.current = vectorLayer;
+
+    // Add click handler to add/move marker
+    map.on('click', (event) => {
+      const coordinates = transform(event.coordinate, 'EPSG:3857', 'EPSG:4326');
+      const [longitude, latitude] = coordinates;
+      updateMapMarker(longitude, latitude);
+    });
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      map.setTarget(undefined);
+    };
+  }, []);
 
   useEffect(() => {
     if (window.location.pathname === `/property/${id}/edit-property`) {
@@ -90,6 +158,61 @@ export function ListingPage() {
       fetchPropertyData(id);
     }
   }, [id]);
+
+  const updateMapMarker = (longitude: number, latitude: number) => {
+    if (!mapInstanceRef.current || !markerLayerRef.current) return;
+
+    const coordinate = fromLonLat([longitude, latitude]);
+    
+    // Update marker
+    const vectorSource = markerLayerRef.current.getSource();
+    if (vectorSource) {
+      vectorSource.clear();
+      const marker = new Feature({
+        geometry: new Point(coordinate)
+      });
+      vectorSource.addFeature(marker);
+    }
+
+    // Center map on new location
+    mapInstanceRef.current.getView().animate({
+      center: coordinate,
+      zoom: 17,
+      duration: 1000
+    });
+
+    // Update form state
+    setDetails(prev => ({
+      ...prev,
+      coordinates: { latitude, longitude }
+    }));
+  };
+
+  const handleCurrentLocation = () => {
+    setIsLocating(true);
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { longitude, latitude } = position.coords;
+          updateMapMarker(longitude, latitude);
+          setIsLocating(false);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          alert('Could not get your current location. Please ensure location services are enabled.');
+          setIsLocating(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser');
+      setIsLocating(false);
+    }
+  };
 
   const fetchPropertyData = async (propertyId? : string) => {
     try{
@@ -139,7 +262,9 @@ for (let i = 0; i < propertyData.count; i++) {
         setDetails({
           name: propertyData.propertyName || "Enter Property Name",
           location: propertyData.propertyLocation || "Enter Property Location",
-          mapsLink: propertyData.propertyLocationGeoPoint || "",
+          coordinates: propertyData.propertyLocationGeo 
+            ? { latitude: propertyData.propertyLocationGeo.latitude, longitude: propertyData.propertyLocationGeo.longitude }
+            : null,
           type: propertyData.propertyType || 'Dormitory',
           bedrooms: propertyData.bedroomCount || 0,
           bathrooms: propertyData.bathroomCount || 0,
@@ -176,21 +301,13 @@ for (let i = 0; i < propertyData.count; i++) {
     try {
       let docRef;
       // Extract coordinates from the maps link if available
-      let geoPoint = new GeoPoint(0, 0);
-      if (details.mapsLink) {
-        try {
-          const response = await axios.get(`/api/expand-maps-url?url=${encodeURIComponent(details.mapsLink)}`);
-          const coordinates = response.data;
-          geoPoint = new GeoPoint(coordinates.latitude, coordinates.longitude);
-        } catch (error) {
-          console.error('Error extracting coordinates from Maps link:', error);
-        }
-      }
+      let geoPoint = details.coordinates 
+        ? new GeoPoint(details.coordinates.latitude, details.coordinates.longitude)
+        : new GeoPoint(0, 0);
 
       const propertyData = {
         propertyName: details.name,
         propertyLocation: details.location,
-        propertyMapsLink: details.mapsLink,
         propertyLocationGeo: geoPoint,
         propertyDesc: details.description,
         propertyType: details.type,
@@ -404,15 +521,83 @@ for (let i = 0; i < propertyData.count; i++) {
             </div>
 
             <div className="form-group">
-              <label htmlFor="propertyMapsLink">Google Maps Link (optional)</label>
-              <input
-                id="propertyMapsLink"
-                type="text"
-                placeholder="Enter Google Maps Link"
-                value={details.mapsLink}
-                onChange={(e) => handleChange('mapsLink', e.target.value)}
-              />
-              <small className="input-help">Paste a Google Maps link to help display your property's location on the map</small>
+              <label>Pin Location on Map</label>
+              <div style={{ position: 'relative' }}>
+                <div 
+                  ref={mapRef} 
+                  style={{ 
+                    width: '100%', 
+                    height: '300px', 
+                    marginBottom: '1rem',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px'
+                  }} 
+                />
+                <button
+                  onClick={handleCurrentLocation}
+                  disabled={isLocating}
+                  title="Use my current location"
+                  style={{
+                    position: 'absolute',
+                    top: '10px',
+                    right: '10px',
+                    width: '32px',
+                    height: '32px',
+                    padding: '6px',
+                    backgroundColor: 'white',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease',
+                    ':hover': {
+                      backgroundColor: '#f5f5f5'
+                    }
+                  }}
+                >
+                  {isLocating ? (
+                    <svg 
+                      width="16" 
+                      height="16" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="#000"
+                      strokeWidth="2"
+                      style={{ animation: 'spin 1s linear infinite' }}
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                    </svg>
+                  ) : (
+                    <svg 
+                      width="20" 
+                      height="20" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="#000"
+                      strokeWidth="2"
+                    >
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                      <circle cx="12" cy="9" r="2.5" fill="#000" />
+                    </svg>
+                  )}
+                </button>
+                <style>
+                  {`
+                    @keyframes spin {
+                      from { transform: rotate(0deg); }
+                      to { transform: rotate(360deg); }
+                    }
+                  `}
+                </style>
+              </div>
+              {details.coordinates && (
+                <small className="coordinates-display">
+                  Selected coordinates: {details.coordinates.latitude.toFixed(6)}, {details.coordinates.longitude.toFixed(6)}
+                </small>
+              )}
             </div>
 
             <div className="form-group">
