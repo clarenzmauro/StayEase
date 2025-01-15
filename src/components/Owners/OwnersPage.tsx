@@ -5,6 +5,7 @@ import logoSvg from '../../assets/STAY.svg';
 import { deleteDoc, doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
+import { supabase } from '../../supabase/supabase';
 
 const OwnersPage: React.FC = () => {
     const navigate = useNavigate();
@@ -57,7 +58,30 @@ const OwnersPage: React.FC = () => {
             const propertyDocRef = doc(db, 'properties', propertyId);
             await deleteDoc(propertyDocRef);
 
-            alert("Property deleted successfully!");
+            const { data: files, error: listError } = await supabase.storage.from('properties').list(`${propertyId}`);
+                if (listError) {
+                    console.error("Error listing files:", listError);
+                    alert("Error listing files: " + listError.message);
+                    return;
+                }
+
+                // Prepare file paths for deletion
+                const filePaths = files.map(file => `${propertyId}/${file.name}`);
+
+                // Delete all files in the propertyId folder
+                const { error } = await supabase.storage.from('properties').remove(filePaths);
+                if (error) {
+                    console.error("Error deleting files from Supabase:", error);
+                    alert("Error deleting files from Supabase: " + error.message);
+                } else {
+                    alert("Property and associated folder deleted successfully!");
+                }
+            if (response.error) {
+                console.error("Error deleting image from Supabase:", response.error);
+                alert("Error deleting image from Supabase: " + response.error.message);
+            } else {
+                alert("Property and associated images deleted successfully!");
+            }
           } else{
             console.error("Dashboard not found");
           }
