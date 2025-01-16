@@ -10,24 +10,32 @@
   gap: 20px; /* Space between items */
 }
 
-.add-box {
-  display: flex;
+.add-listing-button {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 100px; /* Width of the add box */
-  height: 100px; /* Height of the add box */
-  border: 2px dashed #007bff; /* Dashed border for the add box */
-  border-radius: 8px; /* Rounded corners */
+  gap: 8px;
+  padding: 12px 20px;
+  background: none;
+  border: 1px solid #1a365d;
+  border-radius: 8px;
+  color: #1a365d;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 36px; /* Size of the "+" icon */
-  color: #007bff; /* Color of the "+" icon */
-  background-color: #f9f9f9; /* Background color */
-  transition: background-color 0.3s; /* Transition effect for hover */
+  transition: all 0.2s ease;
 }
 
-.add-box:hover {
-  background-color: #e9ecef; /* Change background on hover */
+.add-listing-button:hover {
+  background-color: #1a365d;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.add-listing-button:active {
+  transform: translateY(0);
+}
+
 /* Container */
 .container-owner {
   width: 100%;
@@ -1039,6 +1047,283 @@
   .host-button {
     padding: 8px 12px;
     font-size: 13px;
+  }
+}
+
+/* Skeleton loading container */
+.skeleton-container {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 48px;
+  max-width: 1280px;
+  margin-top: 50px;
+  padding: 48px 80px;
+}
+
+/* Profile sidebar skeleton */
+.profile-sidebar-skeleton {
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+}
+
+.profile-card-skeleton {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 24px;
+}
+
+.profile-image-skeleton {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  margin-bottom: 16px;
+}
+
+.text-skeleton {
+  height: 20px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.text-skeleton.name {
+  width: 60%;
+}
+
+.text-skeleton.title {
+  width: 40%;
+}
+
+.stats-skeleton {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.stat-skeleton {
+  height: 40px;
+  border-radius: 8px;
+}
+
+/* Main content skeleton */
+.main-content-skeleton {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.about-skeleton-header {
+  height: 32px;
+  width: 200px;
+  border-radius: 4px;
+  margin-bottom: 24px;
+}
+
+.about-skeleton-text {
+  height: 100px;
+  border-radius: 4px;
+  margin-bottom: 48px;
+}
+
+.reviews-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.review-skeleton {
+  height: 160px;
+  border-radius: 12px;
+}
+
+/* Animation */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.06) 25%,
+    rgba(0, 0, 0, 0.15) 37%,
+    rgba(0, 0, 0, 0.06) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-loading 1.4s ease infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .skeleton-container {
+    grid-template-columns: 1fr;
+    padding: 24px;
+  }
+
+  .profile-image-skeleton {
+    width: 100px;
+    height: 100px;
+  }
+}
+
+.dashboard-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+/* Add these styles for the header section */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+/* Enhanced Property Card Styles */
+.owner-dashboard-image-container {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  width: calc(33.33% - 14px);
+  min-width: 280px;
+}
+
+.owner-dashboard-image-container:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.owner-dashboard-property-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  color: white;
+  z-index: 1;
+}
+
+.owner-dashboard-property-name {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.owner-dashboard-property-location {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 4px;
+}
+
+.owner-dashboard-property-type {
+  font-size: 13px;
+  opacity: 0.8;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.owner-dashboard-property-price {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4ade80;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.owner-dashboard-property-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.owner-dashboard-image-container:hover .owner-dashboard-property-image {
+  transform: scale(1.05);
+}
+
+.owner-dashboard-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.owner-dashboard-image-container:hover .owner-dashboard-actions {
+  opacity: 1;
+}
+
+.owner-dashboard-actions button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.edit-btn {
+  background: white;
+  color: #1a365d;
+}
+
+.edit-btn:hover {
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.delete-btn {
+  background: #ef4444;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments for property cards */
+@media (max-width: 1200px) {
+  .owner-dashboard-image-container {
+    width: calc(50% - 10px); /* 2 cards per row */
+  }
+}
+
+@media (max-width: 768px) {
+  .owner-dashboard-image-container {
+    width: 100%; /* 1 card per row */
+  }
+
+  .owner-dashboard-property-image {
+    height: 180px;
+  }
+
+  .owner-dashboard-actions {
+    opacity: 1; /* Always visible on mobile */
   }
 }
 

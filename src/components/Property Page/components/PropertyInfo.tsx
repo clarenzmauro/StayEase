@@ -7,6 +7,17 @@ interface PropertyInfoProps {
     propertyDesc: string;
     propertyTags?: string[];
     houseRules?: string[];
+    propertyName?: string;
+    propertyLocation?: string;
+    propertyPhotos?: {
+      [key: string]: {
+        pictureUrl: string;
+        label: string;
+      };
+    };
+    interestedCount?: number;
+    ownerId?: string;
+    // Add any other properties that might be used
   };
   host: {
     username?: string;
@@ -47,15 +58,15 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
       </div>
 
       <div className="house-rules-section">
-        <div className="section-title">House rules</div>
-        <div className="amenities-grid">
+        <h2 className="section-title">House rules</h2>
+        <ul className="house-rules-list">
           {property.houseRules?.map((rule, index) => (
-            <div key={`rule-${index}`} className="amenity-item">
-              <span>•</span>
-              <span>{rule}</span>
-            </div>
+            <li key={`rule-${index}`} className="rule-item">
+              <span className="rule-icon">•</span>
+              {rule}
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </div>
   );

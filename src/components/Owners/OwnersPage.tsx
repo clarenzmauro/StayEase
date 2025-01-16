@@ -7,6 +7,39 @@ import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
 import { supabase } from '../../supabase/supabase';
 
+const SkeletonLoading: React.FC = () => {
+  return (
+    <div className="skeleton-container">
+      {/* Profile Sidebar Skeleton */}
+      <div className="profile-sidebar-skeleton">
+        <div className="profile-card-skeleton">
+          <div className="profile-image-skeleton skeleton" />
+          <div className="text-skeleton name skeleton" />
+          <div className="text-skeleton title skeleton" />
+          <div className="stats-skeleton">
+            <div className="stat-skeleton skeleton" />
+            <div className="stat-skeleton skeleton" />
+            <div className="stat-skeleton skeleton" />
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content Skeleton */}
+      <div className="main-content-skeleton">
+        <div className="about-skeleton-header skeleton" />
+        <div className="about-skeleton-text skeleton" />
+        
+        <div className="reviews-skeleton-grid">
+          <div className="review-skeleton skeleton" />
+          <div className="review-skeleton skeleton" />
+          <div className="review-skeleton skeleton" />
+          <div className="review-skeleton skeleton" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const OwnersPage: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -30,6 +63,7 @@ const OwnersPage: React.FC = () => {
           avatar: "/placeholder.svg?height=56&width=56"
       }
   ]);
+    const [isLoading, setIsLoading] = useState(true);
 
     const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner'; // Default to 'Owner' if username is not available
 
@@ -115,23 +149,24 @@ const OwnersPage: React.FC = () => {
 
   useEffect(() => {
     const fetchOwnerData = async () => {
-        const docRef = doc(db, 'accounts', normalDocumentId);
-        const unsubscribe = onSnapshot(docRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const ownerData = docSnap.data();
-                setOwnerData(ownerData);
-                fetchComments(ownerData); // Fetch comments whenever ownerData changes
-            } else {
-                console.log('No such document!');
-            }
-        });
+      setIsLoading(true);
+      const docRef = doc(db, 'accounts', normalDocumentId);
+      const unsubscribe = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const ownerData = docSnap.data();
+          setOwnerData(ownerData);
+          fetchComments(ownerData);
+        } else {
+          console.log('No such document!');
+        }
+        setIsLoading(false);
+      });
 
-        // Cleanup subscription on unmount
-        return () => unsubscribe();
+      return () => unsubscribe();
     };
 
     fetchOwnerData();
-}, [normalDocumentId]);
+  }, [normalDocumentId]);
 
     const fetchComments = async (ownerData: any) => {
       const commentsData = ownerData?.comments || {};
@@ -236,6 +271,10 @@ const OwnersPage: React.FC = () => {
       }
       };
       
+  if (isLoading) {
+    return <SkeletonLoading />;
+  }
+
   return (
     <div className="container-owner">
       <header className="header">
@@ -325,27 +364,34 @@ const OwnersPage: React.FC = () => {
 
         {isDashboardOpen ? (
           <div id="dashboard-section" className="dashboard-layout">
+            <div className="dashboard-header">
+              <h2 className="dashboard-title">Listed Property</h2>
+              <button className="add-listing-button" onClick={() => navigate(`/owner-page/${normalDocumentId}/add-property`, { state: { normalDocumentId: normalDocumentId } })}>
+                + Add New Listing
+              </button>
+            </div>
             <div className="image-section">
-              <div className="add-box" onClick={() => navigate(`/owner-page/${normalDocumentId}/add-property`, { state: { normalDocumentId: normalDocumentId } })}>
-                <span>+</span>
-              </div>
               {properties.map(property => (
-              <div key={property.id} className="image-container" onClick={() => window.open(`/property/${property.id}`, '_blank')}>
-                <div className="property-info">
-                  <div className="property-name">{property.propertyName}</div>
-                  <div className="property-location">{property.propertyLocation}</div>
-                  <div className="property-type">{property.propertyType}</div>
-                  <div className="property-price">₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month</div>
+              <div 
+                key={property.id} 
+                className="owner-dashboard-image-container" 
+                onClick={() => window.open(`/property/${property.id}`, '_blank')}
+              >
+                <div className="owner-dashboard-property-info">
+                  <div className="owner-dashboard-property-name">{property.propertyName}</div>
+                  <div className="owner-dashboard-property-location">{property.propertyLocation}</div>
+                  <div className="owner-dashboard-property-type">{property.propertyType}</div>
+                  <div className="owner-dashboard-property-price">₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month</div>
                 </div>
-                <div className="actions">
-                  <button className="edit-btn" onClick={(e) => { e. stopPropagation(); navigate(`/property/${property.id}/${normalDocumentId}/view-property`); }}>View</button>
-                  <button className="delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}>  🗑️</button>
+                <div className="owner-dashboard-actions">
+                  <button className="edit-btn" onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}/${normalDocumentId}/view-property`); }}>View</button>
+                  <button className="delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}>🗑️</button>
                 </div>
                 <img 
-                src={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].pictureUrl : "/placeholder.svg?height=150&width=150"} 
-                alt={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].label : "Placeholder"} 
-                className="property-image" 
-              />
+                  src={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].pictureUrl : "/placeholder.svg?height=150&width=150"} 
+                  alt={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].label : "Placeholder"} 
+                  className="owner-dashboard-property-image" 
+                />
               </div>
               ))}
             </div>
