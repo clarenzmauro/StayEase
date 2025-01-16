@@ -63,23 +63,54 @@ export function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   // const [sortBy, setSortBy] = useState('most-popular');
   const [currentImageIndices, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
+  const [imageCache, setImageCache] = useState<{ [key: string]: boolean }>({});
+  const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
 
   const getNextImage = (e: React.MouseEvent, itemId: string, direction: 'next' | 'prev') => {
     e.stopPropagation();
 
+    const property = filteredProperties.find(p => p.id === itemId);
+    if (!property?.propertyPhotos) return;
+
+    const photoKeys = Object.keys(property.propertyPhotos).filter(key => key.startsWith('photo'));
+    const totalImages = photoKeys.length;
+    if (totalImages <= 1) return;
+
     setCurrentImageIndices(prev => {
       const currentIndex = prev[itemId] || 0;
-      const totalImages = Object.keys(filteredProperties.find(p => p.id === itemId)?.propertyPhotos || {})
-      .filter(key => key.startsWith('photo')).length;
-
       let newIndex;
       if (direction === 'next') {
         newIndex = (currentIndex + 1) % totalImages;
       } else {
         newIndex = (currentIndex - 1 + totalImages) % totalImages;
       }
-      return {...prev, [itemId]: newIndex};
+
+      // Preload the next image in sequence
+      const nextIndex = (newIndex + 1) % totalImages;
+      const nextUrl = property.propertyPhotos[`photo${nextIndex}`]?.pictureUrl;
+      if (nextUrl) {
+        preloadImage(nextUrl);
+      }
+
+      // Set loading state
+      setLoadingImages(prev => ({ ...prev, [itemId]: true }));
+      
+      return { ...prev, [itemId]: newIndex };
     });
+  };
+
+  const preloadImage = (url: string) => {
+    if (!imageCache[url]) {
+      const img = new Image();
+      img.src = url;
+      img.onload = () => {
+        setImageCache(prev => ({ ...prev, [url]: true }));
+      };
+    }
+  };
+
+  const handleImageLoad = (itemId: string) => {
+    setLoadingImages(prev => ({ ...prev, [itemId]: false }));
   };
 
   // Set up real-time listener for properties
@@ -105,7 +136,13 @@ export function HomePage() {
           property.propertyTags.forEach(tag => allTags.add(tag));
         }
         if (property.propertyLocation) {
-          allLocations.add(property.propertyLocation);
+          // Standardize location format: capitalize first letter of each word
+          const formattedLocation = property.propertyLocation
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+          allLocations.add(formattedLocation);
         }
       });
       
@@ -205,9 +242,14 @@ export function HomePage() {
 
     // Apply location filter
     if (activeFilters.selectedLocation) {
-      filtered = filtered.filter(property =>
-        property.propertyLocation === activeFilters.selectedLocation
-      );
+      filtered = filtered.filter(property => {
+        const formattedPropertyLocation = property.propertyLocation
+          .toLowerCase()
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        return formattedPropertyLocation === activeFilters.selectedLocation;
+      });
     }
 
     // Apply property type filter
@@ -289,13 +331,15 @@ export function HomePage() {
       if (isFavorited) {
         // Remove from favorites
         await updateDoc(accountRef, {
-          itemsSaved: arrayRemove(itemId)
+          itemsSaved: arrayRemove(itemId),
+          favorites: arrayRemove(itemId)
         });
         setUserFavorites(prev => prev.filter(id => id !== itemId));
       } else {
         // Add to favorites
         await updateDoc(accountRef, {
-          itemsSaved: arrayUnion(itemId)
+          itemsSaved: arrayUnion(itemId),
+          favorites: arrayUnion(itemId)
         });
         setUserFavorites(prev => [...prev, itemId]);
       }
@@ -432,7 +476,6 @@ export function HomePage() {
         </div>
 
         <div className="nav-right">
-          <div className="language-switch">EN</div>
           <div 
             className="user-icon" 
             onClick={() => {
@@ -526,19 +569,26 @@ export function HomePage() {
                   onClick={() => handlePropertyClick(item.id)}
                 >
                   <div className="image-container">
-    <img 
-      src={item.propertyPhotos?.[`photo${currentImageIndices[item.id] || 0}`]?.pictureUrl} 
-      alt={item.propertyName} 
-      className="property-image" 
-    />
-    </div>
+                    <img 
+                      src={item.propertyPhotos?.[`photo${currentImageIndices[item.id] || 0}`]?.pictureUrl} 
+                      alt={item.propertyName} 
+                      className={`property-image ${loadingImages[item.id] ? 'loading' : ''}`}
+                      onLoad={() => handleImageLoad(item.id)}
+                    />
+                    {loadingImages[item.id] && (
+                      <div className="image-loading-overlay">
+                        <div className="loading-spinner"></div>
+                      </div>
+                    )}
+                  </div>
                   <button
                       className="favorite-button"
                       onClick={(e) => {
-                        if (user !== null) {
+                        e.stopPropagation();
+                        if (user) {
                           handleFavorite(e, item.id, user);
                         } else {
-                          console.error('User is not logged in.');
+                          setShowAuthOverlay(true);
                         }
                       }}
                     >
