@@ -1,4 +1,5 @@
 import '../PropertyPage.css';
+import './CommentSection.css';
 
 import { useState, useRef, useEffect } from 'react';
 
@@ -139,6 +140,38 @@ const CommentSection = ({
             )}
           </div>
           
+          {/* Replies section */}
+          {comment.replies && comment.replies.length > 0 && (
+            <div className="replies-section">
+              {comment.replies.map((reply) => (
+                <div key={reply.id} className="reply">
+                  <div className="reply-header">
+                    <span className="reply-author">{reply.userEmail}</span>
+                    <span className="reply-date">{formatDate(reply.commentDate)}</span>
+                  </div>
+                  <div className="reply-content">{reply.content}</div>
+                  <div className="reply-actions">
+                    <button 
+                      className={`action-button like-button ${reply.likedBy?.includes(user?.uid || '') ? 'liked' : ''}`}
+                      onClick={() => onReplyLike(comment.id, reply.id)}
+                    >
+                      {reply.likedBy?.includes(user?.uid || '') ? '❤️' : '🤍'} {reply.likesCounter || 0}
+                    </button>
+                    {user?.uid === reply.userId && (
+                      <button 
+                        className="action-button delete-button"
+                        onClick={() => onDeleteReply(comment.id, reply.id)}
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {/* Reply form */}
           {replyingTo === comment.id && (
             <div className="reply-form">
               <textarea
@@ -168,36 +201,6 @@ const CommentSection = ({
                   Cancel
                 </button>
               </div>
-            </div>
-          )}
-          
-          {comment.replies && comment.replies.length > 0 && (
-            <div className="replies-section">
-              {comment.replies.map((reply) => (
-                <div key={reply.id} className="reply-comment">
-                  <div className="comment-header">
-                    <span className="comment-author">{reply.userEmail}</span>
-                    <span className="comment-date">{formatDate(reply.commentDate)}</span>
-                  </div>
-                  <div className="comment-content">{reply.content}</div>
-                  <div className="comment-actions">
-                    <button 
-                      className={`action-button like-button ${reply.likedBy?.includes(user?.uid || '') ? 'liked' : ''}`}
-                      onClick={() => onReplyLike(comment.id, reply.id)}
-                    >
-                      {reply.likedBy?.includes(user?.uid || '') ? '❤️' : '🤍'} {reply.likesCounter || 0}
-                    </button>
-                    {user?.uid === reply.userId && (
-                      <button 
-                        className="action-button delete-button"
-                        onClick={() => onDeleteReply(comment.id, reply.id)}
-                      >
-                        🗑️
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
             </div>
           )}
         </div>

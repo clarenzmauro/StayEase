@@ -1,0 +1,23 @@
+.interested-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.interested-button:hover {
+  background-color: #0056b3;
+}
+
+.interested-button.interested {
+  background-color: #28a745;
+}
+
+.interested-button.interested:hover {
+  background-color: #218838;
+}

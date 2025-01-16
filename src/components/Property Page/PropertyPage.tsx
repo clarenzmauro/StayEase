@@ -68,6 +68,7 @@ interface Comment {
   dislikeCounter?: number;
   isReply?: boolean;
   replies?: any[];
+  parentCommentId?: string;
 }
 
 const PropertyPage = () => {
@@ -136,65 +137,61 @@ const PropertyPage = () => {
             }
           }
 
-          // Fetch comments and their replies
+          // Fetch all comments for this property (both parent comments and replies)
           const commentsQuery = query(collection(db, 'comments'), where('propertyId', '==', id));
           const commentsSnapshot = await getDocs(commentsQuery);
 
-          // First, get all comments
-          const commentsData = commentsSnapshot.docs.map(doc => ({
-            id: doc.id,
-            propertyId: doc.data().propertyId,
-            userId: doc.data().userId,
-            userEmail: doc.data().userEmail,
-            content: doc.data().content,
-            commentDate: doc.data().commentDate,
-            likesCounter: doc.data().likesCounter,
-            likedBy: doc.data().likedBy,
-            dislikeCounter: doc.data().dislikeCounter,
-            isReply: doc.data().isReply,
-            replies: []
-          })) as Comment[];
+          // Separate parent comments and replies
+          const parentComments: Comment[] = [];
+          const repliesMap = new Map<string, Comment[]>();
 
-          // Then, fetch replies for each comment
-          const repliesQuery = query(
-            collection(db, 'comments'),
-            where('propertyId', '==', id),
-            where('isReply', '==', true)
-          );
-          const repliesSnapshot = await getDocs(repliesQuery);
+          commentsSnapshot.docs.forEach(doc => {
+            const data = doc.data();
+            const comment = {
+              id: doc.id,
+              propertyId: data.propertyId,
+              userId: data.userId,
+              userEmail: data.userEmail,
+              content: data.content,
+              commentDate: data.commentDate,
+              likesCounter: data.likesCounter || 0,
+              likedBy: data.likedBy || [],
+              dislikeCounter: data.dislikeCounter || 0,
+              isReply: data.isReply || false,
+              replies: [],
+              parentCommentId: data.parentCommentId
+            };
 
-          // Create a map of parent comments to their replies
-          const repliesMap = new Map();
-          repliesSnapshot.docs.forEach(doc => {
-            const replyData = doc.data();
-            const parentId = replyData.parentCommentId;
-            if (parentId) {
-              if (!repliesMap.has(parentId)) {
-                repliesMap.set(parentId, []);
+            if (data.parentCommentId) {
+              // This is a reply
+              if (!repliesMap.has(data.parentCommentId)) {
+                repliesMap.set(data.parentCommentId, []);
               }
-              repliesMap.get(parentId).push({
-                id: doc.id,
-                propertyId: replyData.propertyId,
-                userId: replyData.userId,
-                userEmail: replyData.userEmail,
-                content: replyData.content,
-                commentDate: replyData.commentDate,
-                likesCounter: replyData.likesCounter,
-                likedBy: replyData.likedBy,
-                dislikeCounter: replyData.dislikeCounter,
-                isReply: replyData.isReply,
-                replies: []
-              });
+              repliesMap.get(data.parentCommentId)?.push(comment);
+            } else {
+              // This is a parent comment
+              parentComments.push(comment);
             }
           });
 
-          // Attach replies to their parent comments
-          const commentsWithReplies = commentsData.map(comment => ({
+          // Attach replies to their parent comments and sort them by date
+          const commentsWithReplies = parentComments.map(comment => ({
             ...comment,
-            replies: repliesMap.get(comment.id) || []
+            replies: (repliesMap.get(comment.id) || []).sort((a, b) => {
+              const dateA = a.commentDate?.seconds || 0;
+              const dateB = b.commentDate?.seconds || 0;
+              return dateA - dateB;
+            })
           }));
 
-          setComments(commentsWithReplies);
+          // Sort parent comments by date
+          const sortedComments = commentsWithReplies.sort((a, b) => {
+            const dateA = a.commentDate?.seconds || 0;
+            const dateB = b.commentDate?.seconds || 0;
+            return dateB - dateA; // newest first
+          });
+
+          setComments(sortedComments);
         }
         setLoading(false);
       } catch (error) {
@@ -250,24 +247,48 @@ const PropertyPage = () => {
     try {
       const propertyRef = doc(db, 'properties', id);
       const userRef = doc(db, 'accounts', auth.currentUser.uid);
+      
+      // Get current property data to check current interest status
+      const propertyDoc = await getDoc(propertyRef);
+      if (!propertyDoc.exists()) return;
+      
+      const propertyData = propertyDoc.data();
+      const isCurrentlyInterested = propertyData.interestedApplicants?.includes(auth.currentUser.uid);
+      const currentCount = propertyData.interestedCount || 0;
 
-      // Update property's interestedApplicantsa
+      // Toggle interest status and update count
       await updateDoc(propertyRef, {
-        interestedApplicants: arrayUnion(auth.currentUser.uid),
-        interestedCount: (property?.interestedCount || 0) + 1
+        interestedApplicants: isCurrentlyInterested 
+          ? arrayRemove(auth.currentUser.uid)
+          : arrayUnion(auth.currentUser.uid),
+        interestedCount: isCurrentlyInterested 
+          ? Math.max(0, currentCount - 1) // Ensure count never goes below 0
+          : currentCount + 1
       });
 
       // Update user's itemsInterested
       await updateDoc(userRef, {
-        itemsInterested: arrayUnion(id)
+        itemsInterested: isCurrentlyInterested 
+          ? arrayRemove(id)
+          : arrayUnion(id)
       });
 
       // Update local state
-      setProperty(prev => prev ? {
-        ...prev,
-        interestedApplicants: [...(prev.interestedApplicants || []), auth.currentUser.uid],
-        interestedCount: (prev.interestedCount || 0) + 1
-      } : null);
+      setProperty(prev => {
+        if (!prev) return null;
+        const currentApplicants = prev.interestedApplicants || [];
+        const newCount = isCurrentlyInterested 
+          ? Math.max(0, (prev.interestedCount || 0) - 1)
+          : (prev.interestedCount || 0) + 1;
+        
+        return {
+          ...prev,
+          interestedApplicants: isCurrentlyInterested
+            ? currentApplicants.filter(uid => uid !== auth.currentUser?.uid)
+            : [...currentApplicants, auth.currentUser.uid],
+          interestedCount: newCount
+        };
+      });
     } catch (error) {
       console.error('Error updating interested status:', error);
     }
@@ -316,7 +337,8 @@ const PropertyPage = () => {
           likedBy: data.likedBy || [],
           dislikeCounter: data.dislikeCounter || 0,
           isReply: data.isReply || false,
-          replies: data.replies || []
+          replies: data.replies || [],
+          parentCommentId: data.parentCommentId
         };
       });
 
@@ -451,29 +473,28 @@ const PropertyPage = () => {
     }
   };
 
-  const handleReplySubmit = async (commentId: string) => {
+  const handleReplySubmit = async (commentId: string, content: string) => {
     if (!user) {
       setShowLoginPrompt(true);
       return;
     }
-
-    if (!replyContent.trim()) return;
+    if (!auth.currentUser || !content.trim() || !id) return;
 
     try {
       const replyData = {
         propertyId: id,
-        userId: user.uid,
-        userEmail: user.email,
-        content: replyContent,
+        userId: auth.currentUser.uid,
+        userEmail: auth.currentUser.email,
+        content: content,
         commentDate: serverTimestamp(),
         likesCounter: 0,
         likedBy: [],
+        dislikeCounter: 0,
         isReply: true,
         parentCommentId: commentId
       };
 
       const replyRef = await addDoc(collection(db, 'comments'), replyData);
-      const replyWithId = { ...replyData, id: replyRef.id };
 
       // Update local state
       setComments(prevComments =>
@@ -481,15 +502,16 @@ const PropertyPage = () => {
           if (comment.id === commentId) {
             return {
               ...comment,
-              replies: [...(comment.replies || []), replyWithId]
+              replies: [...(comment.replies || []), {
+                ...replyData,
+                id: replyRef.id,
+                commentDate: { seconds: Date.now() / 1000 } // Temporary timestamp for immediate display
+              }]
             };
           }
           return comment;
         })
       );
-
-      setReplyContent('');
-      setReplyingTo(null);
     } catch (error) {
       console.error('Error adding reply:', error);
     }
@@ -656,10 +678,13 @@ const PropertyPage = () => {
     )}
           </section>
         </>
+
       )}
         </>
+
       ) : (
         <>
+
       <PropertyHeader />
 
       {/* Favorite button */}
@@ -667,17 +692,19 @@ const PropertyPage = () => {
         onClick={handleFavoriteToggle}
         className={`favorite-button-property-page ${userFavorites.includes(id || '') ? 'favorited' : ''}`}
       >
-        ❤
+        
       </button>
 
       {property && (
         <>
+
           <div className="property-header">
             <h1 className="property-title">{property.propertyName}</h1>
           </div>
           <PropertyGallery photos={property.propertyPhotos} />
           <p className="property-location">{property.propertyLocation}</p>
         </>
+
       )}
 
       <div className="property-content">
@@ -686,6 +713,7 @@ const PropertyPage = () => {
         <BookingCard
           property={property}
           onInterestedClick={handleInterestedClick}
+          isInterested={property.interestedApplicants?.includes(auth.currentUser?.uid || '') || false}
         />
       </div>
 
@@ -697,7 +725,7 @@ const PropertyPage = () => {
         onCommentSubmit={handleCommentSubmit}
         onLikeComment={handleLikeComment}
         onDeleteComment={handleDeleteComment}
-        onReplySubmit={handleReplySubmit}
+        onReplySubmit={(commentId, content) => handleReplySubmit(commentId, content)}
         onReplyLike={handleReplyLike}
         onDeleteReply={handleDeleteReply}
       />
@@ -715,6 +743,7 @@ const PropertyPage = () => {
         onClose={() => setShowLoginPrompt(false)}
       />
       </>
+
     )}
     </div>
     

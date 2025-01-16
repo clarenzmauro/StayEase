@@ -1,3 +1,5 @@
+import './BookingCard.css';
+
 interface BookingCardProps {
   property: {
     propertyPrice: number;
@@ -11,11 +13,13 @@ interface BookingCardProps {
     securityDeposit: number;
     leaseTerm: number;
     allowViewing: boolean;
+    interestedApplicants?: string[];
   };
   onInterestedClick: () => void;
+  isInterested: boolean;
 }
 
-const BookingCard = ({ property, onInterestedClick }: BookingCardProps) => {
+const BookingCard = ({ property, onInterestedClick, isInterested }: BookingCardProps) => {
   return (
     <div className="booking-card">
       <div className="price-info">
@@ -54,8 +58,11 @@ const BookingCard = ({ property, onInterestedClick }: BookingCardProps) => {
         </div>
       </div>
 
-      <button className="interested-button" onClick={onInterestedClick}>
-        Interested
+      <button 
+        className={`interested-button ${isInterested ? 'interested' : ''}`} 
+        onClick={onInterestedClick}
+      >
+        {isInterested ? 'Interested ✓' : 'Interested'}
       </button>
 
       <div className="total-calculation">
