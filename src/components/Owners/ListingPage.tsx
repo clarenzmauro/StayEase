@@ -465,9 +465,26 @@ for (let i = 0; i < propertyData.count; i++) {
     setImages(newImages);
   };
 
-  const handleFileChange = (index: number, file: File | null) => {
+  const deleteImage = async (propertyId: string, imageName: string) => {
+    const { error } = await supabase.storage
+        .from('properties')
+        .remove([`${propertyId}/${imageName}`]); // Delete the existing image
+
+    if (error) {
+        console.error('Error deleting image:', error);
+        alert('Error deleting image. Please try again.');
+    }
+};
+
+  const handleFileChange = async (index: number, file: File | null) => {
     const newImages = [...images];
     if (file) {
+      if (id) { // Ensure id is defined
+        await deleteImage(id, `photo${index}`);
+    } else {
+        console.error('Property ID is undefined. Cannot delete image.');
+        return; // Exit if id is not defined
+    }
       newImages[index] = {
         url: URL.createObjectURL(file),
         label: newImages[index].label || file.name,
