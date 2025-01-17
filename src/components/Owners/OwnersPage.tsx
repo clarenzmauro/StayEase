@@ -45,6 +45,9 @@ const OwnersPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const location = useLocation();
     const [currentUser, setCurrentUser] = useState<any>(null);
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [userExistingReview, setUserExistingReview] = useState<any>(null);
+    const [isEditMode, setIsEditMode] = useState(false);
     const { normalDocumentId, encryptedDocumentId } = location.state || {}; // Accessing state
     const [ownerData, setOwnerData] = useState<any>(null);
     const [isDashboardOpen, setIsDashboardOpen] = useState(false);
@@ -53,6 +56,7 @@ const OwnersPage: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newReview, setNewReview] = useState({ content: '', rating: 0 });
     const [comments, setComments] = useState<any[]>([]);
+    const [averageRating, setAverageRating] = useState<number>(0);
     const [setReviews] = useState<any[]>([
       // Sample reviews for demonstration
       {
@@ -67,7 +71,7 @@ const OwnersPage: React.FC = () => {
 
     const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner'; // Default to 'Owner' if username is not available
 
-    const handleDeleteProperty = async (propertyId: string) =>{
+    const handleDeleteProperty = async (propertyId: string) => {
       const confirmDelete = window.confirm("Are you sure you want to delete this property?");;
       if(!confirmDelete) return;
 
@@ -137,12 +141,15 @@ const OwnersPage: React.FC = () => {
                   email: user.email,
                   profilePic: user.photoURL
               });
+              // Check if current user is following the owner
+              checkIfFollowing(user.uid);
           } else {
               // User is signed out
               setCurrentUser(null);
+              setIsFollowing(false);
           }
       });
-  
+
       // Cleanup subscription on unmount
       return () => unsubscribe();
   }, []);
@@ -172,56 +179,106 @@ const OwnersPage: React.FC = () => {
       const commentsData = ownerData?.comments || {};
       const commentCounter = commentsData.commentCounter || 0;
       const fetchedComments = [];
+      let totalRating = 0;
+      let validRatingsCount = 0;
 
       for (let i = 0; i < commentCounter; i++) {
           const commentKey = `comment${i + 1}`;
           if (commentsData[commentKey]) {
-              fetchedComments.push({
+              const commentData = {
                   content: commentsData[commentKey].commentContent,
                   user: commentsData[commentKey].commentUser,
                   username: commentsData[commentKey].commentUsername,
                   date: commentsData[commentKey].commentDate,
                   rating: commentsData[commentKey].commentRating,
-              });
+                  commentKey: commentKey
+              };
+              
+              if (currentUser && commentData.user === currentUser.uid) {
+                  setUserExistingReview(commentData);
+              }
+
+              const rating = commentsData[commentKey].commentRating;
+              if (typeof rating === 'number') {
+                  totalRating += rating;
+                  validRatingsCount++;
+              }
+              fetchedComments.push(commentData);
           }
       }
 
+      const calculatedAverage = validRatingsCount > 0 ? (totalRating / validRatingsCount).toFixed(1) : 0;
+      setAverageRating(Number(calculatedAverage));
       setComments(fetchedComments);
-  };
-
-  const handleCommentSubmit = async () => {
-    if (!currentUser) {
-      console.error("User is not logged in.");
-      return; // Exit if no user is logged in
-  }
-
-    const commentCounterRef = doc(db, 'accounts', normalDocumentId);
-    const commentCounterSnap = await getDoc(commentCounterRef);
-    const currentCounter = commentCounterSnap.exists() ? commentCounterSnap.data().comments.commentCounter : 0;
-
-    const newCommentData = {
-        commentContent: newReview.content,
-        commentUser: currentUser?.uid || "Unknown User", // Replace with actual user document ID from Google Auth
-        commentUsername: currentUser?.displayName || "Anonymous", // Replace with actual username from Google Auth
-        commentDate: new Date().toISOString(),
-        commentRating: newReview.rating,
     };
 
-    // Update the comments field in Firestore
-    await updateDoc(commentCounterRef, {
-        [`comments.comment${currentCounter + 1}`]: newCommentData,
-        'comments.commentCounter': currentCounter + 1,
-    });
+    const handleDeleteReview = async () => {
+        if (!currentUser || !userExistingReview) return;
+        
+        const confirmDelete = window.confirm("Are you sure you want to delete your review?");
+        if (!confirmDelete) return;
 
-    // Update local state
-  //   setComments(prevComments => [
-  //     ...prevComments,
-  //     { ...newCommentData, date: new Date(newCommentData.commentDate).toLocaleDateString() }
-  // ]);
-    setNewReview({ content: '', rating: 0 }); // Reset the new comment state
-    setIsModalOpen(false); // Close the modal
-};
+        try {
+            const docRef = doc(db, 'accounts', normalDocumentId);
+            await updateDoc(docRef, {
+                [`comments.${userExistingReview.commentKey}`]: null,
+            });
+            setUserExistingReview(null);
+        } catch (error) {
+            console.error("Error deleting review:", error);
+            alert("Failed to delete review. Please try again.");
+        }
+    };
 
+    const handleEditReview = () => {
+        if (!userExistingReview) return;
+        setNewReview({
+            content: userExistingReview.content,
+            rating: userExistingReview.rating
+        });
+        setIsEditMode(true);
+        setIsModalOpen(true);
+    };
+
+    const handleCommentSubmit = async () => {
+        if (!currentUser) {
+            console.error("User is not logged in.");
+            return;
+        }
+
+        const commentCounterRef = doc(db, 'accounts', normalDocumentId);
+        const commentCounterSnap = await getDoc(commentCounterRef);
+        const currentCounter = commentCounterSnap.exists() ? commentCounterSnap.data().comments.commentCounter : 0;
+
+        const newCommentData = {
+            commentContent: newReview.content,
+            commentUser: currentUser.uid,
+            commentUsername: currentUser.displayName || "Anonymous",
+            commentDate: new Date().toISOString(),
+            commentRating: newReview.rating,
+        };
+
+        try {
+            if (isEditMode && userExistingReview) {
+                // Update existing review
+                await updateDoc(commentCounterRef, {
+                    [`comments.${userExistingReview.commentKey}`]: newCommentData,
+                });
+            } else {
+                // Create new review
+                await updateDoc(commentCounterRef, {
+                    [`comments.comment${currentCounter + 1}`]: newCommentData,
+                    'comments.commentCounter': currentCounter + 1,
+                });
+            }
+            setNewReview({ content: '', rating: 0 });
+            setIsModalOpen(false);
+            setIsEditMode(false);
+        } catch (error) {
+            console.error("Error submitting review:", error);
+            alert("Failed to submit review. Please try again.");
+        }
+    };
     const fetchDahsboardData = async (dashboardId: string) => {
       const dashboardRef = doc(db, 'dashboards', dashboardId);
       const dashboardSnap = await getDoc(dashboardRef);
@@ -246,11 +303,11 @@ const OwnersPage: React.FC = () => {
               const propertiesPromises = dashboardData.listedDorms.map(id => getDoc(doc(db, 'properties', id)));
               const propertiesDocs = await Promise.all(propertiesPromises);
               const propertiesData = propertiesDocs.map(doc => ({ id: doc.id, ...doc.data() }));
-  
+
               // Log the fetched properties
               console.log("Fetched Properties:", propertiesData);
               console.log("Dashboard Id:", dashboardId);
-  
+
               setProperties(propertiesData);
           }
       } else {
@@ -271,6 +328,84 @@ const OwnersPage: React.FC = () => {
       }
       };
       
+  const handleModalOpen = () => {
+    if (!currentUser) {
+        alert("Please log in to leave a review");
+        return;
+    }
+    if (userExistingReview) {
+        alert("You already have a review. Please edit or delete your existing review first.");
+        return;
+    }
+    setIsModalOpen(true);
+  };
+
+  useEffect(() => {
+    if (comments.length > 0 && currentUser) {
+        const existingReview = comments.find(comment => comment.user === currentUser.uid);
+        setUserExistingReview(existingReview || null);
+    } else {
+        setUserExistingReview(null);
+    }
+  }, [comments, currentUser]);
+
+  const checkIfFollowing = async (userId: string) => {
+    if (!normalDocumentId) return;
+    
+    try {
+      const ownerDoc = await getDoc(doc(db, 'accounts', normalDocumentId));
+      if (ownerDoc.exists()) {
+        const followers = ownerDoc.data().followers || {};
+        setIsFollowing(followers[userId] === true);
+      }
+    } catch (error) {
+      console.error("Error checking follow status:", error);
+    }
+  };
+
+  const handleFollowToggle = async () => {
+    if (!currentUser || !normalDocumentId) {
+      alert("Please log in to follow owners");
+      return;
+    }
+
+    if (currentUser.uid === normalDocumentId) {
+      alert("You cannot follow yourself");
+      return;
+    }
+
+    try {
+      const ownerRef = doc(db, 'accounts', normalDocumentId);
+      const ownerDoc = await getDoc(ownerRef);
+
+      if (ownerDoc.exists()) {
+        const currentFollowers = ownerDoc.data().followers || {};
+        const currentFollowerCount = ownerDoc.data().followerCount || 0;
+
+        if (isFollowing) {
+          // Unfollow
+          delete currentFollowers[currentUser.uid];
+          await updateDoc(ownerRef, {
+            followers: currentFollowers,
+            followerCount: currentFollowerCount - 1
+          });
+          setIsFollowing(false);
+        } else {
+          // Follow
+          currentFollowers[currentUser.uid] = true;
+          await updateDoc(ownerRef, {
+            followers: currentFollowers,
+            followerCount: currentFollowerCount + 1
+          });
+          setIsFollowing(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating follow status:", error);
+      alert("Failed to update follow status. Please try again.");
+    }
+  };
+
   if (isLoading) {
     return <SkeletonLoading />;
   }
@@ -315,7 +450,14 @@ const OwnersPage: React.FC = () => {
 
             <h1 className="profile-name">{ownerData?.username}</h1>
             <p className="superhost-badge">Property Owner</p>
-            
+            {!isOwnerViewing && (
+                <button 
+                    className={`follow-button ${isFollowing ? 'following' : ''}`}
+                    onClick={handleFollowToggle}
+                >
+                    {isFollowing ? 'Following' : 'Follow'}
+                </button>
+            )}
             <div className="stats-container">
               <div className="stat-item">
                 <div className="stat-value">{ownerData?.followerCount}</div>
@@ -323,19 +465,18 @@ const OwnersPage: React.FC = () => {
               </div>
 
               <div className="stat-item">
-                <div className="stat-value">{ownerData?.rating}★</div>
+                <div className="stat-value">{averageRating}★</div>
                 <div className="stat-label">Rating</div>
               </div>
 
               <div className="stat-item">
-                <div className="stat-value">{ownerData?.dateJoined ?
+                <div className="stat-value">{ownerData?.dateJoined ? 
                 new Date(ownerData.dateJoined.seconds * 1000).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                   })
-                  : 'N/A'}
-                  </div>
+                  : 'N/A'}</div>
                 <div className="stat-label">Date Joined</div>
               </div>
             </div>
@@ -418,27 +559,34 @@ const OwnersPage: React.FC = () => {
             </div>
 
             <div className="reviews-grid">
-            {!isOwnerViewing && (
-                                    <div className="review-card empty-review" onClick={() => setIsModalOpen(true)}>
-                                        <p>Click here to leave a review!</p>
-                                    </div>
-                                )}
-               {comments.map((comment, index) => (
-                                    <div key={index} className="review-card">
-                                        <p className="review-text">{comment.content}</p>
-                                        <div className="review-author">
-                                        <img 
-    src={currentUser?.profilePic || "/placeholder.svg?height=150&width=150"} 
-    alt="Profile" 
-    className="profile-image" 
-/>
-                                            <div className="author-info">
-                                                <h3>{comment.username}</h3>
-                                                <p>{new Date(comment.date).toLocaleDateString()}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                {!isOwnerViewing && !userExistingReview && (
+                    <div className="review-card empty-review" onClick={handleModalOpen}>
+                        <p>Click here to leave a review!</p>
+                    </div>
+                )}
+                {comments.map((comment, index) => (
+                    <div key={index} className="review-card">
+                        <p className="review-text">{comment.content}</p>
+                        <div className="review-rating">Rating: {comment.rating}★</div>
+                        <div className="review-author">
+                            <img 
+                                src={currentUser?.profilePic || "/placeholder.svg?height=150&width=150"} 
+                                alt="Profile" 
+                                className="profile-image" 
+                            />
+                            <div className="author-info">
+                                <h3>{comment.username}</h3>
+                                <p>{new Date(comment.date).toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        {currentUser && comment.user === currentUser.uid && (
+                            <div className="review-actions">
+                                <button onClick={() => handleEditReview()}>Edit</button>
+                                <button onClick={() => handleDeleteReview()}>Delete</button>
+                            </div>
+                        )}
+                    </div>
+                ))}
             </div>
 
             <button className="show-more-button">Show more reviews</button>
@@ -450,7 +598,7 @@ const OwnersPage: React.FC = () => {
       {isModalOpen && (
                 <div className="modal-overlay">
                     <div className="modal-content">
-                        <h3>Leave a Review</h3>
+                        <h3>{isEditMode ? 'Edit Review' : 'Leave a Review'}</h3>
                         <textarea
                             value={newReview.content}
                             onChange={(e) => setNewReview({ ...newReview, content: e.target.value })}
