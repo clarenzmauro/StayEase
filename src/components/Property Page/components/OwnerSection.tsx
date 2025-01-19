@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../../../firebase/config';
+import { db, auth } from '../../../firebase/config';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import ChatModal from '../../Chat/ChatModal';
 import './OwnerSection.css';
 
@@ -28,6 +29,9 @@ const OwnerSection: React.FC<OwnerSectionProps> = ({
   const [ownerData, setOwnerData] = useState<OwnerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showAuthOverlay, setShowAuthOverlay] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchOwnerData = async () => {
@@ -47,6 +51,38 @@ const OwnerSection: React.FC<OwnerSectionProps> = ({
       fetchOwnerData();
     }
   }, [ownerId]);
+
+  const handleMessageClick = () => {
+    if (!auth.currentUser) {
+      setShowAuthOverlay(true);
+      return;
+    }
+    onMessage();
+  };
+
+  const handleGoogleAuth = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      setIsSuccess(true);
+      setTimeout(() => {
+        setShowAuthOverlay(false);
+        onMessage(); // Open chat after successful login
+      }, 1500);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("An unknown error occurred");
+      }
+    }
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      setShowAuthOverlay(false);
+    }
+  };
 
   if (loading) {
     return <div className="owner-section">Loading owner information...</div>;
@@ -76,8 +112,8 @@ const OwnerSection: React.FC<OwnerSectionProps> = ({
             <button className="view-profile-btn" onClick={onViewProfile}>
               View Profile
             </button>
-            {allowChat && ( // Conditionally render the Message button
-              <button className="message-btn" onClick={onMessage}>
+            {allowChat && (
+              <button className="message-btn" onClick={handleMessageClick}>
                 Message
               </button>
             )}
@@ -92,6 +128,26 @@ const OwnerSection: React.FC<OwnerSectionProps> = ({
           recipientName={ownerData.username}
           recipientPhoto={ownerData.profilePicUrl || '/default-profile.png'}
         />
+      )}
+      {showAuthOverlay && (
+        <div className="auth-overlay" onClick={handleOverlayClick}>
+          <div className="auth-modal">
+            {isSuccess ? (
+              <div className="success-message">
+                Successfully logged in!
+              </div>
+            ) : (
+              <>
+                <button className="close-button" onClick={() => setShowAuthOverlay(false)} aria-label="Close">×</button>
+                <h2>Login</h2>
+                {error && <div className="error-message">{error}</div>}
+                <button onClick={handleGoogleAuth} className="google-button">
+                  Continue with Google
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
