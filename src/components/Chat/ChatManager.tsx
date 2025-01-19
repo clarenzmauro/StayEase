@@ -1,94 +1,85 @@
-import React, { useEffect, useState } from 'react';
-import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore';
+import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase/config';
+import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
 import ChatModal from './ChatModal';
-import './ChatManager.css';
 
-interface ChatSession {
-  id: string;
-  senderId: string;
-  senderName: string;
-  senderPhoto: string;
-  lastMessage: string;
-  timestamp: any;
-}
+interface ChatManagerProps {}
 
-const ChatManager: React.FC = () => {
-  const [activeChats, setActiveChats] = useState<ChatSession[]>([]);
-  const [openChats, setOpenChats] = useState<string[]>([]);
+const ChatManager: React.FC<ChatManagerProps> = () => {
+  const [activeChats, setActiveChats] = useState<{ [key: string]: boolean }>({});
+  const [chatUsers, setChatUsers] = useState<{ [key: string]: { name: string; photo: string } }>({});
+  const [isMinimized, setIsMinimized] = useState<{ [key: string]: boolean }>({});
   const currentUser = auth.currentUser;
 
   useEffect(() => {
     if (!currentUser) return;
 
-    // Query all chats where the current user is the receiver
-    const chatsQuery = query(
-      collection(db, 'chats'),
-      where('participants', 'array-contains', currentUser.uid)
-    );
+    const unsubscribe = onSnapshot(
+      doc(db, 'accounts', currentUser.uid),
+      async (docSnapshot) => {
+        if (docSnapshot.exists()) {
+          const chatMates = docSnapshot.data().chatMates || {};
+          const updatedActiveChats: { [key: string]: boolean } = {};
+          const updatedChatUsers: { [key: string]: { name: string; photo: string } } = {};
 
-    const unsubscribe = onSnapshot(chatsQuery, async (snapshot) => {
-      const newChats: ChatSession[] = [];
-      
-      for (const doc of snapshot.docs) {
-        const chatData = doc.data();
-        const messages = await getDocs(collection(db, 'chats', doc.id, 'messages'));
-        const unreadMessages = messages.docs.filter(msg => {
-          const msgData = msg.data();
-          return msgData.receiverId === currentUser.uid && !msgData.isRead;
-        });
-
-        if (unreadMessages.length > 0) {
-          const lastMessage = unreadMessages[unreadMessages.length - 1];
-          const senderId = lastMessage.data().senderId;
-          
-          // Get sender info from accounts collection
-          const senderDoc = await getDocs(query(
-            collection(db, 'accounts'),
-            where('uid', '==', senderId)
-          ));
-
-          if (!senderDoc.empty) {
-            const senderData = senderDoc.docs[0].data();
-            newChats.push({
-              id: doc.id,
-              senderId,
-              senderName: senderData.username,
-              senderPhoto: senderData.profilePicUrl,
-              lastMessage: lastMessage.data().content,
-              timestamp: lastMessage.data().timestamp
-            });
-
-            // Automatically open chat with unread messages
-            if (!openChats.includes(doc.id)) {
-              setOpenChats(prev => [...prev, doc.id]);
+          for (const [userId, isActive] of Object.entries(chatMates)) {
+            if (isActive) {
+              updatedActiveChats[userId] = true;
+              
+              // Fetch user details if not already in state
+              if (!chatUsers[userId]) {
+                try {
+                  const userDoc = await getDoc(doc(db, 'accounts', userId));
+                  if (userDoc.exists()) {
+                    updatedChatUsers[userId] = {
+                      name: userDoc.data().username || 'Unknown User',
+                      photo: userDoc.data().profilePicUrl || '',
+                    };
+                  }
+                } catch (error) {
+                  console.error('Error fetching user details:', error);
+                }
+              }
             }
           }
+
+          setActiveChats(updatedActiveChats);
+          setChatUsers(prev => ({ ...prev, ...updatedChatUsers }));
         }
       }
-
-      setActiveChats(newChats);
-    });
+    );
 
     return () => unsubscribe();
   }, [currentUser]);
 
-  const handleCloseChat = (chatId: string) => {
-    setOpenChats(prev => prev.filter(id => id !== chatId));
+  const handleCloseChat = (userId: string) => {
+    setActiveChats(prev => {
+      const newActiveChats = { ...prev };
+      delete newActiveChats[userId];
+      return newActiveChats;
+    });
+  };
+
+  const handleMinimizedChange = (userId: string, minimized: boolean) => {
+    setIsMinimized(prev => ({
+      ...prev,
+      [userId]: minimized
+    }));
   };
 
   return (
     <div className="chat-manager">
-      {activeChats.map((chat, index) => (
-        openChats.includes(chat.id) && (
+      {Object.entries(activeChats).map(([userId, isActive]) => (
+        isActive && chatUsers[userId] && (
           <ChatModal
-            key={chat.id}
+            key={userId}
             isOpen={true}
-            onClose={() => handleCloseChat(chat.id)}
-            recipientId={chat.senderId}
-            recipientName={chat.senderName}
-            recipientPhoto={chat.senderPhoto}
-            initialPosition={index}
+            onClose={() => handleCloseChat(userId)}
+            recipientId={userId}
+            recipientName={chatUsers[userId].name}
+            recipientPhoto={chatUsers[userId].photo}
+            isMinimized={isMinimized[userId] || false}
+            onMinimizedChange={(minimized) => handleMinimizedChange(userId, minimized)}
           />
         )
       ))}

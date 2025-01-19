@@ -8,6 +8,8 @@ import { db } from '../../firebase/config.js';
 import { auth } from '../../firebase/config';
 import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from 'firebase/auth';
 import logoSvg from '../../assets/STAY.svg';
+import ChatManager from '../Chat/ChatManager';
+import ChatHistory from '../Chat/ChatHistory';
 
 interface FilterType {
   priceRange: { min: number; max: number };
@@ -656,6 +658,14 @@ export function HomePage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Add Chat Components when user is logged in */}
+      {user && (
+        <>
+          <ChatHistory />
+          <ChatManager />
+        </>
       )}
     </div>
   );

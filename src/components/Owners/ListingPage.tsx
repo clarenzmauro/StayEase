@@ -5,11 +5,7 @@ import { useParams } from 'react-router-dom';
 import { db } from '../../firebase/config';
 import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion, Timestamp } from 'firebase/firestore';
 import { supabase } from '../../supabase/supabase';
-import axios from 'axios'; // Import axios
 import './ListingPage.css';
-import ListingOwnerSection from './ListingOwnerSection';
-import { get } from 'firebase/database';
-import PropertyPage from '../Property Page/PropertyPage';
 import 'ol/ol.css';
 import Map from 'ol/Map';
 import View from 'ol/View';

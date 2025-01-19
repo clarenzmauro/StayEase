@@ -14,6 +14,7 @@ import LoginPrompt from './components/LoginPrompt';
 import PropertySkeleton from './components/PropertySkeleton';
 import OwnerSection from './components/OwnerSection';
 import PropertyMap from './components/PropertyMap';
+import ChatModal from '../Chat/ChatModal';
 
 import './PropertyPage.css';
 import ApplicantDetails from './ApplicantDetails';
@@ -91,6 +92,8 @@ const PropertyPage = () => {
   const [replyContent, setReplyContent] = useState('');
   const [allowChat, setAllowChat] = useState(false);
   const [editChecker, setEditChecker] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
   const COMMENTS_PER_PAGE = 4;
 
   useEffect(() => {
@@ -734,7 +737,7 @@ const PropertyPage = () => {
         <OwnerSection
           ownerId={property.ownerId}
           onViewProfile={() => navigate(`/owner-page/${normalDocumentId}`, { state: { normalDocumentId: normalDocumentId, encryptedDocumentId: encryptedDocumentId } })}
-          onMessage={() => navigate(`/messages/${property.ownerId}`)}
+          onMessage={() => setIsChatModalOpen(true)}
           allowChat={allowChat}
         />
       )}
@@ -742,6 +745,17 @@ const PropertyPage = () => {
         show={showLoginPrompt}
         onClose={() => setShowLoginPrompt(false)}
       />
+      {property && host && (
+        <ChatModal
+          isOpen={isChatModalOpen}
+          onClose={() => setIsChatModalOpen(false)}
+          recipientId={property.ownerId}
+          recipientName={host.username || 'Host'}
+          recipientPhoto={host.photoURL || ''}
+          isMinimized={isChatMinimized}
+          onMinimizedChange={setIsChatMinimized}
+        />
+      )}
       </>
 
     )}
