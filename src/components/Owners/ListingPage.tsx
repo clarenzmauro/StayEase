@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState, useEffect, useRef} from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/config';
 import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion, Timestamp } from 'firebase/firestore';
 import { supabase } from '../../supabase/supabase';
@@ -63,6 +63,7 @@ const tagCategories = {
 
 export function ListingPage() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [allowChatting, setAllowChatting] = useState(false);
   const [images, setImages] = useState<Image[]>([]);
@@ -247,16 +248,17 @@ export function ListingPage() {
         : new Date();
 
         const photos = [];
-for (let i = 0; i < propertyData.count; i++) {
-  const photo = propertyData.propertyPhotos[`photo${i}`];
-  if (photo) {
-    photos.push({
-      label: photo.label,
-      url: photo.pictureUrl,
-      file: null, // Set file to null if not available
-    });
-  }
-}
+        
+        for (let i = 0; i < propertyData.count; i++) {
+          const photo = propertyData.propertyPhotos[`photo${i}`];
+          if (photo) {
+            photos.push({
+              label: photo.label,
+              url: photo.pictureUrl,
+              file: null,
+            });
+          }
+        }
 
 
         setDetails({
@@ -348,11 +350,14 @@ for (let i = 0; i < propertyData.count; i++) {
         docRef = doc(db, 'properties', id); // Use the existing ID
         await updateDoc(docRef, propertyData);
         alert('Property updated successfully!');
+        navigate(`/property/${id}/${ownerId}/view-property`);
       } else {
         // Add new property
         const propertyRef = collection(db, 'properties');
         docRef = await addDoc(propertyRef, propertyData);
         alert('Property added successfully!');
+
+        // Navigate to the property page. Code here
       }
          // Handle image uploads
         await handleImageUploads(docRef.id);
