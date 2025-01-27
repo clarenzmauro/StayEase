@@ -202,3 +202,47 @@
 .chat-messages::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Enhanced Chat History Button */
+.chat-history-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 70px; /* Increased size */
+  height: 70px; /* Increased size */
+  border-radius: 35px; /* Adjusted for larger size */
+  background: #007bff; /* Primary color */
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2); /* Enhanced shadow */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  font-size: 28px; /* Increased icon size */
+}
+
+.chat-history-button:hover {
+  transform: translateY(-3px); /* Slightly increased hover effect */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Enhanced shadow on hover */
+  background: #0056b3; /* Darker shade on hover */
+}
+
+.unread-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background: #dc3545; /* Red for unread messages */
+  color: white;
+  border-radius: 12px;
+  padding: 4px 8px; /* Increased padding for better visibility */
+  font-size: 14px; /* Increased font size */
+  font-weight: bold;
+  min-width: 24px; /* Adjusted for better fit */
+  height: 24px; /* Adjusted for better fit */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

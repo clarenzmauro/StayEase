@@ -3,6 +3,7 @@ import { collection, query, where, orderBy, onSnapshot, getDoc, doc, getDocs, wr
 import { db, auth } from '../../firebase/config';
 import ChatModal from './ChatModal';
 import './ChatHistory.css';
+import chatIcon from '../../assets/chat-icon.png';
 
 interface ChatHistoryItem {
   chatId: string;
@@ -180,7 +181,7 @@ const ChatHistory: React.FC = () => {
         className="chat-history-button"
         onClick={handleHistoryButtonClick}
       >
-        <span className="chat-icon">💬</span>
+        <img src={chatIcon} alt="Chat" className="chat-icon" />
         {chats.reduce((total, chat) => total + (chat.unreadCount || 0), 0) > 0 && (
           <span className="unread-badge">
             {chats.reduce((total, chat) => total + (chat.unreadCount || 0), 0)}
