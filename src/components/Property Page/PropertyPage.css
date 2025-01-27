@@ -290,6 +290,10 @@
 .house-rules-section {
   padding: 32px 0;
   border-bottom: 1px solid #dddddd;
+  background-color: #f8f9fa;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 32px;
 }
 
 .house-rules-list {
@@ -2057,4 +2061,36 @@
   .property-page {
     padding-top: 60px;
   }
+}
+
+.show-more-button {
+  margin-top: 16px;
+  padding: 8px 16px; /* Adjust padding for a balanced look */
+  background-color: #031529; /* Blue background for "Show More" */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px; /* Font size */
+}
+
+.show-more-button:hover {
+  background-color: rgb(4, 31, 59); /* Darker blue on hover */
+}
+
+.show-less-button {
+  margin-top: 16px;
+  padding: 8px 16px; /* Same padding for consistency */
+  background-color: #dc3545; /* Red background for "Show Less" */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 14px; /* Font size */
+}
+
+.show-less-button:hover {
+  background-color: #c82333; /* Darker red on hover */
 }

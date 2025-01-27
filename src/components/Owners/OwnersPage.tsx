@@ -546,8 +546,8 @@ const OwnersPage: React.FC = () => {
           </p>
 
           <section className="reviews-section">
-            <div className="section-header">
-              <h2>{firstName}'s reviews</h2>
+            <div className="reviews-header">
+              <h2>{firstName}'s Reviews</h2>
               <div className="navigation-buttons">
                 <button className="nav-button-owner" aria-label="Previous">
                   <span className="arrow left"></span>
@@ -559,34 +559,43 @@ const OwnersPage: React.FC = () => {
             </div>
 
             <div className="reviews-grid">
-                {!isOwnerViewing && !userExistingReview && (
-                    <div className="review-card empty-review" onClick={handleModalOpen}>
-                        <p>Click here to leave a review!</p>
+              {!isOwnerViewing && !userExistingReview && (
+                <div className="review-card empty-review" onClick={handleModalOpen}>
+                  <p>Click here to leave a review!</p>
+                </div>
+              )}
+              {comments.map((comment, index) => (
+                <div key={index} className="review-card">
+                  <p className="review-text">{comment.content}</p>
+                  <div className="review-rating">
+                    <span>Rating:</span>
+                    <span>
+                      {[...Array(5)].map((_, index) => (
+                        <span key={index} className="star" style={{ color: index < comment.rating ? '#ffcc00' : '#ddd' }}>
+                          ★
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                  <div className="review-author">
+                    <img 
+                      src={currentUser?.profilePic || "/placeholder.svg?height=150&width=150"} 
+                      alt="Profile" 
+                      className="profile-image" 
+                    />
+                    <div className="author-info">
+                      <h3>{comment.username}</h3>
+                      <p>{new Date(comment.date).toLocaleDateString()}</p>
                     </div>
-                )}
-                {comments.map((comment, index) => (
-                    <div key={index} className="review-card">
-                        <p className="review-text">{comment.content}</p>
-                        <div className="review-rating">Rating: {comment.rating}★</div>
-                        <div className="review-author">
-                            <img 
-                                src={currentUser?.profilePic || "/placeholder.svg?height=150&width=150"} 
-                                alt="Profile" 
-                                className="profile-image" 
-                            />
-                            <div className="author-info">
-                                <h3>{comment.username}</h3>
-                                <p>{new Date(comment.date).toLocaleDateString()}</p>
-                            </div>
-                        </div>
-                        {currentUser && comment.user === currentUser.uid && (
-                            <div className="review-actions">
-                                <button onClick={() => handleEditReview()}>Edit</button>
-                                <button onClick={() => handleDeleteReview()}>Delete</button>
-                            </div>
-                        )}
+                  </div>
+                  {currentUser && comment.user === currentUser.uid && (
+                    <div className="review-actions">
+                      <button onClick={() => handleEditReview()}>Edit</button>
+                      <button onClick={() => handleDeleteReview()}>Delete</button>
                     </div>
-                ))}
+                  )}
+                </div>
+              ))}
             </div>
 
             <button className="show-more-button">Show more reviews</button>

@@ -94,153 +94,133 @@
 
 /* Reviews section - repositioned and enhanced */
 .reviews-section {
-  margin-top: 48px;
-  padding: 32px;
-  background: white;
+  background: #f9f9f9; /* Light background for contrast */
   border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-top: 24px;
 }
 
-.section-header {
+.reviews-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
-.section-header h2 {
+.reviews-header h2 {
   font-size: 24px;
   font-weight: 600;
-  color: #222222;
-}
-
-.navigation-buttons {
-  display: flex;
-  gap: 12px;
-}
-
-.nav-button-owner {
-  width: 40px;
-  height: 40px;
-  border: 1px solid #DDDDDD;
-  border-radius: 50%;
-  background: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.nav-button-owner:hover {
-  border-color: #222222;
-  background: #f8f9fa;
-  transform: translateY(-2px);
-}
-
-.nav-button-owner:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.arrow {
-  border: solid #222222;
-  border-width: 0 2px 2px 0;
-  display: inline-block;
-  padding: 4px;
-  transition: border-color 0.2s ease;
-}
-
-.arrow.right {
-  transform: rotate(-45deg);
-}
-
-.arrow.left {
-  transform: rotate(135deg);
+  color: #333;
 }
 
 .reviews-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Responsive grid */
+  gap: 16px;
 }
 
 .review-card {
-  padding: 24px;
-  background: #f8f9fa;
-  border-radius: 16px;
-  transition: all 0.2s ease;
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative; /* For positioning elements */
+  overflow: hidden; /* To prevent overflow */
 }
 
 .review-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .review-text {
-  font-size: 16px;
-  line-height: 1.6;
-  color: #222222;
-  margin-bottom: 20px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  font-size: 18px; /* Keep the review text size larger */
+  color: #333; /* Darker color for better contrast */
+  margin-bottom: 8px;
+  line-height: 1.6; /* Improved readability */
+  font-weight: bold; /* Make the review text bold */
+}
+
+.review-rating {
+  font-weight: normal; /* Set the rating text to normal weight */
+  color: black; /* Ensure the rating label is black */
+  font-size: 14px; /* Minimize the font size of the rating */
+  margin-bottom: 12px; /* Space below rating */
+  display: flex; /* Use flexbox for alignment */
+  align-items: center; /* Center align items */
+}
+
+.review-rating span {
+  margin-left: 5px; /* Space between text and stars */
+  font-size: 14px; /* Match the minimized font size */
+}
+
+.star {
+  color: #ffcc00; /* Gold color for stars */
+  font-size: 20px; /* Size of the stars */
+  margin-left: 2px; /* Space between stars */
 }
 
 .review-author {
   display: flex;
   align-items: center;
-  gap: 12px;
+  margin-top: 12px;
 }
 
-.author-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.review-author img {
+  width: 40px; /* Adjust the width as needed */
+  height: 40px; /* Adjust the height to maintain aspect ratio */
+  border-radius: 50%; /* Keep the circular shape */
+  object-fit: cover; /* Ensure the image covers the area */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: add a subtle shadow */
+}
+
+.author-info {
+  margin-left: 12px; /* Space between image and text */
 }
 
 .author-info h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #222222;
-  margin-bottom: 4px;
+  font-size: 14px; /* Reduced font size for name */
+  font-weight: 500; /* Slightly lighter weight */
+  color: #222;
+  margin: 0; /* Remove default margin */
 }
 
 .author-info p {
-  font-size: 14px;
-  color: #717171;
+  font-size: 12px; /* Smaller font size for date */
+  color: #777;
+  margin: 0; /* Remove default margin */
 }
 
-/* Show more reviews button - dark style */
+/* Add a border to the review card */
+.review-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px; /* Height of the border */
+  background: #1a365d; /* Color of the border */
+  border-radius: 12px 12px 0 0; /* Rounded top corners */
+}
+
+/* Show more button styles */
 .show-more-button {
-  background: #0F1419;
+  background: #1a365d;
   color: white;
   border: none;
-  border-radius: 9999px; /* Very high value for pill shape */
+  border-radius: 8px;
   padding: 12px 20px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex; /* Changed to inline-flex for content-based width */
-  align-items: center;
-  justify-content: center;
-  margin-top: 32px;
-  width: auto; /* Changed from 100% to auto */
+  transition: background 0.2s ease;
+  margin-top: 16px;
 }
 
 .show-more-button:hover {
-  background: #1a1f25;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.show-more-button:active {
-  transform: translateY(0);
+  background: #2c5282;
 }
 
 /* Remove the arrow that was in the previous version */

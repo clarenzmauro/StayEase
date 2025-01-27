@@ -61,6 +61,12 @@ const tagCategories = {
   'Payment': ['Electric Bill Included', 'Water Bill Included', 'No Security Deposit', 'Flexible Payment Terms']
 };
 
+const PLACEHOLDER_IMAGE = {
+  url: '', // No URL for the placeholder
+  label: 'Placeholder Image', // Label for the placeholder
+  file: null, // No file associated with the placeholder
+};
+
 export function ListingPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -449,6 +455,15 @@ export function ListingPage() {
   };
 
   const handleImageSave = () => {
+    // Ensure there are 5 images
+    const filledImages = [...images];
+
+    // Fill in missing images with the placeholder
+    while (filledImages.length < 5) {
+      filledImages.push(PLACEHOLDER_IMAGE);
+    }
+
+    setImages(filledImages);
     setIsModalOpen(false);
   };
 
@@ -836,8 +851,8 @@ export function ListingPage() {
         {/* Right Side - Image Grid */}
         <div className="image-section">
           <h2>Property Image</h2>
-          <div className="main-image" onClick={() => setIsModalOpen(true)}>
-            {images[0] ? (
+          <div className="primary-image" onClick={() => setIsModalOpen(true)}>
+            {images[0] && images[0].url ? (
               <img src={images[0].url} alt={images[0].label} />
             ) : (
               <div className="placeholder-text">
@@ -852,7 +867,7 @@ export function ListingPage() {
                 className="thumbnail"
                 onClick={() => setIsModalOpen(true)}
               >
-                {images[index] ? (
+                {images[index] && images[index].url ? (
                   <img src={images[index].url} alt={images[index].label} />
                 ) : (
                   <div className="placeholder-text">+</div>

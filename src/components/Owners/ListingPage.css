@@ -294,10 +294,28 @@
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+.image-section h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+/* Placeholder text */
+.placeholder-text {
+  color: #94a3b8;
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
 /* Main image container */
-.main-image {
+.primary-image {
   width: 100%;
-  height: 220px;
+  height: 250px;
   border: 2px dashed #e5e7eb;
   border-radius: 0.75rem;
   display: flex;
@@ -305,12 +323,11 @@
   justify-content: center;
   cursor: pointer;
   background-color: #f8fafc;
-  margin-bottom: 1rem;
   overflow: hidden;
   transition: all 0.3s ease;
 }
 
-.main-image:hover {
+.primary-image:hover {
   border-color: #94a3b8;
   background-color: #f1f5f9;
   transform: translateY(-2px);
@@ -344,7 +361,7 @@
 }
 
 /* Images */
-.main-image img,
+.primary-image img,
 .thumbnail img {
   width: 100%;
   height: 100%;
@@ -353,39 +370,9 @@
   transition: transform 0.3s ease;
 }
 
-.main-image:hover img,
+.primary-image:hover img,
 .thumbnail:hover img {
   transform: scale(1.05);
-}
-
-/* Placeholder text */
-.placeholder-text {
-  color: #94a3b8;
-  font-size: 0.875rem;
-  text-align: center;
-  padding: 1rem;
-  transition: all 0.2s ease;
-}
-
-.main-image:hover .placeholder-text,
-.thumbnail:hover .placeholder-text {
-  color: #64748b;
-}
-
-/* Plus icon for thumbnails */
-.thumbnail .placeholder-text {
-  font-size: 1.5rem;
-  font-weight: 500;
-}
-
-/* Section title */
-.image-section h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid #f1f5f9;
 }
 
 /* Image upload modal enhancements */
@@ -406,7 +393,7 @@
     margin-top: 1rem;
   }
 
-  .main-image {
+  .primary-image {
     height: 180px;
   }
 
@@ -591,7 +578,7 @@
 }
 
 /* Images styling */
-.main-image img,
+.primary-image img,
 .thumbnail img {
   width: 100%;
   height: 100%;
@@ -802,7 +789,7 @@
   }
   
   /* Main image container */
-  .main-image {
+  .primary-image {
     width: 100%;
     background-color: #f8fafc;
     border-radius: 0.75rem;
@@ -846,7 +833,7 @@
   }
   
   /* Hover states */
-  .main-image:hover,
+  .primary-image:hover,
   .thumbnail:hover {
     background-color: #f1f5f9;
     border-color: #3b82f6;
@@ -1362,7 +1349,7 @@
     100% { opacity: 0.7; }
   }
   
-  .main-image:empty .placeholder-text,
+  .primary-image:empty .placeholder-text,
   .thumbnail:empty .placeholder-text {
     animation: pulse 2s infinite ease-in-out;
   }
@@ -1500,13 +1487,13 @@
     }
   }
   
-  .main-image,
+  .primary-image,
   .thumbnail {
     cursor: pointer;
     transition: all 0.2s ease;
   }
   
-  .main-image:hover,
+  .primary-image:hover,
   .thumbnail:hover {
     border-color: #3b82f6;
     background-color: #f1f5f9;

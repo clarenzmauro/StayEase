@@ -1,4 +1,6 @@
 import '../PropertyPage.css';
+import React, { useState } from 'react';
+
 interface PropertyInfoProps {
   property: {
     bedroomCount: number;
@@ -25,6 +27,9 @@ interface PropertyInfoProps {
 }
 
 const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
+  const [visibleAmenities, setVisibleAmenities] = useState(6);
+  const [isExpanded, setIsExpanded] = useState(false);
+
   return (
     <div className="property-info">
       <div className="host-section">
@@ -48,13 +53,18 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
       <div className="amenities-section">
         <div className="section-title">What this place offers</div>
         <div className="amenities-grid">
-          {property.propertyTags?.map((tag, index) => (
+          {property.propertyTags?.slice(0, isExpanded ? property.propertyTags.length : visibleAmenities).map((tag, index) => (
             <div key={`tag-${index}`} className="amenity-item">
               <span>✓</span>
               <span>{tag}</span>
             </div>
           ))}
         </div>
+        {property.propertyTags && property.propertyTags.length > visibleAmenities && (
+          <button className="show-more-button" onClick={() => setIsExpanded(prev => !prev)}>
+            {isExpanded ? 'Show Less' : 'Show More'}
+          </button>
+        )}
       </div>
 
       <div className="house-rules-section">
