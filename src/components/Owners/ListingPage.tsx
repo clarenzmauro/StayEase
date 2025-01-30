@@ -341,9 +341,7 @@ export function ListingPage() {
         interestedCount: 0,
         interestedApplicants: [],
         comments: [],
-        propertyPhotos: {
-          count: images.length,
-        },
+        propertyPhotos: [],
         propertyTags: selectedTags,
         houseRules: houseRules
       };
@@ -363,10 +361,10 @@ export function ListingPage() {
         docRef = await addDoc(propertyRef, propertyData);
         alert('Property added successfully!');
 
-        // Navigate to the property page. Code here
-      }
+        
          // Handle image uploads
-        await handleImageUploads(docRef.id);
+         await handleImageUploads(docRef.id);
+      }
 
       if (!id) {
         throw new Error('Owner ID is undefined or invalid.');
@@ -399,45 +397,54 @@ export function ListingPage() {
 
   const handleImageUploads = async (propertyId: string) => {
     const imagesData: { [key: string]: { pictureUrl: string; label: string } } = {};
-    for (let i = 0; i < images.length; i++) {
-      const image = images[i];
-      if (image.file) {
-        try {
-          // Upload to Supabase
-          const filePath = `${propertyId}/photo${i}`;
-          const { error } = await supabase.storage
-            .from('properties')
-            .upload(filePath, image.file, {
-              cacheControl: '3600',
-              upsert: false // Set to true if you want to allow overwriting
-            });
-  
-          if (error) {
-            throw error;
-          }
-  
-          // Get the public URL
-          const { data: { publicUrl } } = supabase.storage
-            .from('properties')
-            .getPublicUrl(filePath);
-  
-          imagesData[`photo${i}`] = {
-            pictureUrl: publicUrl,
-            label: image.label
-          };
-        } catch (error) {
-          console.error('Error uploading image:', error);
-          // Handle error appropriately
-        }
-      } else {
-        console.warn('No file selected for image', i);
-    }
-  }
+    const documentIds: string[] = []; // Array to hold document IDs
 
-  await updateDoc(doc(db, 'properties', propertyId), {
-    propertyPhotos: imagesData,
-    count: images.length
-  });
+    for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        if (image.file) {
+            try {
+                // Upload to MongoDB (assuming you have an API endpoint for this)
+                const formData = new FormData();
+                formData.append('image', image.file);
+                formData.append('label', image.label);
+
+                const response = await fetch('http://localhost:5000/api/property-photos/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to upload image');
+                }
+
+                const uploadedPhoto = await response.json();
+                documentIds.push(uploadedPhoto._id); // Get the document ID from the response
+
+                // Get the public URL (if needed, otherwise you can skip this)
+                const { data: { publicUrl } } = supabase.storage
+                    .from('properties')
+                    .getPublicUrl(uploadedPhoto.filePath); // Adjust this if needed
+
+                imagesData[`photo${i}`] = {
+                    pictureUrl: publicUrl,
+                    label: image.label,
+                };
+            } catch (error) {
+                console.error('Error uploading image:', error);
+                // Handle error appropriately
+            }
+        } else {
+            console.warn('No file selected for image', i);
+        }
+    }
+
+    // Update Firestore with the document IDs in the propertyPhotos array
+    await updateDoc(doc(db, 'properties', propertyId), {
+        propertyPhotos: documentIds, // Set the propertyPhotos field to the array of document IDs
+        count: images.length // Optional: if you want to keep track of the number of images
+    });
+
+    return documentIds;
 };
 
   const handleAddRule = () => {
