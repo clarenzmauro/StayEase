@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../PropertyPage.css';
 import './PropertyGallery.css';
+import { getDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
+import { db } from '../../../firebase/config';
 
 interface Photo {
   pictureUrl: string;
@@ -8,15 +11,45 @@ interface Photo {
 }
 
 interface PropertyGalleryProps {
-  photos: {
-    count: number;
-    [key: string]: Photo | number;
-  };
+  propertyPhotos: string[];
 }
 
-const PropertyGallery = ({ photos }: PropertyGalleryProps) => {
+const PropertyGallery = ({ propertyPhotos }: PropertyGalleryProps) => {
   const [selectedImage, setSelectedImage] = useState<Photo | null>(null);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [images, setImages] = useState<Photo[]>([]);
+
+
+  useEffect(() => {
+    const fetchImages = async () => {
+      const fetchedImages: Photo[] = [];
+  
+      for (const photoId of propertyPhotos) {
+        try {
+          // Fetch image from API
+          const response = await fetch(`http://localhost:5000/api/property-photos/${photoId}/image`);
+          
+          if (!response.ok) {
+            console.error('Error fetching image:', response.statusText);
+            continue;
+          }
+  
+          // Convert response to a blob
+          const blob = await response.blob();
+          const imageUrl = URL.createObjectURL(blob); // Create a URL from the blob
+  
+          fetchedImages.push({ pictureUrl: imageUrl, label: `Photo ${photoId}` }); // Use a default label
+        } catch (error) {
+          console.error('Error fetching image:', error);
+        }
+      }
+  
+      setImages(fetchedImages);
+    };
+  
+    fetchImages();
+  }, [propertyPhotos]);
+
 
   const handleImageClick = (photo: Photo) => {
     setSelectedImage(photo);
@@ -35,27 +68,19 @@ const PropertyGallery = ({ photos }: PropertyGalleryProps) => {
   return (
     <>
       <div className="property-images-grid">
-        {Array.from({ length: photos.count }, (_, index) => {
-          const photoKey = `photo${index}`;
-          const photo = photos[photoKey];
-
-          if (typeof photo === 'object' && photo !== null) {
-            return (
-              <div 
-                key={photoKey} 
-                className={index === 0 ? 'main-image' : ''}
-                onClick={() => handleImageClick(photo)}
-              >
-                <img 
-                  src={photo.pictureUrl} 
-                  alt={photo.label} 
-                  className="clickable-image"
-                />
-              </div>
-            );
-          }
-          return null;
-        })}
+        {images.map((image, index) => (
+          <div
+            key={index}
+            className={index === 0 ? 'main-image' : ''}
+            onClick={() => handleImageClick(image)}
+          >
+            <img
+              src={image.pictureUrl}
+              alt={image.label}
+              className="clickable-image"
+            />
+          </div>
+        ))}
       </div>
 
       {selectedImage && (

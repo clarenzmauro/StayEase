@@ -43,12 +43,7 @@ interface Property {
   propertyLocation: string;
   propertyLocationGeo: any;
   propertyName: string;
-  propertyPhotos: {
-    [key: string]: {
-      pictureUrl: string;
-      label: string;
-    } | number;
-  };
+  propertyPhotos: [];
   propertyPrice: number;
   propertySize: number;
   propertyTags: string[];
@@ -122,14 +117,11 @@ const PropertyPage = () => {
           const propertyData = { id: propertyDoc.id, ...propertyDoc.data() } as Property;
           
           setAllowChat(propertyData.allowChat);
-          const formattedPhotos = {
-            count: propertyData.count, // Directly reference the count field
-            ...propertyData.propertyPhotos // Spread the propertyPhotos map
-          };
+          const propertyPhotosArray = propertyData.propertyPhotos || []; // Assuming this is now an array
 
       setProperty({
         ...propertyData,
-        propertyPhotos: formattedPhotos // Update the propertyPhotos structure
+        propertyPhotos: propertyPhotosArray // Update the propertyPhotos structure
       });
 
           // Fetch host data using ownerId
@@ -704,7 +696,7 @@ const PropertyPage = () => {
           <div className="property-header">
             <h1 className="property-title">{property.propertyName}</h1>
           </div>
-          <PropertyGallery photos={property.propertyPhotos} />
+          <PropertyGallery propertyPhotos={property.propertyPhotos} />
           <p className="property-location">{property.propertyLocation}</p>
         </>
 
