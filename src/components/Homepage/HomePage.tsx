@@ -31,7 +31,7 @@ interface PropertyType {
   };
   viewCount?: number;
   interestedCount?: number;
-  propertyPhotos?: { [key: string]: { pictureUrl: string } };
+  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[]; // Updated to handle both Firebase and MongoDB
   [key: string]: any;
 }
 
@@ -74,6 +74,29 @@ export function HomePage() {
     const property = filteredProperties.find(p => p.id === itemId);
     if (!property?.propertyPhotos) return;
 
+    // Handle MongoDB-style photos (array of strings)
+    if (Array.isArray(property.propertyPhotos)) {
+      const totalImages = property.propertyPhotos.length;
+      if (totalImages <= 1) return;
+
+      setCurrentImageIndices(prev => {
+        const currentIndex = prev[itemId] || 0;
+        let newIndex;
+        if (direction === 'next') {
+          newIndex = (currentIndex + 1) % totalImages;
+        } else {
+          newIndex = (currentIndex - 1 + totalImages) % totalImages;
+        }
+
+        // Set loading state
+        setLoadingImages(prev => ({ ...prev, [itemId]: true }));
+        
+        return { ...prev, [itemId]: newIndex };
+      });
+      return;
+    }
+
+    // Handle Firebase-style photos (object with pictureUrl)
     const photoKeys = Object.keys(property.propertyPhotos).filter(key => key.startsWith('photo'));
     const totalImages = photoKeys.length;
     if (totalImages <= 1) return;
@@ -99,6 +122,21 @@ export function HomePage() {
       
       return { ...prev, [itemId]: newIndex };
     });
+  };
+
+  const getImageUrl = (property: PropertyType, index: number = 0) => {
+    if (!property.propertyPhotos) return '';
+
+    // Handle MongoDB-style photos (array of strings)
+    if (Array.isArray(property.propertyPhotos)) {
+      const photoId = property.propertyPhotos[index];
+      return `http://localhost:5000/api/property-photos/${photoId}/image`;
+    }
+
+    // Handle Firebase-style photos (object with pictureUrl)
+    const photoKeys = Object.keys(property.propertyPhotos).filter(key => key.startsWith('photo'));
+    const photoKey = photoKeys[index];
+    return property.propertyPhotos[photoKey]?.pictureUrl || '';
   };
 
   const preloadImage = (url: string) => {
@@ -572,7 +610,7 @@ export function HomePage() {
                 >
                   <div className="image-container">
                     <img 
-                      src={item.propertyPhotos?.[`photo${currentImageIndices[item.id] || 0}`]?.pictureUrl} 
+                      src={getImageUrl(item)} 
                       alt={item.propertyName} 
                       className={`property-image ${loadingImages[item.id] ? 'loading' : ''}`}
                       onLoad={() => handleImageLoad(item.id)}
