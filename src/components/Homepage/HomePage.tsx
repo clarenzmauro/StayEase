@@ -64,7 +64,7 @@ export function HomePage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   // const [sortBy, setSortBy] = useState('most-popular');
-  const [currentImageIndices, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
+  const [setCurrentImageIndices] = useState<{ [key: string]: number }>({});
   const [imageCache, setImageCache] = useState<{ [key: string]: boolean }>({});
   const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
 
