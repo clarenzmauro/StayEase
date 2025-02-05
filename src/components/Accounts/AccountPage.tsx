@@ -6,6 +6,24 @@ import './AccountPage.css';
 import { User } from 'firebase/auth';
 import { DocumentData } from 'firebase/firestore';
 
+
+interface PropertyType {
+  id: string;
+  propertyName: string;
+  propertyLocation: string;
+  propertyPrice: number;
+  propertyType: string;
+  propertyTags: string[];
+  owner?: string;
+  datePosted?: {
+    toMillis: () => number;
+  };
+  viewCount?: number;
+  interestedCount?: number;
+  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[]; // Updated to handle both Firebase and MongoDB
+  [key: string]: any;
+}
+
 const AccountPage = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<DocumentData | null>(null);
@@ -13,6 +31,7 @@ const AccountPage = () => {
   const [editedData, setEditedData] = useState<DocumentData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [itemsSaved, setFavoriteDorms] = useState<string[]>([]);
+  const [itemsInterested, setInterestedDorms] = useState<string[]>([]);
   const [showOwnerOverlay, setShowOwnerOverlay] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const navigate = useNavigate();
@@ -37,6 +56,17 @@ const AccountPage = () => {
               })
             );
             setFavoriteDorms(favoriteProperties.filter(property => property !== null));
+          }
+
+          if (data.itemsInterested && data.itemsInterested.length > 0) {
+            const propertiesRef = collection(db, 'properties');
+            const interestedProperties = await Promise.all(
+              data.itemsInterested.map(async (propertyId: string) => {
+                const propertyDoc = await getDoc(doc(propertiesRef, propertyId));
+                return propertyDoc.exists() ? { id: propertyDoc.id, ...propertyDoc.data() } : null;
+              })
+            );
+            setInterestedDorms(interestedProperties.filter(property => property !== null));
           }
         }
       } else {
@@ -172,6 +202,21 @@ const AccountPage = () => {
         navigate(`/owner-page/${encryptedId}`, { state: { normalDocumentId: documentId, encryptedDocumentId: encryptedId } });
       }
     }
+  };
+
+  const getImageUrl = (property: PropertyType, index: number = 0) => {
+    if (!property.propertyPhotos) return '';
+
+    // Handle MongoDB-style photos (array of strings)
+    if (Array.isArray(property.propertyPhotos)) {
+      const photoId = property.propertyPhotos[index];
+      return `http://localhost:5000/api/property-photos/${photoId}/image`;
+    }
+
+    // Handle Firebase-style photos (object with pictureUrl)
+    const photoKeys = Object.keys(property.propertyPhotos).filter(key => key.startsWith('photo'));
+    const photoKey = photoKeys[index];
+    return property.propertyPhotos[photoKey]?.pictureUrl || '';
   };
 
   if (!user || !userData || !editedData) {
@@ -441,7 +486,7 @@ const AccountPage = () => {
               itemsSaved.map((dorm:any) => (
                 <div key={dorm.id} className="favorite-dorm-card" onClick={() => navigate(`/property/${dorm.id}`)}>
                   <img 
-                    src={dorm.propertyPhotos[0]} 
+                    src={getImageUrl(dorm, 0)} 
                     alt={dorm.propertyName} 
                     className="favorite-dorm-image"
                   />
@@ -462,11 +507,11 @@ const AccountPage = () => {
         <div className="account-section">
           <h3>Interested Dorms</h3>
           <div className="favorite-dorms-grid">
-            {itemsSaved.length > 0 ? (
-              itemsSaved.map((dorm:any) => (
+            {itemsInterested.length > 0 ? (
+              itemsInterested.map((dorm:any) => (
                 <div key={dorm.id} className="favorite-dorm-card" onClick={() => navigate(`/property/${dorm.id}`)}>
                   <img 
-                    src={dorm.propertyPhotos[0]} 
+                    src={getImageUrl(dorm, 0)} 
                     alt={dorm.propertyName} 
                     className="favorite-dorm-image"
                   />
