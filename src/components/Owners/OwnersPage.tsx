@@ -40,6 +40,23 @@ const SkeletonLoading: React.FC = () => {
   );
 };
 
+interface PropertyType {
+  id: string;
+  propertyName: string;
+  propertyLocation: string;
+  propertyPrice: number;
+  propertyType: string;
+  propertyTags: string[];
+  owner?: string;
+  datePosted?: {
+    toMillis: () => number;
+  };
+  viewCount?: number;
+  interestedCount?: number;
+  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[]; // Updated to handle both Firebase and MongoDB
+  [key: string]: any;
+}
+
 const OwnersPage: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -406,6 +423,21 @@ const OwnersPage: React.FC = () => {
     }
   };
 
+  const getImageUrl = (property: PropertyType, index: number = 0) => {
+    if (!property.propertyPhotos) return '';
+
+    // Handle MongoDB-style photos (array of strings)
+    if (Array.isArray(property.propertyPhotos)) {
+      const photoId = property.propertyPhotos[index];
+      return `http://localhost:5000/api/property-photos/${photoId}/image`;
+    }
+
+    // Handle Firebase-style photos (object with pictureUrl)
+    const photoKeys = Object.keys(property.propertyPhotos).filter(key => key.startsWith('photo'));
+    const photoKey = photoKeys[index];
+    return property.propertyPhotos[photoKey]?.pictureUrl || '';
+  };
+
   if (isLoading) {
     return <SkeletonLoading />;
   }
@@ -529,7 +561,7 @@ const OwnersPage: React.FC = () => {
                   <button className="delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}>🗑️</button>
                 </div>
                 <img 
-                  src={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].pictureUrl : "/placeholder.svg?height=150&width=150"} 
+                  src={getImageUrl(property, 0)} 
                   alt={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].label : "Placeholder"} 
                   className="owner-dashboard-property-image" 
                 />

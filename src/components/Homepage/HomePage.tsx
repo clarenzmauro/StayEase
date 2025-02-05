@@ -64,7 +64,7 @@ export function HomePage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   // const [sortBy, setSortBy] = useState('most-popular');
-  const [setCurrentImageIndices] = useState<{ [key: string]: number }>({});
+  const [currentImageIndices, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
   const [imageCache, setImageCache] = useState<{ [key: string]: boolean }>({});
   const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
 
@@ -90,7 +90,7 @@ export function HomePage() {
 
         // Set loading state
         setLoadingImages(prev => ({ ...prev, [itemId]: true }));
-        
+      
         return { ...prev, [itemId]: newIndex };
       });
       return;
@@ -119,7 +119,6 @@ export function HomePage() {
 
       // Set loading state
       setLoadingImages(prev => ({ ...prev, [itemId]: true }));
-      
       return { ...prev, [itemId]: newIndex };
     });
   };
