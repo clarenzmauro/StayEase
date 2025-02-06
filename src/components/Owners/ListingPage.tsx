@@ -50,6 +50,24 @@ interface PropertyDetails {
   lifestyle?: string;
 }
 
+interface PropertyType {
+  id: string;
+  propertyName: string;
+  propertyLocation: string;
+  propertyPrice: number;
+  propertyType: string;
+  propertyTags: string[];
+  owner?: string;
+  label: string;
+  datePosted?: {
+    toMillis: () => number;
+  };
+  viewCount?: number;
+  interestedCount?: number;
+  propertyPhotos?: { [key: string]: { pictureUrl: string, label: string } } | string[]; // Updated to handle both Firebase and MongoDB
+  [key: string]: any;
+}
+
 const propertyTypes = ['Dormitory', 'Apartment', 'Room', 'House', 'Condo'];
 const furnishingOptions = ['Not Furnished', 'Semi-Furnished', 'Fully Furnished'];
 const lifestyleOptions = ['Male', 'Female', 'Mixed Gender'];
@@ -253,19 +271,15 @@ export function ListingPage() {
         ? parseDate(propertyData.dateAvailability) 
         : new Date();
 
-        const photos = [];
-        
-        for (let i = 0; i < propertyData.count; i++) {
-          const photo = propertyData.propertyPhotos[`photo${i}`];
-          if (photo) {
-            photos.push({
-              label: photo.label,
-              url: photo.pictureUrl,
-              file: null,
-            });
-          }
-        }
-
+        const photos = propertyData.propertyPhotos
+        ? await Promise.all(
+              propertyData.propertyPhotos.map(async (_, index: number) => ({
+                  label: await getImageLabel(propertyData as PropertyType, index), // Fetch label from API
+                  url: getImageUrl(propertyData as PropertyType, index), // Get image URL
+                  file: null,
+              }))
+          )
+        : [];
 
         setDetails({
           name: propertyData.propertyName || "Enter Property Name",
@@ -306,6 +320,47 @@ export function ListingPage() {
       alert("Error fetching");
     }
   }
+
+  const getImageLabel = async (property: PropertyType, index: number = 0): Promise<string> => {
+    if (!property.propertyPhotos) return '';
+
+    // Handle MongoDB-style photos (array of strings)
+    if (Array.isArray(property.propertyPhotos)) {
+        const photoId = property.propertyPhotos[index];
+        if (!photoId) return '';
+
+        // Fetch the label from your backend API
+        try {
+            const response = await fetch(`http://localhost:5000/api/property-photos/${photoId}/label`);
+            const data = await response.json();
+            return data.label || '';
+        } catch (error) {
+            console.error('Error fetching image label:', error);
+            return '';
+        }
+    }
+
+    // Handle Firebase-style photos (object with labels)
+    const photoKeys = Object.keys(property.propertyPhotos).filter(key => key.startsWith('photo'));
+    const photoKey = photoKeys[index];
+    return property.propertyPhotos[photoKey]?.label || '';
+};
+
+
+  const getImageUrl = (property: PropertyType, index: number = 0) => {
+    if (!property.propertyPhotos) return '';
+
+    // Handle MongoDB-style photos (array of strings)
+    if (Array.isArray(property.propertyPhotos)) {
+      const photoId = property.propertyPhotos[index];
+      return `http://localhost:5000/api/property-photos/${photoId}/image`;
+    }
+
+    // Handle Firebase-style photos (object with pictureUrl)
+    const photoKeys = Object.keys(property.propertyPhotos).filter(key => key.startsWith('photo'));
+    const photoKey = photoKeys[index];
+    return property.propertyPhotos[photoKey]?.pictureUrl || '';
+  };
 
   const handleSubmit = async () => {
     try {

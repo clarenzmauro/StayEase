@@ -60,6 +60,19 @@ app.get('/api/property-photos/:id/image', async (req, res) => {
     }
 });
 
+// Route to get the label of a property photo
+app.get('/api/property-photos/:id/label', async (req, res) => {
+    try {
+        const propertyPhoto = await PropertyPhoto.findById(req.params.id);
+        if (!propertyPhoto || !propertyPhoto.label) {
+            return res.status(404).json({ message: 'Label not found' });
+        }
+        res.json({ label: propertyPhoto.label });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`Server is runn	ing on http://localhost:${PORT}`);
