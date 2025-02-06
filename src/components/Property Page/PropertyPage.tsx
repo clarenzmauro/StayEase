@@ -640,7 +640,7 @@ const PropertyPage = () => {
           <div className="property-header">
             <h1 className="property-title">{property.propertyName}</h1>
           </div>
-          <PropertyGallery photos={property.propertyPhotos} />
+          <PropertyGallery propertyPhotos={property.propertyPhotos} />
           <p className="property-location">{property.propertyLocation}</p>
 
           <div className="host-info">
