@@ -2,7 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import './OwnersPage.css';
 import logoSvg from '../../assets/STAY.svg';
-import { deleteDoc, doc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { 
+  deleteDoc, 
+  doc, 
+  getDoc, 
+  updateDoc, 
+  onSnapshot, 
+  arrayUnion 
+} from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
 import { supabase } from '../../supabase/supabase';
@@ -48,127 +55,279 @@ interface PropertyType {
   propertyType: string;
   propertyTags: string[];
   owner?: string;
-  datePosted?: {
-    toMillis: () => number;
-  };
+  datePosted?: { toMillis: () => number };
   viewCount?: number;
   interestedCount?: number;
-  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[]; // Updated to handle both Firebase and MongoDB
+  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[];
   [key: string]: any;
 }
 
 const OwnersPage: React.FC = () => {
-    const navigate = useNavigate();
-    const { id } = useParams<{ id: string }>();
-    const location = useLocation();
-    const [currentUser, setCurrentUser] = useState<any>(null);
-    const [isFollowing, setIsFollowing] = useState(false);
-    const [userExistingReview, setUserExistingReview] = useState<any>(null);
-    const [isEditMode, setIsEditMode] = useState(false);
-    const { normalDocumentId, encryptedDocumentId } = location.state || {}; // Accessing state
-    const [ownerData, setOwnerData] = useState<any>(null);
-    const [isDashboardOpen, setIsDashboardOpen] = useState(false);
-    const [properties, setProperties] = useState<any[]>([]);
-    const [isOwnerViewing, setIsOwnerViewing] = useState(false);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [newReview, setNewReview] = useState({ content: '', rating: 0 });
-    const [comments, setComments] = useState<any[]>([]);
-    const [averageRating, setAverageRating] = useState<number>(0);
-    const [setReviews] = useState<any[]>([
-      // Sample reviews for demonstration
-      {
-          id: 1,
-          text: "Great place!",
-          author: "User1",
-          date: "January 2023", 
-          avatar: "/placeholder.svg?height=56&width=56"
-      }
-  ]);
-    const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const { normalDocumentId, encryptedDocumentId } = location.state || {};
 
-    const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner'; // Default to 'Owner' if username is not available
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [userExistingReview, setUserExistingReview] = useState<any>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [ownerData, setOwnerData] = useState<any>(null);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [isOwnerViewing, setIsOwnerViewing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newReview, setNewReview] = useState({ content: '', rating: 0 });
+  const [comments, setComments] = useState<any[]>([]);
+  const [averageRating, setAverageRating] = useState<number>(0);
+  const [setReviews] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-    const handleDeleteProperty = async (propertyId: string) => {
-      const confirmDelete = window.confirm("Are you sure you want to delete this property?");;
-      if(!confirmDelete) return;
+  // New state for notifications and overlay
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-      try {
-        const userDocRef = doc(db, 'accounts', normalDocumentId);
-        const userDocSnap = await getDoc(userDocRef);
+  const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner';
 
-        if (userDocSnap.exists()){
-          const userData = userDocSnap.data();
-          const dashboardId = userData.dashboardId;
+  // ------------------------------
+  // DELETE PROPERTY FUNCTION
+  // ------------------------------
+  const handleDeleteProperty = async (propertyId: string) => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this property?");
+    if (!confirmDelete) return;
 
-          const dashboardRef = doc(db, 'dashboards', dashboardId);
-          const dashboardDocSnap = await getDoc(dashboardRef);
+    try {
+      const userDocRef = doc(db, 'accounts', normalDocumentId);
+      const userDocSnap = await getDoc(userDocRef);
 
-          if (dashboardDocSnap.exists()){
-            const dashboardData = dashboardDocSnap.data();
-            const listedDorms = dashboardData.listedDorms || [];
+      if (userDocSnap.exists()){
+        const userData = userDocSnap.data();
+        const dashboardId = userData.dashboardId;
 
-            const updateDorms = listedDorms.filter((dormId:string) => dormId !== propertyId);
-            await updateDoc(dashboardRef, { listedDorms: updateDorms});
+        const dashboardRef = doc(db, 'dashboards', dashboardId);
+        const dashboardDocSnap = await getDoc(dashboardRef);
 
-            const propertyDocRef = doc(db, 'properties', propertyId);
-            await deleteDoc(propertyDocRef);
+        if (dashboardDocSnap.exists()){
+          const dashboardData = dashboardDocSnap.data();
+          const listedDorms = dashboardData.listedDorms || [];
 
-            const { data: files, error: listError } = await supabase.storage.from('properties').list(`${propertyId}`);
-                if (listError) {
-                    console.error("Error listing files:", listError);
-                    alert("Error listing files: " + listError.message);
-                    return;
-                }
+          const updateDorms = listedDorms.filter((dormId: string) => dormId !== propertyId);
+          await updateDoc(dashboardRef, { listedDorms: updateDorms });
 
-                // Prepare file paths for deletion
-                const filePaths = files.map(file => `${propertyId}/${file.name}`);
+          const propertyDocRef = doc(db, 'properties', propertyId);
+          await deleteDoc(propertyDocRef);
 
-                // Delete all files in the propertyId folder
-                const { error } = await supabase.storage.from('properties').remove(filePaths);
-                if (error) {
-                    console.error("Error deleting files from Supabase:", error);
-                    alert("Error deleting files from Supabase: " + error.message);
-                } else {
-                    alert("Property and associated folder deleted successfully!");
-                }
-            if (response.error) {
-                console.error("Error deleting image from Supabase:", response.error);
-                alert("Error deleting image from Supabase: " + response.error.message);
-            } else {
-                alert("Property and associated images deleted successfully!");
-            }
-          } else{
-            console.error("Dashboard not found");
+          const { data: files, error: listError } = await supabase
+            .storage
+            .from('properties')
+            .list(`${propertyId}`);
+
+          if (listError) {
+            console.error("Error listing files:", listError);
+            alert("Error listing files: " + listError.message);
+            return;
+          }
+
+          // Prepare file paths for deletion
+          const filePaths = files.map(file => `${propertyId}/${file.name}`);
+
+          // Delete all files in the propertyId folder
+          const { error } = await supabase
+            .storage
+            .from('properties')
+            .remove(filePaths);
+          if (error) {
+            console.error("Error deleting files from Supabase:", error);
+            alert("Error deleting files from Supabase: " + error.message);
+          } else {
+            alert("Property and associated folder deleted successfully!");
           }
         } else {
-          console.error("User not found");
+          console.error("Dashboard not found");
         }
-      } catch(error){
-        console.error("Error deleting property: ", error);
+      } else {
+        console.error("User not found");
+      }
+    } catch (error) {
+      console.error("Error deleting property: ", error);
+    }
+  };
+
+  // ------------------------------
+  // FETCH COMMENTS & CALCULATE AVERAGE RATING
+  // ------------------------------
+  const fetchComments = async (ownerData: any) => {
+    const commentsData = ownerData?.comments || {};
+    const commentCounter = commentsData.commentCounter || 0;
+    const fetchedComments: any[] = [];
+    let totalRating = 0;
+    let validRatingsCount = 0;
+
+    for (let i = 0; i < commentCounter; i++) {
+      const commentKey = `comment${i + 1}`;
+      if (commentsData[commentKey]) {
+        const commentData = {
+          content: commentsData[commentKey].commentContent,
+          user: commentsData[commentKey].commentUser,
+          username: commentsData[commentKey].commentUsername,
+          date: commentsData[commentKey].commentDate,
+          rating: commentsData[commentKey].commentRating,
+          commentKey: commentKey
+        };
+        
+        if (currentUser && commentData.user === currentUser.uid) {
+          setUserExistingReview(commentData);
+        }
+
+        const rating = commentsData[commentKey].commentRating;
+        if (typeof rating === 'number') {
+          totalRating += rating;
+          validRatingsCount++;
+        }
+        fetchedComments.push(commentData);
       }
     }
-    useEffect(() => {
-      const auth = getAuth();
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-          if (user) {
-              // User is signed in
-              setCurrentUser({
-                  uid: user.uid,
-                  displayName: user.displayName,
-                  email: user.email,
-                  profilePic: user.photoURL
-              });
-              // Check if current user is following the owner
-              checkIfFollowing(user.uid);
-          } else {
-              // User is signed out
-              setCurrentUser(null);
-              setIsFollowing(false);
-          }
-      });
 
-      // Cleanup subscription on unmount
-      return () => unsubscribe();
+    const calculatedAverage = validRatingsCount > 0 ? (totalRating / validRatingsCount).toFixed(1) : 0;
+    setAverageRating(Number(calculatedAverage));
+    setComments(fetchedComments);
+  };
+
+  // ------------------------------
+  // DELETE & EDIT REVIEW FUNCTIONS
+  // ------------------------------
+  const handleDeleteReview = async () => {
+    if (!currentUser || !userExistingReview) return;
+    
+    const confirmDelete = window.confirm("Are you sure you want to delete your review?");
+    if (!confirmDelete) return;
+
+    try {
+      const docRef = doc(db, 'accounts', normalDocumentId);
+      await updateDoc(docRef, {
+        [`comments.${userExistingReview.commentKey}`]: null,
+      });
+      setUserExistingReview(null);
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      alert("Failed to delete review. Please try again.");
+    }
+  };
+
+  const handleEditReview = () => {
+    if (!userExistingReview) return;
+    setNewReview({
+      content: userExistingReview.content,
+      rating: userExistingReview.rating
+    });
+    setIsEditMode(true);
+    setIsModalOpen(true);
+  };
+
+  const handleCommentSubmit = async () => {
+    if (!currentUser) {
+      console.error("User is not logged in.");
+      return;
+    }
+
+    const commentCounterRef = doc(db, 'accounts', normalDocumentId);
+    const commentCounterSnap = await getDoc(commentCounterRef);
+    const currentCounter = commentCounterSnap.exists() ? commentCounterSnap.data().comments.commentCounter : 0;
+
+    const newCommentData = {
+      commentContent: newReview.content,
+      commentUser: currentUser.uid,
+      commentUsername: currentUser.displayName || "Anonymous",
+      commentDate: new Date().toISOString(),
+      commentRating: newReview.rating,
+    };
+
+    try {
+      if (isEditMode && userExistingReview) {
+        // Update existing review
+        await updateDoc(commentCounterRef, {
+          [`comments.${userExistingReview.commentKey}`]: newCommentData,
+        });
+      } else {
+        // Create new review
+        await updateDoc(commentCounterRef, {
+          [`comments.comment${currentCounter + 1}`]: newCommentData,
+          'comments.commentCounter': currentCounter + 1,
+        });
+      }
+      setNewReview({ content: '', rating: 0 });
+      setIsModalOpen(false);
+      setIsEditMode(false);
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("Failed to submit review. Please try again.");
+    }
+  };
+
+  // ------------------------------
+  // FETCH DASHBOARD & PROPERTIES FUNCTIONS
+  // ------------------------------
+  const fetchDahsboardData = async (dashboardId: string) => {
+    const dashboardRef = doc(db, 'dashboards', dashboardId);
+    const dashboardSnap = await getDoc(dashboardRef);
+
+    if (dashboardSnap.exists()) {
+      const dashboardData = dashboardSnap.data();
+      if (dashboardData?.listedDorms) {
+        fetchProperties(dashboardData.listedDorms);
+      }
+    } else {
+      console.log('No such document!');
+    }
+  };
+
+  const fetchProperties = async (dashboardId: string) => {
+    const dashboardRef = doc(db, 'dashboards', dashboardId);
+    const dashboardSnap = await getDoc(dashboardRef);
+    console.log("Dashboard Id:", dashboardId);
+    if (dashboardSnap.exists()) {
+      const dashboardData = dashboardSnap.data();
+      if (dashboardData?.listedDorms) {
+        const propertiesPromises = dashboardData.listedDorms.map(id => getDoc(doc(db, 'properties', id)));
+        const propertiesDocs = await Promise.all(propertiesPromises);
+        const propertiesData = propertiesDocs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+
+        // Log the fetched properties
+        console.log("Fetched Properties:", propertiesData);
+        console.log("Dashboard Id:", dashboardId);
+
+        setProperties(propertiesData);
+      }
+    } else {
+      console.log('No such document!');
+    }
+  };
+
+  // ------------------------------
+  // AUTH & OWNER DATA LISTENER
+  // ------------------------------
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        setCurrentUser({
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          profilePic: user.photoURL
+        });
+        // Check if current user is following the owner
+        checkIfFollowing(user.uid);
+      } else {
+        // User is signed out
+        setCurrentUser(null);
+        setIsFollowing(false);
+      }
+    });
+
+    // Cleanup on unmount
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -179,6 +338,8 @@ const OwnersPage: React.FC = () => {
         if (docSnap.exists()) {
           const ownerData = docSnap.data();
           setOwnerData(ownerData);
+          // Update notifications from owner document
+          setNotifications(ownerData.notifications || []);
           fetchComments(ownerData);
         } else {
           console.log('No such document!');
@@ -192,180 +353,22 @@ const OwnersPage: React.FC = () => {
     fetchOwnerData();
   }, [normalDocumentId]);
 
-    const fetchComments = async (ownerData: any) => {
-      const commentsData = ownerData?.comments || {};
-      const commentCounter = commentsData.commentCounter || 0;
-      const fetchedComments = [];
-      let totalRating = 0;
-      let validRatingsCount = 0;
-
-      for (let i = 0; i < commentCounter; i++) {
-          const commentKey = `comment${i + 1}`;
-          if (commentsData[commentKey]) {
-              const commentData = {
-                  content: commentsData[commentKey].commentContent,
-                  user: commentsData[commentKey].commentUser,
-                  username: commentsData[commentKey].commentUsername,
-                  date: commentsData[commentKey].commentDate,
-                  rating: commentsData[commentKey].commentRating,
-                  commentKey: commentKey
-              };
-              
-              if (currentUser && commentData.user === currentUser.uid) {
-                  setUserExistingReview(commentData);
-              }
-
-              const rating = commentsData[commentKey].commentRating;
-              if (typeof rating === 'number') {
-                  totalRating += rating;
-                  validRatingsCount++;
-              }
-              fetchedComments.push(commentData);
-          }
-      }
-
-      const calculatedAverage = validRatingsCount > 0 ? (totalRating / validRatingsCount).toFixed(1) : 0;
-      setAverageRating(Number(calculatedAverage));
-      setComments(fetchedComments);
-    };
-
-    const handleDeleteReview = async () => {
-        if (!currentUser || !userExistingReview) return;
-        
-        const confirmDelete = window.confirm("Are you sure you want to delete your review?");
-        if (!confirmDelete) return;
-
-        try {
-            const docRef = doc(db, 'accounts', normalDocumentId);
-            await updateDoc(docRef, {
-                [`comments.${userExistingReview.commentKey}`]: null,
-            });
-            setUserExistingReview(null);
-        } catch (error) {
-            console.error("Error deleting review:", error);
-            alert("Failed to delete review. Please try again.");
-        }
-    };
-
-    const handleEditReview = () => {
-        if (!userExistingReview) return;
-        setNewReview({
-            content: userExistingReview.content,
-            rating: userExistingReview.rating
-        });
-        setIsEditMode(true);
-        setIsModalOpen(true);
-    };
-
-    const handleCommentSubmit = async () => {
-        if (!currentUser) {
-            console.error("User is not logged in.");
-            return;
-        }
-
-        const commentCounterRef = doc(db, 'accounts', normalDocumentId);
-        const commentCounterSnap = await getDoc(commentCounterRef);
-        const currentCounter = commentCounterSnap.exists() ? commentCounterSnap.data().comments.commentCounter : 0;
-
-        const newCommentData = {
-            commentContent: newReview.content,
-            commentUser: currentUser.uid,
-            commentUsername: currentUser.displayName || "Anonymous",
-            commentDate: new Date().toISOString(),
-            commentRating: newReview.rating,
-        };
-
-        try {
-            if (isEditMode && userExistingReview) {
-                // Update existing review
-                await updateDoc(commentCounterRef, {
-                    [`comments.${userExistingReview.commentKey}`]: newCommentData,
-                });
-            } else {
-                // Create new review
-                await updateDoc(commentCounterRef, {
-                    [`comments.comment${currentCounter + 1}`]: newCommentData,
-                    'comments.commentCounter': currentCounter + 1,
-                });
-            }
-            setNewReview({ content: '', rating: 0 });
-            setIsModalOpen(false);
-            setIsEditMode(false);
-        } catch (error) {
-            console.error("Error submitting review:", error);
-            alert("Failed to submit review. Please try again.");
-        }
-    };
-    const fetchDahsboardData = async (dashboardId: string) => {
-      const dashboardRef = doc(db, 'dashboards', dashboardId);
-      const dashboardSnap = await getDoc(dashboardRef);
-
-      if (dashboardSnap.exists()) {
-        const dashboardData = dashboardSnap.data();
-        if (dashboardData?.listedDorms) {
-          fetchProperties(dashboardData.listedDorms);
-        }
-      }else{
-        console.log('No such document!');
-      }
-    };
-
-    const fetchProperties = async (dashboardId: string) => {
-      const dashboardRef = doc(db, 'dashboards', dashboardId);
-      const dashboardSnap = await getDoc(dashboardRef);
-      console.log("Dashboard Id:", dashboardId);
-      if (dashboardSnap.exists()) {
-          const dashboardData = dashboardSnap.data();
-          if (dashboardData?.listedDorms) {
-              const propertiesPromises = dashboardData.listedDorms.map(id => getDoc(doc(db, 'properties', id)));
-              const propertiesDocs = await Promise.all(propertiesPromises);
-              const propertiesData = propertiesDocs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-              // Log the fetched properties
-              console.log("Fetched Properties:", propertiesData);
-              console.log("Dashboard Id:", dashboardId);
-
-              setProperties(propertiesData);
-          }
-      } else {
-          console.log('No such document!');
-      }
-  };
-
-    useEffect(() => {
-      if (encryptedDocumentId && id === encryptedDocumentId) {
-          setIsOwnerViewing(true);
-      }
-    }, [id, encryptedDocumentId]);
-
-      const handleDashboardClick = () => {
-        setIsDashboardOpen(prevState => !prevState);
-        if (!isDashboardOpen) {
-          fetchProperties(ownerData.dashboardId); // Fetch properties only when opening the dashboard
-      }
-      };
-      
-  const handleModalOpen = () => {
-    if (!currentUser) {
-        alert("Please log in to leave a review");
-        return;
-    }
-    if (userExistingReview) {
-        alert("You already have a review. Please edit or delete your existing review first.");
-        return;
-    }
-    setIsModalOpen(true);
-  };
-
   useEffect(() => {
-    if (comments.length > 0 && currentUser) {
-        const existingReview = comments.find(comment => comment.user === currentUser.uid);
-        setUserExistingReview(existingReview || null);
-    } else {
-        setUserExistingReview(null);
+    if (encryptedDocumentId && id === encryptedDocumentId) {
+      setIsOwnerViewing(true);
     }
-  }, [comments, currentUser]);
+  }, [id, encryptedDocumentId]);
 
+  const handleDashboardClick = () => {
+    setIsDashboardOpen(prevState => !prevState);
+    if (!isDashboardOpen) {
+      fetchProperties(ownerData.dashboardId); // Fetch properties only when opening the dashboard
+    }
+  };
+
+  // ------------------------------
+  // FOLLOW & NOTIFICATION FUNCTIONS
+  // ------------------------------
   const checkIfFollowing = async (userId: string) => {
     if (!normalDocumentId) return;
     
@@ -408,11 +411,18 @@ const OwnersPage: React.FC = () => {
           });
           setIsFollowing(false);
         } else {
-          // Follow
+          // Follow: add notification for follow
           currentFollowers[currentUser.uid] = true;
+          const newNotification = {
+            type: 'follow',
+            message: `${currentUser.displayName || 'Someone'} followed you.`,
+            date: new Date().toISOString(),
+            read: false,
+          };
           await updateDoc(ownerRef, {
             followers: currentFollowers,
-            followerCount: currentFollowerCount + 1
+            followerCount: currentFollowerCount + 1,
+            notifications: arrayUnion(newNotification)
           });
           setIsFollowing(true);
         }
@@ -423,6 +433,35 @@ const OwnersPage: React.FC = () => {
     }
   };
 
+  // ------------------------------
+  // EXPRESS INTEREST FUNCTION (for non-owners)
+  // ------------------------------
+  // const handleExpressInterest = async () => {
+  //   if (!currentUser || !normalDocumentId) {
+  //     alert("Please log in to express interest");
+  //     return;
+  //   }
+  //   try {
+  //     const ownerRef = doc(db, 'accounts', normalDocumentId);
+  //     const newNotification = {
+  //       type: 'interest',
+  //       message: `${currentUser.displayName || 'Someone'} is interested in your property.`,
+  //       date: new Date().toISOString(),
+  //       read: false,
+  //     };
+  //     await updateDoc(ownerRef, {
+  //       notifications: arrayUnion(newNotification)
+  //     });
+  //     alert("Your interest has been sent!");
+  //   } catch (error) {
+  //     console.error("Error expressing interest:", error);
+  //     alert("Failed to express interest. Please try again.");
+  //   }
+  // };
+
+  // ------------------------------
+  // GET PROPERTY IMAGE URL
+  // ------------------------------
   const getImageUrl = (property: PropertyType, index: number = 0) => {
     if (!property.propertyPhotos) return '';
 
@@ -450,11 +489,22 @@ const OwnersPage: React.FC = () => {
             <img src={logoSvg} alt="Stayverse" className="logo" />
           </div>
           <div className="nav-buttons">
-
-            { isOwnerViewing && (
-            <button className="host-button" onClick={handleDashboardClick}>
-              {isDashboardOpen ? 'Profile' : 'Dashboard'}
-            </button>
+            {isOwnerViewing && (
+              <button className="host-button" onClick={handleDashboardClick}>
+                {isDashboardOpen ? 'Profile' : 'Dashboard'}
+              </button>
+            )}
+            {/* Notification icon visible only to the owner */}
+            {isOwnerViewing && (
+              <button 
+                className="notification-button" 
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              >
+                <svg viewBox="0 0 24 24" className="notification-icon" width="24" height="24">
+                  <path d="M12 22c1.1046 0 2-.8954 2-2h-4c0 1.1046.8954 2 2 2zm6-6v-5c0-3.0704-1.641-5.64-4.5-6.32V4c0-.8284-.6716-1.5-1.5-1.5S10.5 3.1716 10.5 4v.68C7.641 5.36 6 7.9296 6 11v5l-1.5 1.5v.5h15v-.5L18 16z" />
+                </svg>
+                {notifications.length > 0 && <span className="notification-count">{notifications.length}</span>}
+              </button>
             )}
             <button className="globe-button">
               <svg viewBox="0 0 16 16" className="globe-icon">
@@ -469,26 +519,58 @@ const OwnersPage: React.FC = () => {
         </div>
       </header>
 
+      {/* Notification overlay */}
+      {isNotificationsOpen && (
+        <div className="notification-overlay">
+          <div className="notification-panel">
+            <div className="notification-header">
+              <h3>Notifications</h3>
+              <button className="close-button" onClick={() => setIsNotificationsOpen(false)}>X</button>
+            </div>
+            <ul>
+              {notifications.length > 0 ? (
+                notifications.map((notif, index) => (
+                  <li key={index} className="notification-item">
+                    <p>{notif.message}</p>
+                    <span className="notification-date">
+                      {new Date(notif.date).toLocaleString()}
+                    </span>
+                  </li>
+                ))
+              ) : (
+                <p>No notifications</p>
+              )}
+            </ul>
+          </div>
+        </div>
+      )}
+
       <main className="main-content-owner">
         <div className="profile-sidebar">
           <div className="profile-card">
             <div className="profile-image-container">
               <img 
-              src={ownerData?.profilePicUrl || "/placeholder.svg?height=150&width=150"} 
-              alt="Profile" 
-              className="profile-image" 
+                src={ownerData?.profilePicUrl || "/placeholder.svg?height=150&width=150"} 
+                alt="Profile" 
+                className="profile-image" 
               />
             </div>
 
             <h1 className="profile-name">{ownerData?.username}</h1>
             <p className="superhost-badge">Property Owner</p>
             {!isOwnerViewing && (
+              <>
                 <button 
-                    className={`follow-button ${isFollowing ? 'following' : ''}`}
-                    onClick={handleFollowToggle}
+                  className={`follow-button ${isFollowing ? 'following' : ''}`}
+                  onClick={handleFollowToggle}
                 >
-                    {isFollowing ? 'Following' : 'Follow'}
+                  {isFollowing ? 'Following' : 'Follow'}
                 </button>
+                {/* Express Interest button for non-owners
+                <button className="interest-button" onClick={handleExpressInterest}>
+                  I'm interested in your property
+                </button> */}
+              </>
             )}
             <div className="stats-container">
               <div className="stat-item">
@@ -502,13 +584,16 @@ const OwnersPage: React.FC = () => {
               </div>
 
               <div className="stat-item">
-                <div className="stat-value">{ownerData?.dateJoined ? 
-                new Date(ownerData.dateJoined.seconds * 1000).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })
-                  : 'N/A'}</div>
+                <div className="stat-value">
+                  {ownerData?.dateJoined 
+                    ? new Date(ownerData.dateJoined.seconds * 1000).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })
+                    : 'N/A'
+                  }
+                </div>
                 <div className="stat-label">Date Joined</div>
               </div>
             </div>
@@ -517,18 +602,18 @@ const OwnersPage: React.FC = () => {
           <div className="info-card">
             <h2 className="info-title">{firstName}'s confirmed information</h2>
             <div className="confirmed-items">
-            {ownerData ? (
-              [ownerData.email || "N/A", ownerData.contactNumber || "N/A", 
-                ownerData.socials.Facebook || "N/A", ownerData.socials.Instagram || "N/A", 
-                ownerData.socials.X || "N/A"].map((item, index) => (
-                <div key={index} className="confirmed-item">
+              {ownerData ? (
+                [ownerData.email || "N/A", ownerData.contactNumber || "N/A", 
+                 ownerData.socials?.Facebook || "N/A", ownerData.socials?.Instagram || "N/A", 
+                 ownerData.socials?.X || "N/A"].map((item, index) => (
+                  <div key={index} className="confirmed-item">
                     <span className="check-icon">✓</span>
                     <span>{item}</span>
-                </div>
-              ))
-            ) : (
-              <p>Loading confirmed information...</p>
-            )}
+                  </div>
+                ))
+              ) : (
+                <p>Loading confirmed information...</p>
+              )}
             </div>
           </div>
 
@@ -539,131 +624,153 @@ const OwnersPage: React.FC = () => {
           <div id="dashboard-section" className="dashboard-layout">
             <div className="dashboard-header">
               <h2 className="dashboard-title">Listed Property</h2>
-              <button className="add-listing-button" onClick={() => navigate(`/owner-page/${normalDocumentId}/add-property`, { state: { normalDocumentId: normalDocumentId } })}>
+              <button 
+                className="add-listing-button" 
+                onClick={() => navigate(`/owner-page/${normalDocumentId}/add-property`, { state: { normalDocumentId } })}
+              >
                 + Add New Listing
               </button>
             </div>
             <div className="image-section">
               {properties.map(property => (
-              <div 
-                key={property.id} 
-                className="owner-dashboard-image-container" 
-                onClick={() => window.open(`/property/${property.id}`, '_blank')}
-              >
-                <div className="owner-dashboard-property-info">
-                  <div className="owner-dashboard-property-name">{property.propertyName}</div>
-                  <div className="owner-dashboard-property-location">{property.propertyLocation}</div>
-                  <div className="owner-dashboard-property-type">{property.propertyType}</div>
-                  <div className="owner-dashboard-property-price">₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month</div>
+                <div 
+                  key={property.id} 
+                  className="owner-dashboard-image-container" 
+                  onClick={() => window.open(`/property/${property.id}`, '_blank')}
+                >
+                  <div className="owner-dashboard-property-info">
+                    <div className="owner-dashboard-property-name">{property.propertyName}</div>
+                    <div className="owner-dashboard-property-location">{property.propertyLocation}</div>
+                    <div className="owner-dashboard-property-type">{property.propertyType}</div>
+                    <div className="owner-dashboard-property-price">
+                      ₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month
+                    </div>
+                  </div>
+                  <div className="owner-dashboard-actions">
+                    <button 
+                      className="edit-btn" 
+                      onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}/${normalDocumentId}/view-property`); }}
+                    >
+                      View
+                    </button>
+                    <button 
+                      className="delete-btn" 
+                      onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                  <img 
+                    src={getImageUrl(property, 0)} 
+                    alt={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].label : "Placeholder"} 
+                    className="owner-dashboard-property-image" 
+                  />
                 </div>
-                <div className="owner-dashboard-actions">
-                  <button className="edit-btn" onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}/${normalDocumentId}/view-property`); }}>View</button>
-                  <button className="delete-btn" onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}>🗑️</button>
-                </div>
-                <img 
-                  src={getImageUrl(property, 0)} 
-                  alt={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].label : "Placeholder"} 
-                  className="owner-dashboard-property-image" 
-                />
-              </div>
               ))}
             </div>
           </div>  
-        ): (
+        ) : (
           <div className="about-section-owner">
             <h2 className="about-title">About {firstName}</h2>
+            <p className="bio">{ownerData?.description}</p>
 
-          <p className="bio">
-            {ownerData?.description}
-          </p>
-
-          <section className="reviews-section">
-            <div className="reviews-header">
-              <h2>{firstName}'s Reviews</h2>
-              <div className="navigation-buttons">
-                <button className="nav-button-owner" aria-label="Previous">
-                  <span className="arrow left"></span>
-                </button>
-                <button className="nav-button-owner" aria-label="Next">
-                  <span className="arrow right"></span>
-                </button>
+            <section className="reviews-section">
+              <div className="reviews-header">
+                <h2>{firstName}'s Reviews</h2>
+                <div className="navigation-buttons">
+                  <button className="nav-button-owner" aria-label="Previous">
+                    <span className="arrow left"></span>
+                  </button>
+                  <button className="nav-button-owner" aria-label="Next">
+                    <span className="arrow right"></span>
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="reviews-grid">
-              {!isOwnerViewing && !userExistingReview && (
-                <div className="review-card empty-review" onClick={handleModalOpen}>
-                  <p>Click here to leave a review!</p>
-                </div>
-              )}
-              {comments.map((comment, index) => (
-                <div key={index} className="review-card">
-                  <p className="review-text">{comment.content}</p>
-                  <div className="review-rating">
-                    <span>Rating:</span>
-                    <span>
-                      {[...Array(5)].map((_, index) => (
-                        <span key={index} className="star" style={{ color: index < comment.rating ? '#ffcc00' : '#ddd' }}>
-                          ★
-                        </span>
-                      ))}
-                    </span>
+              <div className="reviews-grid">
+                {!isOwnerViewing && !userExistingReview && (
+                  <div className="review-card empty-review" onClick={() => {
+                    if (!currentUser) {
+                      alert("Please log in to leave a review");
+                      return;
+                    }
+                    if (userExistingReview) {
+                      alert("You already have a review. Please edit or delete your existing review first.");
+                      return;
+                    }
+                    setIsModalOpen(true);
+                  }}>
+                    <p>Click here to leave a review!</p>
                   </div>
-                  <div className="review-author">
-                    <img 
-                      src={currentUser?.profilePic || "/placeholder.svg?height=150&width=150"} 
-                      alt="Profile" 
-                      className="profile-image" 
-                    />
-                    <div className="author-info">
-                      <h3>{comment.username}</h3>
-                      <p>{new Date(comment.date).toLocaleDateString()}</p>
+                )}
+                {comments.map((comment, index) => (
+                  <div key={index} className="review-card">
+                    <p className="review-text">{comment.content}</p>
+                    <div className="review-rating">
+                      <span>Rating:</span>
+                      <span>
+                        {[...Array(5)].map((_, index) => (
+                          <span key={index} className="star" style={{ color: index < comment.rating ? '#ffcc00' : '#ddd' }}>
+                            ★
+                          </span>
+                        ))}
+                      </span>
                     </div>
+                    <div className="review-author">
+                      <img 
+                        src={currentUser?.profilePic || "/placeholder.svg?height=150&width=150"} 
+                        alt="Profile" 
+                        className="profile-image" 
+                      />
+                      <div className="author-info">
+                        <h3>{comment.username}</h3>
+                        <p>{new Date(comment.date).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    {currentUser && comment.user === currentUser.uid && (
+                      <div className="review-actions">
+                        <button onClick={handleEditReview}>Edit</button>
+                        <button onClick={handleDeleteReview}>Delete</button>
+                      </div>
+                    )}
                   </div>
-                  {currentUser && comment.user === currentUser.uid && (
-                    <div className="review-actions">
-                      <button onClick={() => handleEditReview()}>Edit</button>
-                      <button onClick={() => handleDeleteReview()}>Delete</button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
 
-            <button className="show-more-button">Show more reviews</button>
-          </section>
-        </div>
+              <button className="show-more-button">Show more reviews</button>
+            </section>
+          </div>
         )}
       </main>
 
       {isModalOpen && (
-                <div className="modal-overlay">
-                    <div className="modal-content">
-                        <h3>{isEditMode ? 'Edit Review' : 'Leave a Review'}</h3>
-                        <textarea
-                            value={newReview.content}
-                            onChange={(e) => setNewReview({ ...newReview, content: e.target.value })}
-                            placeholder="Write your review here..."
-                        />
-                        <div className="rating">
-                            <span>Rating: </span>
-                            {[1, 2, 3, 4, 5].map(star => (
-                                <span
-                                    key={star}
-                                    onClick={() => setNewReview({ ...newReview, rating: star })}
-                                    style={{ cursor: 'pointer', color: newReview.rating >= star ? 'gold' : 'gray' }}
-                                >
-                                    ★
-                                </span>
-                            ))}
-                        </div>
-                        <button onClick={handleCommentSubmit}>Submit</button>
-                        <button onClick={() => setIsModalOpen(false)}>Cancel</button>
-                    </div>
-                </div>
-            )}
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>{isEditMode ? 'Edit Review' : 'Leave a Review'}</h3>
+            <textarea
+              value={newReview.content}
+              onChange={(e) => setNewReview({ ...newReview, content: e.target.value })}
+              placeholder="Write your review here..."
+            />
+            <div className="rating">
+              <span>Rating: </span>
+              {[1, 2, 3, 4, 5].map(star => (
+                <span
+                  key={star}
+                  onClick={() => setNewReview({ ...newReview, rating: star })}
+                  style={{ cursor: 'pointer', color: newReview.rating >= star ? 'gold' : 'gray' }}
+                >
+                  ★
+                </span>
+              ))}
+            </div>
+            <button onClick={handleCommentSubmit}>Submit</button>
+            <button onClick={() => setIsModalOpen(false)}>Cancel</button>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 };
 
 export default OwnersPage;
