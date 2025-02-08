@@ -13,7 +13,6 @@ import {
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
-import { supabase } from '../../supabase/supabase';
 
 const SkeletonLoading: React.FC = () => {
   return (
@@ -805,7 +804,7 @@ const OwnersPage: React.FC = () => {
                       className="edit-btn" 
                       onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}/${normalDocumentId}/view-property`); }}
                     >
-                      View
+                      Edit
                     </button>
                     <button 
                       className="delete-btn" 

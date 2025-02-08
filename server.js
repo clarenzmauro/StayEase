@@ -31,6 +31,34 @@ const propertyPhotoSchema = new mongoose.Schema({
 
 const PropertyPhoto = mongoose.model('PropertyPhoto', propertyPhotoSchema, 'propertyPhotos');
 
+// Route to update an existing image
+app.put('/api/property-photos/:id', upload.single('image'), async (req, res) => {
+    try {
+        const { label } = req.body;
+        const propertyPhoto = await PropertyPhoto.findById(req.params.id);
+
+        if (!propertyPhoto) {
+            return res.status(404).json({ message: 'Property photo not found' });
+        }
+
+        // Update label if provided
+        if (label) {
+            propertyPhoto.label = label;
+        }
+
+        // If a new image is uploaded, update the binary data
+        if (req.file) {
+            propertyPhoto.photoURL = req.file.buffer;
+        }
+
+        const updatedPhoto = await propertyPhoto.save();
+        res.json(updatedPhoto);
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Route to upload an image
 app.post('/api/property-photos/upload', upload.single('image'), async (req, res) => {
     const { label } = req.body; // Remove uid
