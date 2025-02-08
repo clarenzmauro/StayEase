@@ -89,6 +89,8 @@ const OwnersPage: React.FC = () => {
   const [averageRating, setAverageRating] = useState<number>(0);
   const [setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [pictureUrl, setPictureUrl] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // New state for notifications and overlay
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -164,42 +166,73 @@ const OwnersPage: React.FC = () => {
   // ------------------------------
   // FETCH COMMENTS & CALCULATE AVERAGE RATING
   // ------------------------------
-  const fetchComments = async (ownerData: any) => {
+  const fetchComments = async (ownerData) => {
     const commentsData = ownerData?.comments || {};
     const commentCounter = commentsData.commentCounter || 0;
-    const fetchedComments: any[] = [];
     let totalRating = 0;
     let validRatingsCount = 0;
-
-    for (let i = 0; i < commentCounter; i++) {
-      const commentKey = `comment${i + 1}`;
-      if (commentsData[commentKey]) {
+  
+    const fetchedComments = await Promise.all(
+      Array.from({ length: commentCounter }, async (_, i) => {
+        const commentKey = `comment${i + 1}`;
+        if (!commentsData[commentKey]) return null;
+  
         const commentData = {
           content: commentsData[commentKey].commentContent,
           user: commentsData[commentKey].commentUser,
           username: commentsData[commentKey].commentUsername,
           date: commentsData[commentKey].commentDate,
           rating: commentsData[commentKey].commentRating,
-          commentKey: commentKey
+          commentKey: commentKey,
+          pictureUrl: "/placeholder.svg?height=150&width=150", // Default placeholder
         };
-        
+  
         if (currentUser && commentData.user === currentUser.uid) {
           setUserExistingReview(commentData);
         }
-
+  
         const rating = commentsData[commentKey].commentRating;
-        if (typeof rating === 'number') {
+        if (typeof rating === "number") {
           totalRating += rating;
           validRatingsCount++;
         }
-        fetchedComments.push(commentData);
-      }
-    }
-
+  
+        // Fetch the profile picture for each user
+        try {
+          const pictureUrl = await fetchUserProfilePicture(commentData.user);
+          return { ...commentData, pictureUrl }; // Return updated commentData
+        } catch (error) {
+          console.error(`Error fetching profile picture for user ${commentData.user}:`, error);
+          return commentData; // Return without pictureUrl if error
+        }
+      })
+    );
+  
+    // Filter out null values
+    const validComments = fetchedComments.filter((comment) => comment !== null);
+  
     const calculatedAverage = validRatingsCount > 0 ? (totalRating / validRatingsCount).toFixed(1) : 0;
     setAverageRating(Number(calculatedAverage));
-    setComments(fetchedComments);
+    setComments(validComments);
   };
+  
+  
+
+  const fetchUserProfilePicture = async (userId) => {
+    if (!userId) return "/placeholder.svg?height=150&width=150";
+  
+    try {
+      const userDoc = await getDoc(doc(db, "accounts", userId));
+      if (userDoc.exists()) {
+        return userDoc.data().profilePicUrl || "/placeholder.svg?height=150&width=150";
+      }
+    } catch (error) {
+      console.error(`Error fetching profile picture for user ${userId}:`, error);
+    }
+  
+    return "/placeholder.svg?height=150&width=150"; // Default placeholder
+  };
+  
 
   // ------------------------------
   // DELETE & EDIT REVIEW FUNCTIONS
@@ -871,7 +904,7 @@ const OwnersPage: React.FC = () => {
                     </div>
                     <div className="review-author">
                       <img 
-                        src={currentUser?.profilePic || "/placeholder.svg?height=150&width=150"} 
+                        src={comment.pictureUrl} 
                         alt="Profile" 
                         className="profile-image" 
                       />

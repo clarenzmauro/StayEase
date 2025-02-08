@@ -4,7 +4,7 @@ import { useState, useEffect, useRef} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/config';
 import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion, Timestamp } from 'firebase/firestore';
-import { supabase } from '../../supabase/supabase';
+// import { supabase } from '../../supabase/supabase';
 import './ListingPage.css';
 import 'ol/ol.css';
 import Map from 'ol/Map';
