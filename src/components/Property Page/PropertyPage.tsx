@@ -237,11 +237,12 @@ const PropertyPage = () => {
       setShowLoginPrompt(true);
       return;
     }
-    if (!auth.currentUser || !id) return;
+    if (!auth.currentUser || !id || !property) return;
 
     try {
       const propertyRef = doc(db, 'properties', id);
       const userRef = doc(db, 'accounts', auth.currentUser.uid);
+      const ownerRef = doc(db, 'accounts', property.ownerId);
       
       // Get current property data to check current interest status
       const propertyDoc = await getDoc(propertyRef);
@@ -250,6 +251,26 @@ const PropertyPage = () => {
       const propertyData = propertyDoc.data();
       const isCurrentlyInterested = propertyData.interestedApplicants?.includes(auth.currentUser.uid);
       const currentCount = propertyData.interestedCount || 0;
+
+      if (!isCurrentlyInterested) {
+        // Create notification for the owner
+        const newNotification = {
+          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          type: 'interested',
+          message: `${user.displayName || 'Someone'} is interested in ${property.propertyName}`,
+          timestamp: Date.now(),
+          read: false,
+          propertyId: id,
+          propertyName: property.propertyName,
+          userId: auth.currentUser.uid,
+          userName: user.displayName || 'Anonymous'
+        };
+
+        // Update owner's notifications
+        await updateDoc(ownerRef, {
+          notifications: arrayUnion(newNotification)
+        });
+      }
 
       // Toggle interest status and update count
       await updateDoc(propertyRef, {

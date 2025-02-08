@@ -8,7 +8,8 @@ import {
   getDoc, 
   updateDoc, 
   onSnapshot, 
-  arrayUnion 
+  arrayUnion, 
+  runTransaction 
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
@@ -62,6 +63,13 @@ interface PropertyType {
   [key: string]: any;
 }
 
+interface Notification {
+  id: string;
+  message: string;
+  timestamp: number;
+  read: boolean;
+}
+
 const OwnersPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -84,8 +92,9 @@ const OwnersPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   // New state for notifications and overlay
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
 
   const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner';
 
@@ -383,6 +392,16 @@ const OwnersPage: React.FC = () => {
     }
   };
 
+  const addNotification = (message: string) => {
+    const newNotification: Notification = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      message,
+      timestamp: Date.now(),
+      read: false
+    };
+    setNotifications(prev => [newNotification, ...prev]);
+  };
+
   const handleFollowToggle = async () => {
     if (!currentUser || !normalDocumentId) {
       alert("Please log in to follow owners");
@@ -396,41 +415,207 @@ const OwnersPage: React.FC = () => {
 
     try {
       const ownerRef = doc(db, 'accounts', normalDocumentId);
-      const ownerDoc = await getDoc(ownerRef);
+      
+      // Use a transaction to ensure atomic updates
+      await runTransaction(db, async (transaction) => {
+        const ownerDoc = await transaction.get(ownerRef);
+        
+        if (!ownerDoc.exists()) {
+          throw new Error("Owner document does not exist!");
+        }
 
-      if (ownerDoc.exists()) {
-        const currentFollowers = ownerDoc.data().followers || {};
-        const currentFollowerCount = ownerDoc.data().followerCount || 0;
+        const data = ownerDoc.data();
+        const currentFollowers = data.followers || {};
+        let newFollowerCount = (data.followerCount || 0);
 
         if (isFollowing) {
-          // Unfollow
-          delete currentFollowers[currentUser.uid];
-          await updateDoc(ownerRef, {
+          // Unfollow logic
+          if (currentFollowers[currentUser.uid]) {
+            delete currentFollowers[currentUser.uid];
+            newFollowerCount = Math.max(0, newFollowerCount - 1); // Ensure count never goes below 0
+          }
+
+          transaction.update(ownerRef, {
             followers: currentFollowers,
-            followerCount: currentFollowerCount - 1
+            followerCount: newFollowerCount
           });
+
           setIsFollowing(false);
         } else {
-          // Follow: add notification for follow
-          currentFollowers[currentUser.uid] = true;
-          const newNotification = {
-            type: 'follow',
-            message: `${currentUser.displayName || 'Someone'} followed you.`,
-            date: new Date().toISOString(),
-            read: false,
-          };
-          await updateDoc(ownerRef, {
-            followers: currentFollowers,
-            followerCount: currentFollowerCount + 1,
-            notifications: arrayUnion(newNotification)
-          });
-          setIsFollowing(true);
+          // Follow logic
+          if (!currentFollowers[currentUser.uid]) {
+            currentFollowers[currentUser.uid] = true;
+            newFollowerCount += 1;
+
+            const newNotification = {
+              id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              type: 'follow',
+              message: `${currentUser.displayName || 'Someone'} followed you.`,
+              timestamp: Date.now(),
+              read: false,
+              userId: currentUser.uid,
+              userName: currentUser.displayName || 'Anonymous'
+            };
+
+            transaction.update(ownerRef, {
+              followers: currentFollowers,
+              followerCount: newFollowerCount,
+              notifications: arrayUnion(newNotification)
+            });
+
+            setIsFollowing(true);
+            addNotification(`You are now following ${ownerData?.username || 'this owner'}!`);
+          }
         }
-      }
+      });
     } catch (error) {
       console.error("Error updating follow status:", error);
       alert("Failed to update follow status. Please try again.");
     }
+  };
+
+  // Function to mark notifications as read
+  const markNotificationsAsRead = async () => {
+    if (!normalDocumentId) return;
+    
+    try {
+      const userRef = doc(db, 'accounts', normalDocumentId);
+      await updateDoc(userRef, {
+        'notifications': notifications.map(notif => ({
+          ...notif,
+          read: true
+        }))
+      });
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+  };
+
+  // Function to clear all notifications
+  const clearAllNotifications = async () => {
+    if (!normalDocumentId) return;
+    
+    try {
+      const userRef = doc(db, 'accounts', normalDocumentId);
+      await updateDoc(userRef, {
+        'notifications': []
+      });
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+    }
+  };
+
+  // Update unread count when notifications change
+  useEffect(() => {
+    const unreadNotifications = notifications.filter(notif => !notif.read);
+    setUnreadCount(unreadNotifications.length);
+  }, [notifications]);
+
+  const NotificationBell = () => (
+    <div 
+      className="notification-icon" 
+      onClick={() => {
+        setShowNotifications(!showNotifications);
+        if (!showNotifications) {
+          markNotificationsAsRead();
+        }
+      }}
+    >
+      🔔
+      {unreadCount > 0 && (
+        <span className="notification-badge">{unreadCount}</span>
+      )}
+    </div>
+  );
+
+  const NotificationDropdown = () => {
+    const navigate = useNavigate();
+
+    const handleNotificationClick = async (notification: any) => {
+      // Mark notification as read
+      if (!notification.read && normalDocumentId) {
+        const ownerRef = doc(db, 'accounts', normalDocumentId);
+        try {
+          const updatedNotifications = notifications.map(n => 
+            n.id === notification.id ? { ...n, read: true } : n
+          );
+          
+          await updateDoc(ownerRef, {
+            notifications: updatedNotifications
+          });
+          
+          setNotifications(updatedNotifications);
+        } catch (error) {
+          console.error("Error marking notification as read:", error);
+        }
+      }
+
+      // Navigate based on notification type
+      if (notification.type === 'interested' && notification.propertyId) {
+        navigate(`/property/${notification.propertyId}`);
+      } else if (notification.type === 'follow' && notification.userId) {
+        navigate(`/account/${notification.userId}`);
+      }
+    };
+
+    // Sort notifications by timestamp in descending order (newest first)
+    const sortedNotifications = [...notifications].sort((a, b) => {
+      const timeA = a.timestamp || 0;
+      const timeB = b.timestamp || 0;
+      return timeB - timeA;
+    });
+
+    if (!showNotifications) return null;
+
+    return (
+      <div className="notifications-dropdown">
+        <div className="notifications-header">
+          <h3>Notifications</h3>
+          {notifications.length > 0 && (
+            <button 
+              className="clear-notifications"
+              onClick={clearAllNotifications}
+            >
+              Clear all
+            </button>
+          )}
+        </div>
+        <div className="notifications-list">
+          {sortedNotifications.length === 0 ? (
+            <div key="no-notifications" className="no-notifications">
+              No notifications
+            </div>
+          ) : (
+            sortedNotifications.map((notification, index) => (
+              <div 
+                key={notification.id || `notification-${index}-${Date.now()}`}
+                className={`notification-item ${!notification.read ? 'unread' : ''}`}
+                onClick={() => handleNotificationClick(notification)}
+                style={{ cursor: 'pointer' }}
+              >
+                <p>{notification.message}</p>
+                {notification.type === 'interested' && (
+                  <small className="notification-property">
+                    Property: {notification.propertyName}
+                  </small>
+                )}
+                {notification.type === 'follow' && (
+                  <small className="notification-property">
+                    User: {notification.userName}
+                  </small>
+                )}
+                <small className="notification-time">
+                  {notification.timestamp ? new Date(notification.timestamp).toLocaleString() : ''}
+                </small>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
   };
 
   // ------------------------------
@@ -496,15 +681,7 @@ const OwnersPage: React.FC = () => {
             )}
             {/* Notification icon visible only to the owner */}
             {isOwnerViewing && (
-              <button 
-                className="notification-button" 
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              >
-                <svg viewBox="0 0 24 24" className="notification-icon" width="24" height="24">
-                  <path d="M12 22c1.1046 0 2-.8954 2-2h-4c0 1.1046.8954 2 2 2zm6-6v-5c0-3.0704-1.641-5.64-4.5-6.32V4c0-.8284-.6716-1.5-1.5-1.5S10.5 3.1716 10.5 4v.68C7.641 5.36 6 7.9296 6 11v5l-1.5 1.5v.5h15v-.5L18 16z" />
-                </svg>
-                {notifications.length > 0 && <span className="notification-count">{notifications.length}</span>}
-              </button>
+              <NotificationBell />
             )}
             <button className="globe-button">
               <svg viewBox="0 0 16 16" className="globe-icon">
@@ -520,30 +697,7 @@ const OwnersPage: React.FC = () => {
       </header>
 
       {/* Notification overlay */}
-      {isNotificationsOpen && (
-        <div className="notification-overlay">
-          <div className="notification-panel">
-            <div className="notification-header">
-              <h3>Notifications</h3>
-              <button className="close-button" onClick={() => setIsNotificationsOpen(false)}>X</button>
-            </div>
-            <ul>
-              {notifications.length > 0 ? (
-                notifications.map((notif, index) => (
-                  <li key={index} className="notification-item">
-                    <p>{notif.message}</p>
-                    <span className="notification-date">
-                      {new Date(notif.date).toLocaleString()}
-                    </span>
-                  </li>
-                ))
-              ) : (
-                <p>No notifications</p>
-              )}
-            </ul>
-          </div>
-        </div>
-      )}
+      <NotificationDropdown />
 
       <main className="main-content-owner">
         <div className="profile-sidebar">

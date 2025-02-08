@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '../../firebase/config';
 import { collection, doc, getDoc, updateDoc, addDoc } from 'firebase/firestore';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import './AccountPage.css';
 import { User } from 'firebase/auth';
 import { DocumentData } from 'firebase/firestore';
-
 
 interface PropertyType {
   id: string;
@@ -20,11 +19,12 @@ interface PropertyType {
   };
   viewCount?: number;
   interestedCount?: number;
-  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[]; // Updated to handle both Firebase and MongoDB
+  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[];
   [key: string]: any;
 }
 
 const AccountPage = () => {
+  const { userId } = useParams(); // Get userId from URL
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<DocumentData | null>(null);
   const [editMode, setEditMode] = useState(false);
@@ -37,45 +37,52 @@ const AccountPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      setUser(user);
-      if (user) {
-        const accountDoc = await getDoc(doc(db, 'accounts', user.uid));
+    const fetchUserData = async () => {
+      try {
+        // If userId is provided in URL, fetch that user's data
+        const targetUserId = userId || auth.currentUser?.uid;
+        
+        if (!targetUserId) {
+          console.error('No user ID available');
+          navigate('/');
+          return;
+        }
+
+        const accountDoc = await getDoc(doc(db, 'accounts', targetUserId));
         if (accountDoc.exists()) {
           const data = accountDoc.data();
           setUserData(data);
           setEditedData(data);
 
-          // Fetch favorite dorms data
-          if (data.itemsSaved && data.itemsSaved.length > 0) {
-            const propertiesRef = collection(db, 'properties');
-            const favoriteProperties = await Promise.all(
-              data.itemsSaved.map(async (propertyId: string) => {
-                const propertyDoc = await getDoc(doc(propertiesRef, propertyId));
-                return propertyDoc.exists() ? { id: propertyDoc.id, ...propertyDoc.data() } : null;
-              })
-            );
-            setFavoriteDorms(favoriteProperties.filter(property => property !== null));
+          // Only set these if viewing own profile
+          if (!userId || userId === auth.currentUser?.uid) {
+            if (data.itemsSaved && data.itemsSaved.length > 0) {
+              setFavoriteDorms(data.itemsSaved);
+            }
+            if (data.itemsInterested && data.itemsInterested.length > 0) {
+              setInterestedDorms(data.itemsInterested);
+            }
           }
-
-          if (data.itemsInterested && data.itemsInterested.length > 0) {
-            const propertiesRef = collection(db, 'properties');
-            const interestedProperties = await Promise.all(
-              data.itemsInterested.map(async (propertyId: string) => {
-                const propertyDoc = await getDoc(doc(propertiesRef, propertyId));
-                return propertyDoc.exists() ? { id: propertyDoc.id, ...propertyDoc.data() } : null;
-              })
-            );
-            setInterestedDorms(interestedProperties.filter(property => property !== null));
-          }
+        } else {
+          console.error('User document not found');
+          navigate('/');
         }
-      } else {
-        navigate('/'); // Redirect to homepage if not authenticated
+      } catch (error) {
+        console.error('Error fetching user data:', error);
       }
+    };
+
+    // Set current user for auth state
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      setUser(currentUser);
+      fetchUserData();
     });
 
     return () => unsubscribe();
-  }, [navigate]);
+  }, [userId, navigate]); // Re-run when userId changes
+
+  // Only show edit controls if viewing own profile
+  const isOwnProfile = !userId || userId === auth.currentUser?.uid;
 
   const handleLogout = async () => {
     try {
@@ -281,7 +288,7 @@ const AccountPage = () => {
             <h1>Account Details</h1>
           </div>
           <div className="action-buttons">
-            {editMode ? (
+            {isOwnProfile && editMode ? (
               <>
                 <button 
                   onClick={handleSave} 
@@ -297,7 +304,7 @@ const AccountPage = () => {
                   Cancel
                 </button>
               </>
-            ) : (
+            ) : isOwnProfile ? (
               <>
                 <button onClick={handleEdit} className="edit-button-account">
                   Edit Profile
@@ -315,6 +322,10 @@ const AccountPage = () => {
                   </button>
                 ) : null}
               </>
+            ) : (
+              <button onClick={handleLogout} className="logout-button">
+                Logout
+              </button>
             )}
           </div>
         </div>
@@ -324,7 +335,7 @@ const AccountPage = () => {
           <div className="profile-info-container">
             <div className="profile-image-section">
               <div className="profile-image-container">
-                {user.photoURL ? (
+                {user && user.photoURL ? (
                   <img 
                     src={user.photoURL} 
                     alt="Profile" 
@@ -332,7 +343,7 @@ const AccountPage = () => {
                   />
                 ) : (
                   <div className="profile-image-placeholder">
-                    {userData.username[0].toUpperCase()}
+                    {userData && userData.username[0].toUpperCase()}
                   </div>
                 )}
               </div>
@@ -341,7 +352,7 @@ const AccountPage = () => {
             <div className="profile-details-section">
               <div className="info-group">
                 <label>Username</label>
-                {editMode ? (
+                {isOwnProfile && editMode ? (
                   <input
                     type="text"
                     value={editedData.username}
@@ -357,7 +368,7 @@ const AccountPage = () => {
               </div>
               <div className="info-group">
                 <label>Contact Number</label>
-                {editMode ? (
+                {isOwnProfile && editMode ? (
                   <input
                     type="tel"
                     value={editedData.contactNumber}
@@ -383,69 +394,39 @@ const AccountPage = () => {
         <div className="account-section">
           <h2>Social Media</h2>
           <div className="socials-list">
-            {editMode ? (
+            {isOwnProfile && editMode ? (
               <div className="social-edit">
-                <div className="social-input-group">
-                  <label>Facebook</label>
-                  <input
-                    type="text"
-                    value={editedData.socials.Facebook}
-                    onChange={(e) => handleSocialChange('Facebook', e.target.value)}
-                    placeholder="Enter Facebook profile URL"
-                  />
-                </div>
-                <div className="social-input-group">
-                  <label>Instagram</label>
-                  <input
-                    type="text"
-                    value={editedData.socials.Instagram}
-                    onChange={(e) => handleSocialChange('Instagram', e.target.value)}
-                    placeholder="Enter Instagram profile URL"
-                  />
-                </div>
-                <div className="social-input-group">
-                  <label>X</label>
-                  <input
-                    type="text"
-                    value={editedData.socials.X}
-                    onChange={(e) => handleSocialChange('X', e.target.value)}
-                    placeholder="Enter X profile URL"
-                  />
-                </div>
+                {Object.entries(editedData.socials || {}).map(([platform, url]) => (
+                  <div key={`social-edit-${platform}`} className="social-input-group">
+                    <label>{platform}</label>
+                    <input
+                      type="text"
+                      value={url as string}
+                      onChange={(e) => handleSocialChange(platform, e.target.value)}
+                      placeholder={`Enter your ${platform} URL`}
+                    />
+                  </div>
+                ))}
               </div>
             ) : (
               <>
-        {userData.socials.Facebook && (
-          <div className="social-item">
-            <span>Facebook: </span>
-            <a href={userData.socials.Facebook} target="_blank" rel="noopener noreferrer">
-              {userData.socials.Facebook}
-            </a>
+                {Object.entries(userData?.socials || {}).map(([platform, url]) => (
+                  url && (
+                    <div key={`social-view-${platform}`} className="social-item">
+                      <span className="social-platform">{platform}:</span>
+                      <a href={url as string} target="_blank" rel="noopener noreferrer">
+                        {url as string}
+                      </a>
+                    </div>
+                  )
+                ))}
+                {(!userData?.socials?.Facebook && !userData?.socials?.Instagram && !userData?.socials?.X) && (
+                  <p>No social media accounts linked</p>
+                )}
+              </>
+            )}
           </div>
-        )}
-        {userData.socials.Instagram && (
-          <div className="social-item">
-            <span>Instagram: </span>
-            <a href={userData.socials.Instagram} target="_blank" rel="noopener noreferrer">
-              {userData.socials.Instagram}
-            </a>
-          </div>
-        )}
-        {userData.socials.X && (
-          <div className="social-item">
-            <span>X: </span>
-            <a href={userData.socials.X} target="_blank" rel="noopener noreferrer">
-              {userData.socials.X}
-            </a>
-          </div>
-        )}
-        {(!userData.socials.Facebook && !userData.socials.Instagram && !userData.socials.X) && (
-          <p>No social media accounts linked</p>
-        )}
-      </>
-    )}
-  </div>
-  </div>
+        </div>
 
         <div className="account-section">
           <h2>Property Interests</h2>
@@ -472,62 +453,68 @@ const AccountPage = () => {
               <label>Comments</label>
               <div className="comments-list">
                 {userData.comments.map((comment: string, index: number) => (
-                  comment && <p key={index}>{comment}</p>
+                  <div key={`comment-${index}-${comment.substring(0, 10)}`} className="comment-item">
+                    <p>{comment}</p>
+                  </div>
                 ))}
               </div>
             </div>
           )}
         </div>
 
-        <div className="account-section">
-          <h3>Favorite Dorms</h3>
-          <div className="favorite-dorms-grid">
-            {itemsSaved.length > 0 ? (
-              itemsSaved.map((dorm:any) => (
-                <div key={dorm.id} className="favorite-dorm-card" onClick={() => navigate(`/property/${dorm.id}`)}>
-                  <img 
-                    src={getImageUrl(dorm, 0)} 
-                    alt={dorm.propertyName} 
-                    className="favorite-dorm-image"
-                  />
-                  <div className="favorite-dorm-info">
-                    <h4>{dorm.propertyName}</h4>
-                    <p>{dorm.propertyLocation}</p>
-                    <p>{dorm.propertyType}</p>
-                    <p>₱{dorm.rent}/month</p>
+        {isOwnProfile && (
+          <div className="account-section">
+            <h3>Favorite Dorms</h3>
+            <div className="favorite-dorms-grid">
+              {itemsSaved.length > 0 ? (
+                itemsSaved.map((dorm:any) => (
+                  <div key={dorm.id} className="favorite-dorm-card" onClick={() => navigate(`/property/${dorm.id}`)}>
+                    <img 
+                      src={getImageUrl(dorm, 0)} 
+                      alt={dorm.propertyName} 
+                      className="favorite-dorm-image"
+                    />
+                    <div className="favorite-dorm-info">
+                      <h4 key={`${dorm.id}-name`}>{dorm.propertyName}</h4>
+                      <p key={`${dorm.id}-location`}>{dorm.propertyLocation}</p>
+                      <p key={`${dorm.id}-type`}>{dorm.propertyType}</p>
+                      <p key={`${dorm.id}-rent`}>₱{dorm.rent}/month</p>
+                    </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <p>No favorite dorms yet</p>
-            )}
+                ))
+              ) : (
+                <p>No favorite dorms yet</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
         
-        <div className="account-section">
-          <h3>Interested Dorms</h3>
-          <div className="favorite-dorms-grid">
-            {itemsInterested.length > 0 ? (
-              itemsInterested.map((dorm:any) => (
-                <div key={dorm.id} className="favorite-dorm-card" onClick={() => navigate(`/property/${dorm.id}`)}>
-                  <img 
-                    src={getImageUrl(dorm, 0)} 
-                    alt={dorm.propertyName} 
-                    className="favorite-dorm-image"
-                  />
-                  <div className="favorite-dorm-info">
-                    <h4>{dorm.propertyName}</h4>
-                    <p>{dorm.propertyLocation}</p>
-                    <p>{dorm.propertyType}</p>
-                    <p>₱{dorm.rent}/month</p>
+        {isOwnProfile && (
+          <div className="account-section">
+            <h3>Interested Dorms</h3>
+            <div className="favorite-dorms-grid">
+              {itemsInterested.length > 0 ? (
+                itemsInterested.map((dorm:any) => (
+                  <div key={dorm.id} className="favorite-dorm-card" onClick={() => navigate(`/property/${dorm.id}`)}>
+                    <img 
+                      src={getImageUrl(dorm, 0)} 
+                      alt={dorm.propertyName} 
+                      className="favorite-dorm-image"
+                    />
+                    <div className="favorite-dorm-info">
+                      <h4 key={`${dorm.id}-name`}>{dorm.propertyName}</h4>
+                      <p key={`${dorm.id}-location`}>{dorm.propertyLocation}</p>
+                      <p key={`${dorm.id}-type`}>{dorm.propertyType}</p>
+                      <p key={`${dorm.id}-rent`}>₱{dorm.rent}/month</p>
+                    </div>
                   </div>
-                </div>
-              ))
-            ) : (
-              <p>No interested dorms</p>
-            )}
+                ))
+              ) : (
+                <p>No interested dorms</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
           
         {showOwnerOverlay && (
           <div className="modal-overlay">
