@@ -89,7 +89,15 @@ const PropertyPage = () => {
   const [editChecker, setEditChecker] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const COMMENTS_PER_PAGE = 4;
+
+  useEffect(() => {
+    const state = location.state as { isOwner?: boolean; ownerId?: string } | null;
+    if (state?.isOwner) {
+      setIsOwner(true);
+    }
+  }, [location]);
 
   useEffect(() => {
     // Log the current pathname to identify which URL is used
@@ -701,7 +709,11 @@ const PropertyPage = () => {
       ) : (
         <>
 
-      <PropertyHeader />
+      <PropertyHeader 
+        title={property.propertyName} 
+        location={property.propertyLocation} 
+        isVerified={property.isVerified}
+      />
 
       {/* Favorite button */}
       <button
@@ -710,6 +722,17 @@ const PropertyPage = () => {
       >
         
       </button>
+
+      {isOwner && (
+        <div className="edit-property-button-container">
+          <button 
+            className="edit-property-button"
+            onClick={() => navigate(`/property/${id}/edit-property`)}
+          >
+            Edit Property
+          </button>
+        </div>
+      )}
 
       {property && (
         <>

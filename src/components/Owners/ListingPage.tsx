@@ -4,7 +4,6 @@ import { useState, useEffect, useRef} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/config';
 import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion, Timestamp } from 'firebase/firestore';
-// import { supabase } from '../../supabase/supabase';
 import './ListingPage.css';
 import 'ol/ol.css';
 import Map from 'ol/Map';
@@ -172,6 +171,81 @@ export function ListingPage() {
       map.setTarget(undefined);
     };
   }, []);
+
+  useEffect(() => {
+    const loadPropertyData = async () => {
+      if (id) {
+        try {
+          const propertyDoc = await getDoc(doc(db, 'properties', id));
+          if (propertyDoc.exists()) {
+            const data = propertyDoc.data();
+            
+            // Set property details
+            setDetails({
+              name: data.propertyName || "",
+              location: data.propertyLocation || "",
+              coordinates: data.coordinates || null,
+              type: data.propertyType || "Dormitory",
+              bedrooms: data.bedrooms || 0,
+              bathrooms: data.bathrooms || 0,
+              description: data.description || "",
+              tags: data.propertyTags || [],
+              views: data.viewCount || 0,
+              price: data.propertyPrice || 0,
+              availableFrom: data.availableFrom || "",
+              maxOccupants: data.maxOccupants || 1,
+              floorLevel: data.floorLevel || 0,
+              furnishing: data.furnishing || "Not Furnished",
+              allowViewing: data.allowViewing || false,
+              allowChat: data.allowChat || false,
+              size: data.size || 0,
+              securityDeposit: data.securityDeposit || 0,
+              leaseTerm: data.leaseTerm || 0,
+              lifestyle: data.lifestyle || "Mixed Gender"
+            });
+
+            // Set house rules
+            if (data.houseRules) {
+              setHouseRules(data.houseRules);
+            }
+
+            // Set tags
+            if (data.propertyTags) {
+              setSelectedTags(data.propertyTags);
+            }
+
+            // Load images
+            if (data.propertyPhotos) {
+              if (Array.isArray(data.propertyPhotos)) {
+                // MongoDB style - array of image IDs
+                const loadedImages = data.propertyPhotos.map((photoId: string) => ({
+                  url: `http://localhost:5000/api/property-photos/${photoId}/image`,
+                  label: "Property Image",
+                  file: null
+                }));
+                setImages(loadedImages);
+              } else {
+                // Firebase style - object with pictureUrl
+                const loadedImages = Object.entries(data.propertyPhotos).map(([key, value]: [string, any]) => ({
+                  url: value.pictureUrl,
+                  label: value.label || "Property Image",
+                  file: null
+                }));
+                setImages(loadedImages);
+              }
+            }
+
+            setIsEditing(true);
+          }
+        } catch (error) {
+          console.error("Error loading property data:", error);
+          alert("Failed to load property data. Please try again.");
+        }
+      }
+    };
+
+    loadPropertyData();
+  }, [id]);
 
   useEffect(() => {
     if (window.location.pathname === `/property/${id}/edit-property`) {
@@ -365,142 +439,151 @@ export function ListingPage() {
   const handleSubmit = async () => {
     try {
       let docRef;
-      // Extract coordinates from the maps link if available
-      const geoPoint = details.coordinates 
-        ? new GeoPoint(details.coordinates.latitude, details.coordinates.longitude)
-        : new GeoPoint(0, 0);
-
       const propertyData = {
         propertyName: details.name,
         propertyLocation: details.location,
-        propertyLocationGeo: geoPoint,
-        propertyDesc: details.description,
+        coordinates: details.coordinates,
         propertyType: details.type,
-        ownerId: isEditing ? ownerId : id,
-        datePosted: new Date(),
-        bedroomCount: details.bedrooms,
-        bathroomCount: details.bathrooms,
+        bedrooms: details.bedrooms,
+        bathrooms: details.bathrooms,
+        description: details.description,
+        propertyTags: selectedTags,
+        viewCount: details.views,
         propertyPrice: details.price,
-        dateAvailability: new Date(details.availableFrom),
+        availableFrom: details.availableFrom,
         maxOccupants: details.maxOccupants,
         floorLevel: details.floorLevel,
-        furnishingStatus: details.furnishing,
-        propertyLifestyle: details.lifestyle,
-        propertySize: details.size,
+        furnishing: details.furnishing,
+        allowViewing: details.allowViewing,
+        allowChat: details.allowChat,
+        size: details.size,
         securityDeposit: details.securityDeposit,
         leaseTerm: details.leaseTerm,
-        allowViewing: details.allowViewing,
-        allowChat: allowChatting,
-        isVerified: false,
-        viewCount: 0,
-        interestedCount: 0,
-        interestedApplicants: [],
-        comments: [],
-        propertyPhotos: [],
-        propertyTags: selectedTags,
+        lifestyle: details.lifestyle,
         houseRules: houseRules
       };
-      if (isEditing) {
-        if (!id) {
-          alert('Property ID is undefined. Cannot update property.');
-          return;
-        }
+
+      if (isEditing && id) {
         // Update existing property
-        docRef = doc(db, 'properties', id); // Use the existing ID
+        docRef = doc(db, 'properties', id);
         await updateDoc(docRef, propertyData);
+        
+        // Handle image updates
+        await handleImageUploads(id);
+        
         alert('Property updated successfully!');
-        navigate(`/property/${id}/${ownerId}/view-property`);
+        navigate(`/property/${id}`);
       } else {
         // Add new property
         const propertyRef = collection(db, 'properties');
         docRef = await addDoc(propertyRef, propertyData);
-        alert('Property added successfully!');
-
         
-         // Handle image uploads
-         await handleImageUploads(docRef.id);
-      }
-
-      if (!id) {
-        throw new Error('Owner ID is undefined or invalid.');
-      }
-
-      const ownerDoc = await getDoc(doc(db, 'accounts', id));
-      if (ownerDoc.exists()) {
-        const ownerData = ownerDoc.data();
-        const dashboardId = ownerData.dashboardId;
-
-        if (dashboardId) {
-          const dashboardRef = doc(db, 'dashboards', dashboardId);
-
-          await updateDoc(dashboardRef, {
-          listedDorms: arrayUnion(docRef.id),
-          });
-
-          console.log('Dashboard updated successfully!');
-        } else {
-          console.error('Dashboard ID not found.');
+        // Handle image uploads
+        await handleImageUploads(docRef.id);
+        
+        alert('Property added successfully!');
+        
+        if (!id) {
+          throw new Error('Owner ID is undefined or invalid.');
         }
-      } else {
-        console.error('Owner document does not exist.');
+
+        const ownerDoc = await getDoc(doc(db, 'accounts', id));
+        if (ownerDoc.exists()) {
+          const ownerData = ownerDoc.data();
+          const dashboardId = ownerData.dashboardId;
+
+          if (dashboardId) {
+            const dashboardRef = doc(db, 'dashboards', dashboardId);
+            await updateDoc(dashboardRef, {
+              listedDorms: arrayUnion(docRef.id),
+            });
+          } else {
+            console.error('Dashboard ID not found.');
+          }
+        }
       }
     } catch (error) {
-      console.error('Error adding document: ', error);
-      alert('Error adding property. Please try again.');
+      console.error('Error saving property:', error);
+      alert('Error saving property. Please try again.');
     }
   };
 
   const handleImageUploads = async (propertyId: string) => {
-    const imagesData: { [key: string]: { pictureUrl: string; label: string } } = {};
-    const documentIds: string[] = []; // Array to hold document IDs
+    const documentIds: string[] = []; // Array to hold MongoDB document IDs
 
     for (let i = 0; i < images.length; i++) {
-        const image = images[i];
-        if (image.file) {
-            try {
-                // Upload to MongoDB (assuming you have an API endpoint for this)
-                const formData = new FormData();
-                formData.append('image', image.file);
-                formData.append('label', image.label);
+      const image = images[i];
+      if (image.file) {
+        try {
+          // Upload to MongoDB
+          const formData = new FormData();
+          formData.append('image', image.file);
+          formData.append('label', image.label);
+          formData.append('propertyId', propertyId);
 
-                const response = await fetch('http://localhost:5000/api/property-photos/upload', {
-                    method: 'POST',
-                    body: formData,
-                });
+          const response = await fetch('http://localhost:5000/api/property-photos/upload', {
+            method: 'POST',
+            body: formData,
+          });
 
-                if (!response.ok) {
-                    throw new Error('Failed to upload image');
-                }
+          if (!response.ok) {
+            throw new Error('Failed to upload image');
+          }
 
-                const uploadedPhoto = await response.json();
-                documentIds.push(uploadedPhoto._id); // Get the document ID from the response
-
-                // Get the public URL (if needed, otherwise you can skip this)
-                const { data: { publicUrl } } = supabase.storage
-                    .from('properties')
-                    .getPublicUrl(uploadedPhoto.filePath); // Adjust this if needed
-
-                imagesData[`photo${i}`] = {
-                    pictureUrl: publicUrl,
-                    label: image.label,
-                };
-            } catch (error) {
-                console.error('Error uploading image:', error);
-                // Handle error appropriately
-            }
-        } else {
-            console.warn('No file selected for image', i);
+          const uploadedPhoto = await response.json();
+          documentIds.push(uploadedPhoto._id);
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          alert('Error uploading image. Please try again.');
         }
+      } else if (image.url && image.url.includes('/api/property-photos/')) {
+        // If it's an existing MongoDB image, extract and keep its ID
+        const photoId = image.url.split('/api/property-photos/')[1].split('/')[0];
+        documentIds.push(photoId);
+      }
     }
 
-    // Update Firestore with the document IDs in the propertyPhotos array
+    // Update Firestore with the MongoDB document IDs
     await updateDoc(doc(db, 'properties', propertyId), {
-        propertyPhotos: documentIds, // Set the propertyPhotos field to the array of document IDs
-        count: images.length // Optional: if you want to keep track of the number of images
+      propertyPhotos: documentIds,
+      count: documentIds.length
     });
 
     return documentIds;
-};
+  };
+
+  const deleteImage = async (propertyId: string, photoId: string) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/property-photos/${photoId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete image');
+      }
+    } catch (error) {
+      console.error('Error deleting image:', error);
+      alert('Error deleting image. Please try again.');
+    }
+  };
+
+  const handleFileChange = async (index: number, file: File | null) => {
+    const newImages = [...images];
+    if (file) {
+      // If there's an existing image at this index and it's from MongoDB, delete it
+      if (newImages[index]?.url?.includes('/api/property-photos/')) {
+        const photoId = newImages[index].url.split('/api/property-photos/')[1].split('/')[0];
+        await deleteImage(id || '', photoId);
+      }
+
+      newImages[index] = {
+        url: URL.createObjectURL(file),
+        label: newImages[index].label || file.name,
+        file: file
+      };
+      setImages(newImages);
+    }
+  };
 
   const handleAddRule = () => {
     setHouseRules([...houseRules, '']);
@@ -540,35 +623,6 @@ export function ListingPage() {
   const handleLabelChange = (index: number, value: string) => {
     const newImages = [...images];
     newImages[index].label = value;
-    setImages(newImages);
-  };
-
-  const deleteImage = async (propertyId: string, imageName: string) => {
-    const { error } = await supabase.storage
-        .from('properties')
-        .remove([`${propertyId}/${imageName}`]); // Delete the existing image
-
-    if (error) {
-        console.error('Error deleting image:', error);
-        alert('Error deleting image. Please try again.');
-    }
-};
-
-  const handleFileChange = async (index: number, file: File | null) => {
-    const newImages = [...images];
-    if (file) {
-      if (id) { // Ensure id is defined
-        await deleteImage(id, `photo${index}`);
-    } else {
-        console.error('Property ID is undefined. Cannot delete image.');
-        return; // Exit if id is not defined
-    }
-      newImages[index] = {
-        url: URL.createObjectURL(file),
-        label: newImages[index].label || file.name,
-        file: file
-      };
-    }
     setImages(newImages);
   };
 

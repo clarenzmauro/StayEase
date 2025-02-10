@@ -822,7 +822,10 @@ const OwnersPage: React.FC = () => {
                 <div 
                   key={property.id} 
                   className="owner-dashboard-image-container" 
-                  onClick={() => window.open(`/property/${property.id}`, '_blank')}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate(`/property/${property.id}`, { state: { isOwner: true } });
+                  }}
                 >
                   <div className="owner-dashboard-property-info">
                     <div className="owner-dashboard-property-name">{property.propertyName}</div>
@@ -835,7 +838,10 @@ const OwnersPage: React.FC = () => {
                   <div className="owner-dashboard-actions">
                     <button 
                       className="edit-btn" 
-                      onClick={(e) => { e.stopPropagation(); navigate(`/property/${property.id}/${normalDocumentId}/view-property`); }}
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        navigate(`/property/${property.id}/edit-property`);
+                      }}
                     >
                       Edit
                     </button>
