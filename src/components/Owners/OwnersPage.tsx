@@ -108,51 +108,60 @@ const OwnersPage: React.FC = () => {
     if (!confirmDelete) return;
 
     try {
+      // First get the property document to access propertyPhotos array
+      const propertyDocRef = doc(db, 'properties', propertyId);
+      const propertyDocSnap = await getDoc(propertyDocRef);
+
+      if (!propertyDocSnap.exists()) {
+        console.error("Property not found");
+        return;
+      }
+
+      const propertyData = propertyDocSnap.data();
+      const photoIds = propertyData.propertyPhotos || [];
+
+      // Delete all associated photos from MongoDB if there are any
+      if (photoIds.length > 0) {
+        try {
+          const response = await fetch('http://localhost:5000/api/property-photos/bulk-delete', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ photoIds }),
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to delete photos');
+          }
+        } catch (error) {
+          console.error("Error deleting photos:", error);
+          alert("Error deleting photos. Please try again.");
+          return;
+        }
+      }
+
+      // Now proceed with deleting the property from Firebase
       const userDocRef = doc(db, 'accounts', normalDocumentId);
       const userDocSnap = await getDoc(userDocRef);
 
-      if (userDocSnap.exists()){
+      if (userDocSnap.exists()) {
         const userData = userDocSnap.data();
         const dashboardId = userData.dashboardId;
 
         const dashboardRef = doc(db, 'dashboards', dashboardId);
         const dashboardDocSnap = await getDoc(dashboardRef);
 
-        if (dashboardDocSnap.exists()){
+        if (dashboardDocSnap.exists()) {
           const dashboardData = dashboardDocSnap.data();
           const listedDorms = dashboardData.listedDorms || [];
 
           const updateDorms = listedDorms.filter((dormId: string) => dormId !== propertyId);
           await updateDoc(dashboardRef, { listedDorms: updateDorms });
 
-          const propertyDocRef = doc(db, 'properties', propertyId);
+          // Delete the property document
           await deleteDoc(propertyDocRef);
-
-          const { data: files, error: listError } = await supabase
-            .storage
-            .from('properties')
-            .list(`${propertyId}`);
-
-          if (listError) {
-            console.error("Error listing files:", listError);
-            alert("Error listing files: " + listError.message);
-            return;
-          }
-
-          // Prepare file paths for deletion
-          const filePaths = files.map(file => `${propertyId}/${file.name}`);
-
-          // Delete all files in the propertyId folder
-          const { error } = await supabase
-            .storage
-            .from('properties')
-            .remove(filePaths);
-          if (error) {
-            console.error("Error deleting files from Supabase:", error);
-            alert("Error deleting files from Supabase: " + error.message);
-          } else {
-            alert("Property and associated folder deleted successfully!");
-          }
+          alert("Property deleted successfully!");
         } else {
           console.error("Dashboard not found");
         }
@@ -161,6 +170,7 @@ const OwnersPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Error deleting property: ", error);
+      alert("Error deleting property. Please try again.");
     }
   };
 

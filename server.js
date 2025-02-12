@@ -101,7 +101,22 @@ app.get('/api/property-photos/:id/label', async (req, res) => {
     }
 });
 
+// Route to delete multiple property photos
+app.delete('/api/property-photos/bulk-delete', async (req, res) => {
+    try {
+        const { photoIds } = req.body;
+        if (!photoIds || !Array.isArray(photoIds)) {
+            return res.status(400).json({ message: 'photoIds array is required' });
+        }
+
+        const result = await PropertyPhoto.deleteMany({ _id: { $in: photoIds } });
+        res.json({ message: `${result.deletedCount} photos deleted successfully` });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server is runn	ing on http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
