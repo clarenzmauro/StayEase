@@ -508,11 +508,6 @@ export function HomePage() {
             <img src={logoSvg} alt="StayEase Logo" className="logo-image" />
           </Link>
         </div>
-        
-        <div className="nav-links">
-          <span>Properties</span>
-          <span>People</span>
-        </div>
 
         <div className="nav-right">
           <div 

@@ -67,6 +67,9 @@ interface Notification {
   message: string;
   timestamp: number;
   read: boolean;
+  type: string;
+  propertyName: string;
+  userName: string;
 }
 
 const OwnersPage: React.FC = () => {
@@ -99,9 +102,7 @@ const OwnersPage: React.FC = () => {
 
   const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner';
 
-  // ------------------------------
-  // DELETE PROPERTY FUNCTION
-  // ------------------------------
+  // Delete Property Function
   const handleDeleteProperty = async (propertyId: string) => {
     const confirmDelete = window.confirm("Are you sure you want to delete this property?");
     if (!confirmDelete) return;
@@ -163,9 +164,7 @@ const OwnersPage: React.FC = () => {
     }
   };
 
-  // ------------------------------
-  // FETCH COMMENTS & CALCULATE AVERAGE RATING
-  // ------------------------------
+  // Fetch comments & Calculate Average rating
   const fetchComments = async (ownerData) => {
     const commentsData = ownerData?.comments || {};
     const commentCounter = commentsData.commentCounter || 0;
@@ -233,10 +232,7 @@ const OwnersPage: React.FC = () => {
     return "/placeholder.svg?height=150&width=150"; // Default placeholder
   };
   
-
-  // ------------------------------
-  // DELETE & EDIT REVIEW FUNCTIONS
-  // ------------------------------
+  // Delete & Edit Review Functions
   const handleDeleteReview = async () => {
     if (!currentUser || !userExistingReview) return;
     
@@ -305,10 +301,8 @@ const OwnersPage: React.FC = () => {
     }
   };
 
-  // ------------------------------
-  // FETCH DASHBOARD & PROPERTIES FUNCTIONS
-  // ------------------------------
-  const fetchDahsboardData = async (dashboardId: string) => {
+  // Fetch Dashboard Data and Properties
+  const fetchDashboardData = async (dashboardId: string) => {
     const dashboardRef = doc(db, 'dashboards', dashboardId);
     const dashboardSnap = await getDoc(dashboardRef);
 
@@ -344,9 +338,7 @@ const OwnersPage: React.FC = () => {
     }
   };
 
-  // ------------------------------
-  // AUTH & OWNER DATA LISTENER
-  // ------------------------------
+  // Auth and Owner Data Listener
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -407,9 +399,7 @@ const OwnersPage: React.FC = () => {
     }
   };
 
-  // ------------------------------
-  // FOLLOW & NOTIFICATION FUNCTIONS
-  // ------------------------------
+  // Follow & Notification Functions
   const checkIfFollowing = async (userId: string) => {
     if (!normalDocumentId) return;
     
