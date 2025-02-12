@@ -807,8 +807,9 @@ const OwnersPage: React.FC = () => {
                 + Add New Listing
               </button>
             </div>
+            
+            {properties.map(property => (
             <div className="image-section">
-              {properties.map(property => (
                 <div 
                   key={property.id} 
                   className="owner-dashboard-image-container" 
@@ -848,8 +849,8 @@ const OwnersPage: React.FC = () => {
                     className="owner-dashboard-property-image" 
                   />
                 </div>
-              ))}
             </div>
+            ))}
           </div>  
         ) : (
           <div className="about-section-owner">
