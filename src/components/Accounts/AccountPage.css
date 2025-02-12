@@ -8,7 +8,7 @@
 
 .account-container {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 50px auto;
   background: white;
   border-radius: 20px;
   padding: 2.5rem;
@@ -426,6 +426,19 @@
   background: white;
   border-radius: 20px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  position: relative;
+}
+
+.skeleton-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 20px;
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.02);
+  pointer-events: none;
 }
 
 .skeleton-header {
@@ -465,9 +478,9 @@
 }
 
 .skeleton-image {
-  width: 320px;
-  height: 320px;
-  border-radius: 160px;
+  width: 350px;
+  height: 350px;
+  border-radius: 175px;
   margin: 0 auto;
   border: 12px solid #fff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -505,6 +518,10 @@
   border-radius: 16px;
   background: white;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.skeleton-section:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
 }
 
 .skeleton-section-header {
@@ -602,28 +619,6 @@
   border-radius: 4px;
 }
 
-/* Add subtle hover effects */
-.skeleton-section:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.06);
-}
-
-/* Add depth to containers */
-.skeleton-container {
-  position: relative;
-}
-
-.skeleton-container::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  border-radius: 20px;
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.02);
-  pointer-events: none;
-}
-
 /* Add subtle animation delay for staggered effect */
 .skeleton-field:nth-child(2) {
   animation-delay: 0.1s;
@@ -639,4 +634,349 @@
 
 .skeleton-card:nth-child(3) {
   animation-delay: 0.3s;
+}
+
+.skeleton-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.skeleton-logo {
+  height: 40px;
+  width: 120px;
+  border-radius: 6px;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.navbar-logo img {
+  height: 40px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.navbar-links a {
+  text-decoration: none;
+  color: #333;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.navbar-links a:hover {
+  color: #007bff;
+}
+
+.navbar-buttons {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.navbar-buttons .edit-button-account,
+.navbar-buttons .save-button,
+.navbar-buttons .cancel-button,
+.navbar-buttons .logout-button,
+.navbar-buttons .apply-button,
+.navbar-buttons .visit-button {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.navbar-buttons .edit-button-account {
+  background-color: #007bff;
+  color: white;
+}
+
+.navbar-buttons .edit-button-account:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.navbar-buttons .save-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.navbar-buttons .save-button:hover:not(:disabled) {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.navbar-buttons .cancel-button {
+  background-color: #6c757d;
+  color: white;
+}
+
+.navbar-buttons .cancel-button:hover {
+  background-color: #5a6268;
+  transform: translateY(-1px);
+}
+
+.navbar-buttons .logout-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.navbar-buttons .logout-button:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+.navbar-buttons .apply-button, 
+.navbar-buttons .visit-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.navbar-buttons .apply-button:hover, 
+.navbar-buttons .visit-button:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.button-icon {
+  width: 23px;
+  height: 23px;
+}
+
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 120px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px 0;
+  position: absolute;
+  z-index: 1;
+  top: 125%; /* Position below the button */
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip-container:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+@media (max-width: 1200px) {
+  .profile-info-container {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-image-section {
+    height: 223px;
+  }
+
+  .profile-image-container {
+    width: 250px;
+    height: 250px;
+  }
+
+  .profile-image-placeholder {
+    font-size: 3rem;
+  }
+
+  .skeleton-profile {
+    grid-template-columns: 1fr;
+  }
+
+  .skeleton-image {
+    width: 300px;
+    height: 300px;
+    border-radius: 150px;
+  }
+}
+
+@media (max-width: 768px) {
+  .account-container {
+    padding: 1.5rem;
+  }
+
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.5rem;
+  }
+
+  .profile-title h1 {
+    font-size: 2rem;
+  }
+
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .edit-button-account,
+  .save-button,
+  .cancel-button,
+  .logout-button,
+  .apply-button,
+  .visit-button {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .profile-info-container {
+    gap: 2rem;
+  }
+
+  .profile-image-section {
+    height: 206px;
+  }
+
+  .profile-image-container {
+    width: 200px;
+    height: 200px;
+  }
+
+  .profile-image-placeholder {
+    font-size: 2.5rem;
+  }
+
+  .account-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .info-group input {
+    font-size: 1rem;
+  }
+
+  .favorite-dorms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-details-section {
+    padding: 1rem;
+  }
+
+  .social-input-group label {
+    min-width: 80px;
+  }
+
+  .skeleton-image {
+    width: 250px;
+    height: 250px;
+    border-radius: 125px;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-page {
+    padding: 1rem;
+  }
+
+  .account-container {
+    margin: 75px auto;
+    padding: 1rem;
+  }
+
+  .profile-title h1 {
+    font-size: 1.8rem;
+  }
+
+  .profile-image-section {
+    height: 150px;
+  }
+
+  .profile-image-container {
+    width: 150px;
+    height: 150px;
+  }
+
+  .profile-image-placeholder {
+    font-size: 2rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .edit-button-account,
+  .save-button,
+  .cancel-button,
+  .logout-button,
+  .apply-button,
+  .visit-button {
+    padding: 0.5rem 0.5rem;
+    font-size: 0.5rem;
+    width: 100%;
+    text-align: center;
+  }
+
+  .account-section {
+    padding: 1rem;
+  }
+
+  .account-section h2 {
+    font-size: 1.2rem;
+  }
+
+  .info-group input {
+    font-size: 0.9rem;
+  }
+
+  .favorite-dorms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-details-section {
+    padding: 0.5rem;
+  }
+
+  .social-input-group label {
+    min-width: 60px;
+  }
+
+  .profile-header {
+    gap: 1rem;
+  }
+
+  .profile-info-container {
+    gap: 1rem;
+  }
+
+  .profile-image-section {
+    padding: 1rem;
+  }
+
+  .skeleton-image {
+    width: 200px;
+    height: 200px;
+    border-radius: 100px;
+  }
 }

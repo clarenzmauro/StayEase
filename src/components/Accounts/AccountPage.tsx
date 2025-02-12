@@ -226,9 +226,24 @@ const AccountPage = () => {
     return property.propertyPhotos[photoKey]?.pictureUrl || '';
   };
 
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
+  const renderTooltip = (text: string) => (
+    <span className="tooltip-text">{text}</span>
+  );
+
   if (!user || !userData || !editedData) {
     return (
       <div className="account-page">
+        <div className="skeleton-navbar">
+          <div className="skeleton-logo skeleton"></div>
+          <div className="skeleton-buttons">
+            <div className="skeleton-button skeleton"></div>
+            <div className="skeleton-button skeleton"></div>
+          </div>
+        </div>
         <div className="skeleton-container">
           <div className="skeleton-header">
             <div className="skeleton-title skeleton"></div>
@@ -282,51 +297,74 @@ const AccountPage = () => {
 
   return (
     <div className="account-page">
+      <nav className="navbar">
+        <div className="navbar-logo" onClick={handleLogoClick}>
+          <img src="/src/assets/STAY.svg" alt="StayEase Logo" />
+        </div>
+        <div className="navbar-buttons">
+          {isOwnProfile && (
+            <>
+              {editMode ? (
+                <>
+                  <div className="tooltip-container">
+                    <button 
+                      onClick={handleSave} 
+                      className="save-button"
+                      disabled={isSaving}
+                    >
+                      <img src="/src/assets/save.png" alt="Save" className="button-icon" />
+                    </button>
+                    {renderTooltip('Save Changes')}
+                  </div>
+                  <div className="tooltip-container">
+                    <button 
+                      onClick={handleCancel} 
+                      className="cancel-button"
+                    >
+                      <img src="/src/assets/cancel.png" alt="Cancel" className="button-icon" />
+                    </button>
+                    {renderTooltip('Cancel')}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="tooltip-container">
+                    <button onClick={handleEdit} className="edit-button-account">
+                      <img src="/src/assets/edit.png" alt="Edit" className="button-icon" />
+                    </button>
+                    {renderTooltip('Edit Profile')}
+                  </div>
+                  <div className="tooltip-container">
+                    <button onClick={handleLogout} className="logout-button">
+                      <img src="/src/assets/logout.png" alt="Logout" className="button-icon" />
+                    </button>
+                    {renderTooltip('Logout')}
+                  </div>
+                  {userData && userData.isOwner === false ? (
+                    <div className="tooltip-container">
+                      <button onClick={handleApplyAsOwner} className="apply-button">
+                        <img src="/src/assets/owners.png" alt="Apply as Owner" className="button-icon" />
+                      </button>
+                      {renderTooltip('Apply as Owner')}
+                    </div>
+                  ) : userData && userData.isOwner === true ? (
+                    <div className="tooltip-container">
+                      <button onClick={handleNavigateToOwnerPage} className="visit-button">
+                        <img src="/src/assets/owners.png" alt="Visit Owner Page" className="button-icon" />
+                      </button>
+                      {renderTooltip('Visit Owner Page')}
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </nav>
       <div className="account-container">
         <div className="profile-header">
           <div className="profile-title">
             <h1>Account Details</h1>
-          </div>
-          <div className="action-buttons">
-            {isOwnProfile && editMode ? (
-              <>
-                <button 
-                  onClick={handleSave} 
-                  className="save-button"
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button 
-                  onClick={handleCancel} 
-                  className="cancel-button"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : isOwnProfile ? (
-              <>
-                <button onClick={handleEdit} className="edit-button-account">
-                  Edit Profile
-                </button>
-                <button onClick={handleLogout} className="logout-button">
-                  Logout
-                </button>
-                {userData && userData.isOwner === false ? (
-                  <button onClick={handleApplyAsOwner} className="apply-button">
-                    Apply as Owner
-                  </button>
-                ) : userData && userData.isOwner === true ? (
-                  <button onClick={handleNavigateToOwnerPage} className="visit-button">
-                    Visit Owner Page
-                  </button>
-                ) : null}
-              </>
-            ) : (
-              <button onClick={handleLogout} className="logout-button">
-                Logout
-              </button>
-            )}
           </div>
         </div>
 
