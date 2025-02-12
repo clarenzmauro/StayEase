@@ -67,6 +67,7 @@ export function HomePage() {
   const [currentImageIndices, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
   const [imageCache, setImageCache] = useState<{ [key: string]: boolean }>({});
   const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
+  const [isMobileFilterVisible, setIsMobileFilterVisible] = useState(false);
 
   const getNextImage = (e: React.MouseEvent, itemId: string, direction: 'next' | 'prev') => {
     e.stopPropagation();
@@ -539,32 +540,60 @@ export function HomePage() {
         </div>
       </nav>
 
+      {/* Centered Search Bar */}
+      <div className="centered-search-bar">
+        <div className="search-bar-container">
+          <input
+            type="text"
+            className="search-bar"
+            placeholder="Search for your perfect stay..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            disabled={isLoading}
+          />
+          <svg
+            className="search-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          {/* Add Filter Icon for mobile */}
+          <button 
+            className="mobile-filter-button"
+            onClick={() => setIsMobileFilterVisible(!isMobileFilterVisible)}
+            aria-label="Toggle filters"
+          >
+            <svg 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <line x1="4" y1="21" x2="20" y2="21" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+              <line x1="4" y1="3" x2="20" y2="3" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <div className="homepage-layout">
         {/* Filters Sidebar */}
-        <div className="filters-sidebar">
-          <div className={`search-section ${isLoading ? 'skeleton' : ''}`}>
-            <input
-              type="text"
-              className="search-bar"
-              placeholder="Search for your perfect stay..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              disabled={isLoading}
-            />
-            <svg
-              className="search-icon"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ opacity: isLoading ? 0 : 1 }}
-            >
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </div>
+        <div className={`filters-sidebar ${isMobileFilterVisible ? 'mobile-visible' : ''}`}>
+          <button 
+            className="close-filter-button"
+            onClick={() => setIsMobileFilterVisible(false)}
+          >
+            ×
+          </button>
           <FilterMenu 
             onFilterChange={handleFilterChange} 
             isLoading={isLoading}

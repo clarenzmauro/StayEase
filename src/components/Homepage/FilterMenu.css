@@ -116,3 +116,149 @@ select {
 .more-tags-button:hover {
   color: #021526;
 }
+
+/* Mobile optimizations */
+@media (max-width: 1200px) {
+  .filter-menu {
+    padding-top: 3rem; /* Make room for close button */
+  }
+
+  .filter-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .filter-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #021526;
+  }
+
+  .price-range {
+    flex-wrap: wrap;
+  }
+
+  .price-range input {
+    flex: 1;
+    min-width: 120px;
+    height: 44px;
+    font-size: 1rem;
+    padding: 0.8rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .price-range span {
+    padding: 0 0.5rem;
+    font-size: 1rem;
+    color: #666;
+  }
+
+  select {
+    height: 44px;
+    font-size: 1rem;
+    padding: 0 1rem;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background-color: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .tag-checkbox {
+    padding: 0.8rem;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+  }
+
+  .tag-checkbox:hover {
+    background: #f8f8ff;
+  }
+
+  .tag-checkbox input {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+  }
+
+  .filter-buttons {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding: 1rem;
+    margin: 0 -1rem;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  }
+
+  .reset-button,
+  .apply-button {
+    padding: 1rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .reset-button:hover {
+    background-color: #eee;
+  }
+
+  .reset-button:active {
+    transform: scale(0.98);
+  }
+
+  .more-tags-button {
+    padding: 0.8rem;
+    background: white;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+
+  .more-tags-button:hover {
+    background: #f8f8ff;
+  }
+}
+
+@media (max-width: 480px) {
+  .filter-menu {
+    padding-top: 2.5rem;
+  }
+
+  .filter-section {
+    padding: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .price-range input {
+    min-width: 100px;
+    font-size: 0.9rem;
+    height: 40px;
+  }
+
+  select {
+    height: 40px;
+    font-size: 0.9rem;
+  }
+
+  .tag-checkbox {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .filter-buttons {
+    padding: 0.8rem;
+  }
+
+  .reset-button,
+  .apply-button {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+}
