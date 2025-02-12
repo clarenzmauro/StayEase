@@ -79,9 +79,9 @@ const tagCategories = {
 };
 
 const PLACEHOLDER_IMAGE = {
-  url: '', // No URL for the placeholder
-  label: 'Placeholder Image', // Label for the placeholder
-  file: null, // No file associated with the placeholder
+  url: '/assets/ImagePlaceholder.png', // Updated URL for the placeholder
+  label: 'Placeholder Image',
+  file: null,
 };
 
 export function ListingPage() {

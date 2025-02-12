@@ -1445,3 +1445,384 @@
   margin: 0;
   color: #333;
 }
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .main-content-owner {
+    padding: 24px 40px;
+    grid-template-columns: 1fr;
+  }
+
+  .profile-sidebar {
+    position: static;
+    margin-bottom: 24px;
+  }
+
+  .profile-card {
+    padding: 20px;
+  }
+
+  .profile-image {
+    width: 100px;
+    height: 100px;
+  }
+
+  .profile-name {
+    font-size: 20px;
+  }
+
+  .stats-container {
+    gap: 12px;
+  }
+
+  .stat-value {
+    font-size: 14px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .info-card {
+    padding: 20px;
+  }
+
+  .confirmed-items {
+    gap: 12px;
+  }
+
+  .about-section-owner {
+    padding: 24px;
+  }
+
+  .details-grid-owner {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .about-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .reviews-section {
+    padding-top: 24px;
+  }
+
+  .reviews-header h2 {
+    font-size: 20px;
+  }
+
+  .show-more-button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .listings-section {
+    padding: 24px;
+  }
+
+  .listings-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .listing-card {
+    padding: 16px;
+  }
+
+  .listing-image {
+    height: 180px;
+  }
+
+  .listing-title {
+    font-size: 16px;
+  }
+
+  .listing-price {
+    font-size: 14px;
+  }
+
+  .listing-price span {
+    font-size: 12px;
+  }
+
+  .listing-actions {
+    gap: 6px;
+  }
+
+  .action-button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .owner-dashboard-image-container {
+    width: calc(50% - 10px);
+  }
+
+  .owner-dashboard-property-image {
+    height: 180px;
+  }
+
+  .owner-dashboard-actions {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content-owner {
+    padding: 16px 20px;
+  }
+
+  .profile-card {
+    padding: 16px;
+  }
+
+  .profile-image {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-name {
+    font-size: 18px;
+  }
+
+  .stats-container {
+    gap: 8px;
+  }
+
+  .stat-value {
+    font-size: 12px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+  }
+
+  .info-card {
+    padding: 16px;
+  }
+
+  .confirmed-items {
+    gap: 8px;
+  }
+
+  .about-section-owner {
+    padding: 16px;
+  }
+
+  .details-grid-owner {
+    gap: 8px;
+  }
+
+  .about-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .reviews-section {
+    padding-top: 16px;
+  }
+
+  .reviews-header h2 {
+    font-size: 18px;
+  }
+
+  .show-more-button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .listings-section {
+    padding: 16px;
+  }
+
+  .listings-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .listing-card {
+    padding: 12px;
+  }
+
+  .listing-image {
+    height: 150px;
+  }
+
+  .listing-title {
+    font-size: 14px;
+  }
+
+  .listing-price {
+    font-size: 12px;
+  }
+
+  .listing-price span {
+    font-size: 10px;
+  }
+
+  .listing-actions {
+    gap: 4px;
+  }
+
+  .action-button {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .owner-dashboard-image-container {
+    width: 100%;
+  }
+
+  .owner-dashboard-property-image {
+    height: 150px;
+  }
+
+  .owner-dashboard-actions {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content-owner {
+    padding: 12px 16px;
+  }
+
+  .profile-card {
+    padding: 12px;
+  }
+
+  .profile-image {
+    width: 60px;
+    height: 60px;
+  }
+
+  .profile-name {
+    font-size: 16px;
+  }
+
+  .stats-container {
+    gap: 6px;
+  }
+
+  .stat-value {
+    font-size: 10px;
+  }
+
+  .stat-label {
+    font-size: 8px;
+  }
+
+  .info-card {
+    padding: 12px;
+  }
+
+  .confirmed-items {
+    gap: 6px;
+  }
+
+  .about-section-owner {
+    padding: 12px;
+  }
+
+  .details-grid-owner {
+    gap: 6px;
+  }
+
+  .about-title {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .reviews-section {
+    padding-top: 12px;
+  }
+
+  .reviews-header h2 {
+    font-size: 16px;
+  }
+
+  .show-more-button {
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+
+  .listings-section {
+    padding: 12px;
+  }
+
+  .listings-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .listing-card {
+    padding: 8px;
+  }
+
+  .listing-image {
+    height: 120px;
+  }
+
+  .listing-title {
+    font-size: 12px;
+  }
+
+  .listing-price {
+    font-size: 10px;
+  }
+
+  .listing-price span {
+    font-size: 8px;
+  }
+
+  .listing-actions {
+    gap: 2px;
+  }
+
+  .action-button {
+    padding: 2px 6px;
+    font-size: 8px;
+  }
+
+  .owner-dashboard-image-container {
+    width: 100%;
+  }
+
+  .owner-dashboard-property-image {
+    height: 120px;
+  }
+
+  .owner-dashboard-actions {
+    opacity: 1;
+  }
+}
+
+/* Dropdown menu styles */
+.dropdown-menu {
+  position: absolute;
+  top: 60px;
+  right: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdown-menu button {
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 14px;
+  color: #1a365d;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.dropdown-menu button:hover {
+  background: #f3f4f6;
+}

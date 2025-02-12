@@ -100,6 +100,9 @@ const OwnersPage: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
+  // New state for menu dropdown
+  const [showMenuDropdown, setShowMenuDropdown] = useState(false);
+
   const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner';
 
   // Delete Property Function
@@ -706,11 +709,6 @@ const OwnersPage: React.FC = () => {
             <img src={logoSvg} alt="Stayverse" className="logo" />
           </div>
           <div className="nav-buttons">
-            {isOwnerViewing && (
-              <button className="host-button" onClick={handleDashboardClick}>
-                {isDashboardOpen ? 'Profile' : 'Dashboard'}
-              </button>
-            )}
             {/* Notification icon visible only to the owner */}
             {isOwnerViewing && (
               <NotificationBell />
@@ -720,10 +718,21 @@ const OwnersPage: React.FC = () => {
                 <path d="M8 0.5C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5C3.85786 15.5 0.5 12.1421 0.5 8C0.5 3.85786 3.85786 0.5 8 0.5ZM8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5899 4.41015 14.5 8 14.5C11.5899 14.5 14.5 11.5899 14.5 8C14.5 4.41015 11.5899 1.5 8 1.5Z"/>
               </svg>
             </button>
-            <button className="menu-button">
+            <div className="menu-button" onClick={() => setShowMenuDropdown(!showMenuDropdown)}>
               <span className="menu-icon"></span>
               <div className="profile-icon"></div>
-            </button>
+              {showMenuDropdown && (
+                <div className="menu-dropdown">
+                  {isOwnerViewing && (
+                    <>
+                      <button className="host-button" onClick={handleDashboardClick}>
+                        {isDashboardOpen ? 'Profile' : 'Dashboard'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
