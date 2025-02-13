@@ -36,6 +36,7 @@ interface PropertyDetails {
   description: string;
   tags: string[];
   views: number;
+  interested: number,
   price: number;
   availableFrom: string;
   maxOccupants: number;
@@ -103,6 +104,7 @@ export function ListingPage() {
     description: 'Enter Property Description',
     tags: [],
     views: 0,
+    interested: 0,
     price: 0,
     availableFrom: "",
     maxOccupants: 0,
@@ -191,6 +193,7 @@ export function ListingPage() {
               description: data.description || "",
               tags: data.propertyTags || [],
               views: data.viewCount || 0,
+              interested: data.interestedCount || 0,
               price: data.propertyPrice || 0,
               availableFrom: data.availableFrom || "",
               maxOccupants: data.maxOccupants || 1,
@@ -367,6 +370,7 @@ export function ListingPage() {
           description: propertyData.propertyDesc || 'Enter Property Description',
           tags: propertyData.propertyTags || [],
           views: propertyData.viewCount || 0,
+          interested: propertyData.interestedCount || 0,
           price: propertyData.propertyPrice || 0,
           availableFrom: availableDate.toISOString().split('T')[0],
           maxOccupants: propertyData.maxOccupants || 0,
@@ -439,28 +443,37 @@ export function ListingPage() {
   const handleSubmit = async () => {
     try {
       let docRef;
+
       const propertyData = {
         propertyName: details.name,
+        propertyDesc: details.description,
         propertyLocation: details.location,
-        coordinates: details.coordinates,
+        propertyLocationGeo: details.coordinates,
         propertyType: details.type,
-        bedrooms: details.bedrooms,
-        bathrooms: details.bathrooms,
-        description: details.description,
+        ownerId: isEditing ? ownerId : id,
+        datePosted: new Date(),
+        bedroomCount: details.bedrooms,
+        bathroomCount: details.bathrooms,
+        dateAvailability: new Date(details.availableFrom),
         propertyTags: selectedTags,
         viewCount: details.views,
+        interestedCount: details.interested,
         propertyPrice: details.price,
         availableFrom: details.availableFrom,
         maxOccupants: details.maxOccupants,
         floorLevel: details.floorLevel,
-        furnishing: details.furnishing,
+        furnishingStatus: details.furnishing,
         allowViewing: details.allowViewing,
         allowChat: details.allowChat,
-        size: details.size,
+        propertySize: details.size,
         securityDeposit: details.securityDeposit,
         leaseTerm: details.leaseTerm,
-        lifestyle: details.lifestyle,
-        houseRules: houseRules
+        propertyLifestyle: details.lifestyle,
+        houseRules: houseRules,
+        isVerified: false,
+        interestedApplicants: [],
+        comments: [],
+        propertyPhotos: [],
       };
 
       if (isEditing && id) {

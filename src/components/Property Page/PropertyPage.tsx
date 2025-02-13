@@ -223,7 +223,7 @@ const PropertyPage = () => {
       setShowLoginPrompt(true);
       return;
     }
-    if (!auth.currentUser || !id) return;
+    if (!auth.currentUser || !id) return;   
 
     const userRef = doc(db, 'accounts', auth.currentUser.uid);
     const isFavorited = userFavorites.includes(id);
@@ -409,6 +409,9 @@ const PropertyPage = () => {
   };
 
   const caesarCipher = (text: string, key: number): string => {
+    if (!text || typeof text !== 'string') {
+      return '';
+    }
     return text.split('').map(char => {
       const code = char.charCodeAt(0);
 
@@ -655,8 +658,8 @@ const PropertyPage = () => {
 
   
   const key = new Date().getDate();
-  const normalDocumentId = property.ownerId;
-  const encryptedDocumentId = caesarCipher(normalDocumentId, key);
+  const normalDocumentId = property?.ownerId || '';
+  const encryptedDocumentId = normalDocumentId ? caesarCipher(normalDocumentId, key) : '';
 
   return (
     <div className="property-page">
