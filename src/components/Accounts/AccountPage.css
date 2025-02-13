@@ -656,14 +656,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  padding: 0 2rem;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  height: 80px; /* Set consistent height */
 }
 
 .navbar-logo img {
-  height: 40px;
+  margin-top:12px;
+  height: 40px; /* Set consistent logo size */
 }
 
 .navbar-links {
@@ -793,7 +794,7 @@
   }
 
   .profile-image-section {
-    height: 223px;
+    height: 300px;
   }
 
   .profile-image-container {
@@ -854,7 +855,7 @@
   }
 
   .profile-image-section {
-    height: 206px;
+    height: 300px;
   }
 
   .profile-image-container {
@@ -908,7 +909,7 @@
   }
 
   .profile-image-section {
-    height: 150px;
+    height: 200px;
   }
 
   .profile-image-container {

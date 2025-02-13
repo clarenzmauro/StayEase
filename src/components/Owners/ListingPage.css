@@ -316,6 +316,7 @@
 .primary-image {
   width: 100%;
   height: 250px;
+  margin: 10px auto;
   border: 2px dashed #e5e7eb;
   border-radius: 0.75rem;
   display: flex;

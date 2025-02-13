@@ -17,6 +17,14 @@ import { db } from '../../firebase/config';
 const SkeletonLoading: React.FC = () => {
   return (
     <div className="skeleton-container">
+      {/* Skeleton Navbar */}
+      <div className="skeleton-navbar">
+        <div className="skeleton-logo skeleton"></div>
+        <div className="skeleton-buttons">
+          <div className="skeleton-button skeleton"></div>
+          <div className="skeleton-button skeleton"></div>
+        </div>
+      </div>
       {/* Profile Sidebar Skeleton */}
       <div className="profile-sidebar-skeleton">
         <div className="profile-card-skeleton">
@@ -86,7 +94,7 @@ const OwnersPage: React.FC = () => {
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [properties, setProperties] = useState<any[]>([]);
   const [isOwnerViewing, setIsOwnerViewing] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReview, setNewReview] = useState({ content: '', rating: 0 });
   const [comments, setComments] = useState<any[]>([]);
   const [averageRating, setAverageRating] = useState<number>(0);
@@ -271,7 +279,7 @@ const OwnersPage: React.FC = () => {
       rating: userExistingReview.rating
     });
     setIsEditMode(true);
-    setIsModalOpen(true);
+    setIsReviewModalOpen(true);
   };
 
   const handleCommentSubmit = async () => {
@@ -306,7 +314,7 @@ const OwnersPage: React.FC = () => {
         });
       }
       setNewReview({ content: '', rating: 0 });
-      setIsModalOpen(false);
+      setIsReviewModalOpen(false);
       setIsEditMode(false);
     } catch (error) {
       console.error("Error submitting review:", error);
@@ -697,6 +705,26 @@ const OwnersPage: React.FC = () => {
     return property.propertyPhotos[photoKey]?.pictureUrl || '';
   };
 
+  const handleLogout = async () => {
+    try {
+      const auth = getAuth();
+      await auth.signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  const handleLogoClick = () => {
+    navigate('/');
+  };
+
+  const formatDate = (timestamp) => {
+    const date = new Date(timestamp.seconds * 1000);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return date.toLocaleDateString('en-US', options);
+  };
+
   if (isLoading) {
     return <SkeletonLoading />;
   }
@@ -705,31 +733,25 @@ const OwnersPage: React.FC = () => {
     <div className="container-owner">
       <header className="header">
         <div className="header-content">
-          <div className="logo-container">
+          <div className="logo-container" onClick={handleLogoClick}>
             <img src={logoSvg} alt="Stayverse" className="logo" />
           </div>
           <div className="nav-buttons">
-            {/* Notification icon visible only to the owner */}
-            {isOwnerViewing && (
-              <NotificationBell />
-            )}
-            <button className="globe-button">
-              <svg viewBox="0 0 16 16" className="globe-icon">
-                <path d="M8 0.5C12.1421 0.5 15.5 3.85786 15.5 8C15.5 12.1421 12.1421 15.5 8 15.5C3.85786 15.5 0.5 12.1421 0.5 8C0.5 3.85786 3.85786 0.5 8 0.5ZM8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5899 4.41015 14.5 8 14.5C11.5899 14.5 14.5 11.5899 14.5 8C14.5 4.41015 11.5899 1.5 8 1.5Z"/>
-              </svg>
-            </button>
+            {isOwnerViewing && <NotificationBell />}
             <div className="menu-button" onClick={() => setShowMenuDropdown(!showMenuDropdown)}>
-              <span className="menu-icon"></span>
-              <div className="profile-icon"></div>
+              <div className="menu-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
               {showMenuDropdown && (
                 <div className="menu-dropdown">
                   {isOwnerViewing && (
-                    <>
-                      <button className="host-button" onClick={handleDashboardClick}>
-                        {isDashboardOpen ? 'Profile' : 'Dashboard'}
-                      </button>
-                    </>
+                    <button onClick={handleDashboardClick}>
+                      {isDashboardOpen ? 'View Profile' : 'View Dashboard'}
+                    </button>
                   )}
+                  <button onClick={handleLogout}>Logout</button>
                 </div>
               )}
             </div>
@@ -741,7 +763,7 @@ const OwnersPage: React.FC = () => {
       <NotificationDropdown />
 
       <main className="main-content-owner">
-        <div className="profile-sidebar">
+        <div className={`profile-sidebar ${isDashboardOpen ? 'dashboard-open' : ''}`}>
           <div className="profile-card">
             <div className="profile-image-container">
               <img 
@@ -750,9 +772,9 @@ const OwnersPage: React.FC = () => {
                 className="profile-image" 
               />
             </div>
-
             <h1 className="profile-name">{ownerData?.username}</h1>
-            <p className="superhost-badge">Property Owner</p>
+            <p className="superhost-badge">Property Owner</p> {/* Move this under the name */}
+            {/* Moved follow button here */}
             {!isOwnerViewing && (
               <>
                 <button 
@@ -777,42 +799,43 @@ const OwnersPage: React.FC = () => {
                 <div className="stat-value">{averageRating}★</div>
                 <div className="stat-label">Rating</div>
               </div>
-
-              <div className="stat-item">
-                <div className="stat-value">
-                  {ownerData?.dateJoined 
-                    ? new Date(ownerData.dateJoined.seconds * 1000).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })
-                    : 'N/A'
-                  }
-                </div>
-                <div className="stat-label">Date Joined</div>
-              </div>
             </div>
           </div>
-
-          <div className="info-card">
+          <div className={`info-card ${isDashboardOpen ? 'hidden' : ''}`}>
             <h2 className="info-title">{firstName}'s confirmed information</h2>
             <div className="confirmed-items">
               {ownerData ? (
-                [ownerData.email || "N/A", ownerData.contactNumber || "N/A", 
-                 ownerData.socials?.Facebook || "N/A", ownerData.socials?.Instagram || "N/A", 
-                 ownerData.socials?.X || "N/A"].map((item, index) => (
-                  <div key={index} className="confirmed-item">
+                <>
+                  <div className="confirmed-item">
                     <span className="check-icon">✓</span>
-                    <span>{item}</span>
+                    <span>{ownerData.email || "N/A"}</span>
                   </div>
-                ))
+                  <div className="confirmed-item">
+                    <span className="check-icon">✓</span>
+                    <span>{ownerData.contactNumber || "N/A"}</span>
+                  </div>
+                  <div className="confirmed-item">
+                    <span className="check-icon">✓</span>
+                    <span>{ownerData.socials?.Facebook || "N/A"}</span>
+                  </div>
+                  <div className="confirmed-item">
+                    <span className="check-icon">✓</span>
+                    <span>{ownerData.socials?.Instagram || "N/A"}</span>
+                  </div>
+                  <div className="confirmed-item">
+                    <span className="check-icon">✓</span>
+                    <span>{ownerData.socials?.X || "N/A"}</span>
+                  </div>
+                  <div className="confirmed-item">
+                    <span className="check-icon">✓</span>
+                    <span>Date Joined: {ownerData.dateJoined ? formatDate(ownerData.dateJoined) : 'N/A'}</span>
+                  </div>
+                </>
               ) : (
                 <p>Loading confirmed information...</p>
               )}
             </div>
           </div>
-
-          <button className="report-button">Report this profile</button>
         </div>
 
         {isDashboardOpen ? (
@@ -827,17 +850,16 @@ const OwnersPage: React.FC = () => {
               </button>
             </div>
             
-            {properties.map(property => (
-            <div className="image-section">
-                <div 
-                  key={property.id} 
-                  className="owner-dashboard-image-container" 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate(`/property/${property.id}`, { state: { isOwner: true } });
-                  }}
-                >
-                  <div className="owner-dashboard-property-info">
+            <div className="owner-image-section">
+              {properties.map(property => (
+                <div key={property.id} className="owner-dashboard-image-container">
+                  <div 
+                    className="owner-dashboard-property-info"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(`/property/${property.id}`, { state: { isOwner: true } });
+                    }}
+                  >
                     <div className="owner-dashboard-property-name">{property.propertyName}</div>
                     <div className="owner-dashboard-property-location">{property.propertyLocation}</div>
                     <div className="owner-dashboard-property-type">{property.propertyType}</div>
@@ -868,9 +890,9 @@ const OwnersPage: React.FC = () => {
                     className="owner-dashboard-property-image" 
                   />
                 </div>
+              ))}
             </div>
-            ))}
-          </div>  
+          </div>
         ) : (
           <div className="about-section-owner">
             <h2 className="about-title">About {firstName}</h2>
@@ -900,7 +922,7 @@ const OwnersPage: React.FC = () => {
                       alert("You already have a review. Please edit or delete your existing review first.");
                       return;
                     }
-                    setIsModalOpen(true);
+                    setIsReviewModalOpen(true);
                   }}>
                     <p>Click here to leave a review!</p>
                   </div>
@@ -931,8 +953,8 @@ const OwnersPage: React.FC = () => {
                     </div>
                     {currentUser && comment.user === currentUser.uid && (
                       <div className="review-actions">
-                        <button onClick={handleEditReview}>Edit</button>
-                        <button onClick={handleDeleteReview}>Delete</button>
+                        <button className="edit-btn" onClick={handleEditReview}>Edit</button>
+                        <button className="delete-btn" onClick={handleDeleteReview}>Delete</button>
                       </div>
                     )}
                   </div>
@@ -945,9 +967,9 @@ const OwnersPage: React.FC = () => {
         )}
       </main>
 
-      {isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
+      {isReviewModalOpen && (
+        <div className="modal-overlay-review">
+          <div className="modal-content-review">
             <h3>{isEditMode ? 'Edit Review' : 'Leave a Review'}</h3>
             <textarea
               value={newReview.content}
@@ -966,8 +988,10 @@ const OwnersPage: React.FC = () => {
                 </span>
               ))}
             </div>
-            <button onClick={handleCommentSubmit}>Submit</button>
-            <button onClick={() => setIsModalOpen(false)}>Cancel</button>
+            <div className="button-group">
+              <button onClick={handleCommentSubmit}>Submit</button>
+              <button onClick={() => setIsReviewModalOpen(false)}>Cancel</button>
+            </div>
           </div>
         </div>
       )}

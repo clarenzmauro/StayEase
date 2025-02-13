@@ -36,9 +36,10 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 0 2rem;
   background-color: white;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  height: 80px; /* Set consistent height */
 }
 
 .logo {
@@ -46,7 +47,7 @@ body {
 }
 
 .logo-image {
-  height: 40px;
+  height: 40px; /* Set consistent logo size */
   width: auto;
 }
 
