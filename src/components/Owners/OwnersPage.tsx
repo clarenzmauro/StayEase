@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import './OwnersPage.css';
 import logoSvg from '../../assets/STAY.svg';
+import placeholderHouse from '../../assets/placeholder_image.svg';
 import { 
   deleteDoc, 
   doc, 
@@ -886,6 +887,10 @@ const OwnersPage: React.FC = () => {
                   </div>
                   <img 
                     src={getImageUrl(property, 0)} 
+                    onError={(e) => {
+                      e.currentTarget.src = placeholderHouse;
+                      e.currentTarget.onerror = null; // prevents infinite loop if placeholder also fails
+                    }}
                     alt={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].label : "Placeholder"} 
                     className="owner-dashboard-property-image" 
                   />
