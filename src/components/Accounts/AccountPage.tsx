@@ -31,7 +31,7 @@ const AccountPage = () => {
   const [editedData, setEditedData] = useState<DocumentData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [itemsSaved, setFavoriteDorms] = useState<PropertyType[]>([]);
-  const [itemsInterested, setInterestedDorms] = useState<string[]>([]);
+  const [itemsInterested, setInterestedDorms] = useState<PropertyType[]>([]);
   const [showOwnerOverlay, setShowOwnerOverlay] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const navigate = useNavigate();
@@ -69,7 +69,17 @@ const AccountPage = () => {
               setFavoriteDorms(savedProperties.filter((prop): prop is PropertyType => prop !== null));
             }
             if (data.itemsInterested && data.itemsInterested.length > 0) {
-              setInterestedDorms(data.itemsInterested);
+              // Fetch full property data for each interested item
+              const interestedPropertiesPromises = data.itemsInterested.map(async (propertyId: string) => {
+                const propertyDoc = await getDoc(doc(db, 'properties', propertyId));
+                if (propertyDoc.exists()) {
+                  return { id: propertyDoc.id, ...propertyDoc.data() } as PropertyType;
+                }
+                return null;
+              });
+              
+              const interestedProperties = await Promise.all(interestedPropertiesPromises);
+              setInterestedDorms(interestedProperties.filter((prop): prop is PropertyType => prop !== null));
             }
           }
         } else {
