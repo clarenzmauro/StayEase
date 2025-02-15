@@ -30,7 +30,7 @@ const AccountPage = () => {
   const [editMode, setEditMode] = useState(false);
   const [editedData, setEditedData] = useState<DocumentData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [itemsSaved, setFavoriteDorms] = useState<string[]>([]);
+  const [itemsSaved, setFavoriteDorms] = useState<PropertyType[]>([]);
   const [itemsInterested, setInterestedDorms] = useState<string[]>([]);
   const [showOwnerOverlay, setShowOwnerOverlay] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -39,7 +39,6 @@ const AccountPage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        // If userId is provided in URL, fetch that user's data
         const targetUserId = userId || auth.currentUser?.uid;
         
         if (!targetUserId) {
@@ -57,7 +56,17 @@ const AccountPage = () => {
           // Only set these if viewing own profile
           if (!userId || userId === auth.currentUser?.uid) {
             if (data.itemsSaved && data.itemsSaved.length > 0) {
-              setFavoriteDorms(data.itemsSaved);
+              // Fetch full property data for each saved item
+              const savedPropertiesPromises = data.itemsSaved.map(async (propertyId: string) => {
+                const propertyDoc = await getDoc(doc(db, 'properties', propertyId));
+                if (propertyDoc.exists()) {
+                  return { id: propertyDoc.id, ...propertyDoc.data() } as PropertyType;
+                }
+                return null;
+              });
+              
+              const savedProperties = await Promise.all(savedPropertiesPromises);
+              setFavoriteDorms(savedProperties.filter((prop): prop is PropertyType => prop !== null));
             }
             if (data.itemsInterested && data.itemsInterested.length > 0) {
               setInterestedDorms(data.itemsInterested);
