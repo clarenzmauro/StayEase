@@ -7,6 +7,7 @@ import {
   deleteDoc, 
   doc, 
   getDoc, 
+  getDocs,
   updateDoc, 
   onSnapshot, 
   arrayUnion, 
@@ -155,6 +156,38 @@ const OwnersPage: React.FC = () => {
           return;
         }
       }
+
+      // Remove property from all users' favorites and interests
+      const accountsRef = collection(db, 'accounts');
+      const accountsSnapshot = await getDocs(accountsRef);
+      
+      const updatePromises = accountsSnapshot.docs.map(async (accountDoc) => {
+        const accountData = accountDoc.data();
+        let needsUpdate = false;
+        
+        // Check and update favorites
+        if (accountData.itemsSaved?.includes(propertyId)) {
+          accountData.itemsSaved = accountData.itemsSaved.filter((id: string) => id !== propertyId);
+          needsUpdate = true;
+        }
+        
+        // Check and update interests
+        if (accountData.itemsInterested?.includes(propertyId)) {
+          accountData.itemsInterested = accountData.itemsInterested.filter((id: string) => id !== propertyId);
+          needsUpdate = true;
+        }
+        
+        // Only update if changes were made
+        if (needsUpdate) {
+          return updateDoc(doc(db, 'accounts', accountDoc.id), {
+            itemsSaved: accountData.itemsSaved || [],
+            itemsInterested: accountData.itemsInterested || []
+          });
+        }
+      });
+
+      // Wait for all user updates to complete
+      await Promise.all(updatePromises.filter(Boolean));
 
       // Now proceed with deleting the property from Firebase
       const userDocRef = doc(db, 'accounts', normalDocumentId);
@@ -1084,4 +1117,3 @@ const OwnersPage: React.FC = () => {
 };
 
 export default OwnersPage;
-//done
