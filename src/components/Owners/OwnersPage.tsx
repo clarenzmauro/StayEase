@@ -567,7 +567,7 @@ const OwnersPage: React.FC = () => {
               followers: currentFollowers,
               followerCount: newFollowerCount,
               notifications: arrayUnion(newNotification)
-            });
+            }); 
 
             setIsFollowing(true);
             addNotification(`You are now following ${ownerData?.username || 'this owner'}!`);
@@ -1084,3 +1084,4 @@ const OwnersPage: React.FC = () => {
 };
 
 export default OwnersPage;
+//done
