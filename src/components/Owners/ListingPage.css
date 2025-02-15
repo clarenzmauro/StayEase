@@ -2076,4 +2076,18 @@
     }
   }
   
+  .error-field {
+    border: 2px solid #ff4444 !important;
+    background-color: #fff0f0 !important;
+  }
   
+  .error-field:focus {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 0 2px rgba(255, 68, 68, 0.25) !important;
+  }
+  
+  .error-text {
+    color: #ff4444;
+    font-size: 0.875rem;
+    margin-top: 4px;
+  }

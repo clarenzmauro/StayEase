@@ -48,7 +48,7 @@ interface PropertyDetails {
   size: number;
   securityDeposit: number;
   leaseTerm: number;
-  lifestyle?: string;
+  lifestyle: string;
 }
 
 interface PropertyType {
@@ -121,6 +121,7 @@ export function ListingPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [ownerId, setOwnerId] = useState<string|null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{[key: string]: boolean}>({});
 
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
@@ -441,7 +442,106 @@ export function ListingPage() {
     return property.propertyPhotos[photoKey]?.pictureUrl || '';
   };
 
-  const handleSubmit = async () => {
+  const validateForm = () => {
+    const errors: string[] = [];
+    const newFieldErrors: {[key: string]: boolean} = {};
+
+    // Basic Information
+    if (!details.name || details.name === "Enter Property Name") {
+      errors.push("Property name is required");
+      newFieldErrors.name = true;
+    }
+    if (!details.location || details.location === "Enter Property Location") {
+      errors.push("Property location is required");
+      newFieldErrors.location = true;
+    }
+    if (!details.type || !propertyTypes.includes(details.type)) {
+      errors.push("Valid property type is required");
+      newFieldErrors.type = true;
+    }
+    if (!details.description || details.description === "Enter Property Description") {
+      errors.push("Property description is required");
+      newFieldErrors.description = true;
+    }
+
+    // Numbers and Measurements
+    if (details.price <= 0) {
+      errors.push("Valid price is required");
+      newFieldErrors.price = true;
+    }
+    if (details.bedrooms <= 0) {
+      errors.push("Number of bedrooms is required");
+      newFieldErrors.bedrooms = true;
+    }
+    if (details.bathrooms <= 0) {
+      errors.push("Number of bathrooms is required");
+      newFieldErrors.bathrooms = true;
+    }
+    if (details.maxOccupants <= 0) {
+      errors.push("Maximum number of occupants is required");
+      newFieldErrors.maxOccupants = true;
+    }
+    if (details.size <= 0) {
+      errors.push("Property size is required");
+      newFieldErrors.size = true;
+    }
+    if (details.securityDeposit <= 0) {
+      errors.push("Security deposit amount is required");
+      newFieldErrors.securityDeposit = true;
+    }
+    if (details.leaseTerm <= 0) {
+      errors.push("Lease term is required");
+      newFieldErrors.leaseTerm = true;
+    }
+
+    // Dates
+    if (!details.availableFrom) {
+      errors.push("Available from date is required");
+      newFieldErrors.availableFrom = true;
+    }
+
+    // Furnishing and Lifestyle
+    if (!details.furnishing || details.furnishing === "Enter Furnishing Status" || !furnishingOptions.includes(details.furnishing)) {
+      errors.push("Furnishing status is required");
+      newFieldErrors.furnishing = true;
+    }
+    if (!details.lifestyle || !lifestyleOptions.includes(details.lifestyle)) {
+      errors.push("Lifestyle preference is required");
+      newFieldErrors.lifestyle = true;
+    }
+
+    // Images
+    if (images.length === 0) {
+      errors.push("At least one property image is required");
+      newFieldErrors.images = true;
+    }
+
+    // Tags/Amenities
+    if (selectedTags.length === 0) {
+      errors.push("At least one amenity tag is required");
+      newFieldErrors.tags = true;
+    }
+
+    // House Rules
+    if (houseRules.length === 0) {
+      errors.push("At least one house rule is required");
+      newFieldErrors.houseRules = true;
+    }
+
+    setFieldErrors(newFieldErrors);
+    return errors;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate form
+    const validationErrors = validateForm();
+    if (validationErrors.length > 0) {
+      alert('Please fix the following errors:\n\n' + validationErrors.join('\n'));
+      return;
+    }
+
     try {
       let docRef;
 
@@ -682,6 +782,7 @@ export function ListingPage() {
                 onChange={(e) => handleChange('name', e.target.value)}
                 required
               />
+              {fieldErrors.name && <div className="error-message">Property name is required</div>}
             </div>
 
             <div className="form-group">
@@ -693,6 +794,7 @@ export function ListingPage() {
                 value={details.location}
                 onChange={(e) => handleChange('location', e.target.value)}
               />
+              {fieldErrors.location && <div className="error-message">Property location is required</div>}
             </div>
 
             <div className="form-group">
@@ -783,6 +885,7 @@ export function ListingPage() {
                 value={details.description}
                 onChange={(e) => handleChange('description', e.target.value)}
               />
+              {fieldErrors.description && <div className="error-message">Property description is required</div>}
             </div>
           </div>
 
@@ -800,6 +903,7 @@ export function ListingPage() {
                     <option key={type} value={type}>{type}</option>
                   ))}
                 </select>
+                {fieldErrors.type && <div className="error-message">Valid property type is required</div>}
               </div>
               <div className="form-group">
                 <label htmlFor="availableFrom">Available From</label>
@@ -809,6 +913,7 @@ export function ListingPage() {
                   value={details.availableFrom}
                   onChange={(e) => handleChange('availableFrom', e.target.value)}
                 />
+                {fieldErrors.availableFrom && <div className="error-message">Available from date is required</div>}
               </div>
               <div className="form-group">
                 <label htmlFor="maxOccupants">Max Occupants</label>
@@ -819,6 +924,7 @@ export function ListingPage() {
                   onChange={(e) => handleChange('maxOccupants', parseInt(e.target.value))}
                   min={1}
                 />
+                {fieldErrors.maxOccupants && <div className="error-message">Maximum number of occupants is required</div>}
               </div>
               <div className="form-group">
                 <label htmlFor="floorLevel">Floor Level</label>
@@ -841,6 +947,7 @@ export function ListingPage() {
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
+                {fieldErrors.furnishing && <div className="error-message">Furnishing status is required</div>}
               </div>
               <div className="form-group">
                 <label htmlFor="lifestyle">Lifestyle</label>
@@ -853,6 +960,7 @@ export function ListingPage() {
                     <option key={option} value={option}>{option}</option>
                   ))}
                 </select>
+                {fieldErrors.lifestyle && <div className="error-message">Lifestyle preference is required</div>}
               </div>
               <div className="form-group">
                 <label htmlFor="size">Size (sqm)</label>
@@ -863,6 +971,7 @@ export function ListingPage() {
                   onChange={(e) => handleChange('size', parseInt(e.target.value))}
                   min={0}
                 />
+                {fieldErrors.size && <div className="error-message">Property size is required</div>}
               </div>
               <div className="form-group">
                 <label htmlFor="bedroomCount">Bedroom Count</label>
@@ -873,6 +982,7 @@ export function ListingPage() {
                   onChange={(e) => handleChange('bedrooms', parseInt(e.target.value))}
                   min={0}
                 />
+                {fieldErrors.bedrooms && <div className="error-message">Number of bedrooms is required</div>}
               </div>
               <div className="form-group">
                 <label htmlFor="bathroomCount">Bathroom Count</label>
@@ -883,6 +993,7 @@ export function ListingPage() {
                   onChange={(e) => handleChange('bathrooms', parseInt(e.target.value))}
                   min={0}
                 />
+                {fieldErrors.bathrooms && <div className="error-message">Number of bathrooms is required</div>}
               </div>
               <div className="form-group checkbox-group">
                 <input
@@ -931,6 +1042,7 @@ export function ListingPage() {
                 </div>
               ))}
             </div>
+            {fieldErrors.tags && <div className="error-message">At least one amenity tag is required</div>}
           </div>
 
           <div className="card">
@@ -947,6 +1059,7 @@ export function ListingPage() {
               </div>
             ))}
             <button className="add-house-rule-button" onClick={handleAddRule}>Add House Rule</button>
+            {fieldErrors.houseRules && <div className="error-message">At least one house rule is required</div>}
           </div>
 
           <div className="card">
@@ -960,6 +1073,7 @@ export function ListingPage() {
                 onChange={(e) => handleChange('price', parseInt(e.target.value))}
                 min={0}
               />
+              {fieldErrors.price && <div className="error-message">Valid price is required</div>}
             </div>
             <div className="form-group">
               <label htmlFor="securityDeposit">Security Deposit</label>
@@ -970,6 +1084,7 @@ export function ListingPage() {
                 onChange={(e) => handleChange('securityDeposit', parseInt(e.target.value))}
                 min={0}
               />
+              {fieldErrors.securityDeposit && <div className="error-message">Security deposit amount is required</div>}
             </div>
             <div className="form-group">
               <label htmlFor="leaseTerm">Lease Term (months)</label>
@@ -980,6 +1095,7 @@ export function ListingPage() {
                 onChange={(e) => handleChange('leaseTerm', parseInt(e.target.value))}
                 min={1}
               />
+              {fieldErrors.leaseTerm && <div className="error-message">Lease term is required</div>}
             </div>
           </div>
         </div>
@@ -1011,6 +1127,7 @@ export function ListingPage() {
               </div>
             ))}
           </div>
+          {fieldErrors.images && <div className="error-message">At least one property image is required</div>}
         </div>
       </div>
 
