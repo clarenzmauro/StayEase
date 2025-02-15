@@ -496,6 +496,12 @@ export function ListingPage() {
         await handleImageUploads(docRef.id);
         
         alert('Property added successfully!');
+        navigate(`/owner-page/${id}`, {
+          state: {
+            normalDocumentId: id,
+            encryptedDocumentId: id
+          }
+        });
         
         if (!id) {
           throw new Error('Owner ID is undefined or invalid.');
