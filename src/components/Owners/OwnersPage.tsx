@@ -18,6 +18,7 @@ import {
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
+import { API_URL } from '../../config';
 
 const SkeletonLoading: React.FC = () => {
   return (
@@ -139,7 +140,7 @@ const OwnersPage: React.FC = () => {
       // Delete all associated photos from MongoDB if there are any
       if (photoIds.length > 0) {
         try {
-          const response = await fetch('http://localhost:5000/api/property-photos/bulk-delete', {
+          const response = await fetch(`${API_URL}/api/property-photos/bulk-delete`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -792,7 +793,7 @@ const OwnersPage: React.FC = () => {
     // Handle MongoDB-style photos (array of strings)
     if (Array.isArray(property.propertyPhotos)) {
       const photoId = property.propertyPhotos[index];
-      return `http://localhost:5000/api/property-photos/${photoId}/image`;
+      return `${API_URL}/api/property-photos/${photoId}/image`;
     }
 
     // Handle Firebase-style photos (object with pictureUrl)

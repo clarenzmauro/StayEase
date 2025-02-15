@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import './AccountPage.css';
 import { User } from 'firebase/auth';
 import { DocumentData } from 'firebase/firestore';
+import { API_URL } from '../../config';
 
 interface PropertyType {
   id: string;
@@ -236,7 +237,7 @@ const AccountPage = () => {
     // Handle MongoDB-style photos (array of strings)
     if (Array.isArray(property.propertyPhotos)) {
       const photoId = property.propertyPhotos[index];
-      return `http://localhost:5000/api/property-photos/${photoId}/image`;
+      return `${API_URL}/api/property-photos/${photoId}/image`;
     }
 
     // Handle Firebase-style photos (object with pictureUrl)

@@ -4,6 +4,7 @@ import './PropertyGallery.css';
 import { getDoc } from 'firebase/firestore';
 import { doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { API_URL } from '../../../config';
 
 interface Photo {
   pictureUrl: string;
@@ -27,7 +28,7 @@ const PropertyGallery = ({ propertyPhotos }: PropertyGalleryProps) => {
       for (const photoId of propertyPhotos) {
         try {
           // Fetch image from API
-          const response = await fetch(`http://localhost:5000/api/property-photos/${photoId}/image`);
+          const response = await fetch(`${API_URL}/api/property-photos/${photoId}/image`);
           
           if (!response.ok) {
             console.error('Error fetching image:', response.statusText);

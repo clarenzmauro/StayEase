@@ -16,6 +16,7 @@ import Point from 'ol/geom/Point';
 import { Vector as VectorLayer } from 'ol/layer';
 import { Vector as VectorSource } from 'ol/source';
 import { Style, Icon } from 'ol/style';
+import { API_URL } from '../../config';
 
 interface Image {
   url: string;
@@ -222,7 +223,7 @@ export function ListingPage() {
               if (Array.isArray(data.propertyPhotos)) {
                 // MongoDB style - array of image IDs
                 const loadedImages = data.propertyPhotos.map((photoId: string) => ({
-                  url: `http://localhost:5000/api/property-photos/${photoId}/image`,
+                  url: `${API_URL}/api/property-photos/${photoId}/image`,
                   label: "Property Image",
                   file: null
                 }));
@@ -409,7 +410,7 @@ export function ListingPage() {
 
         // Fetch the label from your backend API
         try {
-            const response = await fetch(`http://localhost:5000/api/property-photos/${photoId}/label`);
+            const response = await fetch(`${API_URL}/api/property-photos/${photoId}/label`);
             const data = await response.json();
             return data.label || '';
         } catch (error) {
@@ -431,7 +432,7 @@ export function ListingPage() {
     // Handle MongoDB-style photos (array of strings)
     if (Array.isArray(property.propertyPhotos)) {
       const photoId = property.propertyPhotos[index];
-      return `http://localhost:5000/api/property-photos/${photoId}/image`;
+      return `${API_URL}/api/property-photos/${photoId}/image`;
     }
 
     // Handle Firebase-style photos (object with pictureUrl)
@@ -534,7 +535,7 @@ export function ListingPage() {
           formData.append('label', image.label);
           formData.append('propertyId', propertyId);
 
-          const response = await fetch('http://localhost:5000/api/property-photos/upload', {
+          const response = await fetch(`${API_URL}/api/property-photos/upload`, {
             method: 'POST',
             body: formData,
           });
@@ -567,7 +568,7 @@ export function ListingPage() {
 
   const deleteImage = async (propertyId: string, photoId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/property-photos/${photoId}`, {
+      const response = await fetch(`${API_URL}/api/property-photos/${photoId}`, {
         method: 'DELETE',
       });
 

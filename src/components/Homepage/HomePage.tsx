@@ -10,6 +10,7 @@ import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from 'fireb
 import logoSvg from '../../assets/STAY.svg';
 import ChatManager from '../Chat/ChatManager';
 import ChatHistory from '../Chat/ChatHistory';
+import { API_URL } from '../../config';
 
 interface FilterType {
   priceRange: { min: number; max: number };
@@ -130,7 +131,7 @@ export function HomePage() {
     // Handle MongoDB-style photos (array of strings)
     if (Array.isArray(property.propertyPhotos)) {
       const photoId = property.propertyPhotos[index];
-      return `http://localhost:5000/api/property-photos/${photoId}/image`;
+      return `${API_URL}/api/property-photos/${photoId}/image`;
     }
 
     // Handle Firebase-style photos (object with pictureUrl)
