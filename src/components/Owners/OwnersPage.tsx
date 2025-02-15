@@ -995,16 +995,6 @@ const OwnersPage: React.FC = () => {
                     <span className="interest-count">
                       {property.interestedCount || 0} Interested Applicant{(property.interestedCount === 1) ? '' : 's'}
                     </span>
-                    <a 
-                      href="#" 
-                      className="view-link"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        navigate(`/property/${property.id}/applicants`);
-                      }}
-                    >
-                      View
-                    </a>
                   </div>
                 </div>
               ))}

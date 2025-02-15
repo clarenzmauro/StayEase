@@ -90,6 +90,7 @@ const PropertyPage = () => {
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
+  const [showApplicants, setShowApplicants] = useState(false);
   const COMMENTS_PER_PAGE = 4;
 
   useEffect(() => {
@@ -734,6 +735,13 @@ const PropertyPage = () => {
           >
             Edit Property
           </button>
+          
+        <button 
+          className="view-applicants-button" 
+          onClick={() => setShowApplicants(!showApplicants)}
+        >
+          {showApplicants ? 'Hide Applicants' : 'View Applicants'}
+        </button>
         </div>
       )}
 
@@ -758,6 +766,35 @@ const PropertyPage = () => {
           isInterested={property.interestedApplicants?.includes(auth.currentUser?.uid || '') || false}
         />
       </div>
+
+      {showApplicants && (
+        <div className="modal-overlay">
+          <div className="modal-content applicants-modal">
+            <div className="modal-header">
+              <h2>Interested Applicants</h2>
+              <button 
+                className="close-modal-button"
+                onClick={() => setShowApplicants(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              {property.interestedApplicants && property.interestedApplicants.length > 0 ? (
+                <ul className="interested-applicants-list">
+                  {property.interestedApplicants.map((applicantId) => (
+                    <li key={applicantId} className="applicant-item">
+                      <ApplicantDetails applicantId={applicantId} />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No interested applicants for this property</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <CommentSection
         comments={comments}
