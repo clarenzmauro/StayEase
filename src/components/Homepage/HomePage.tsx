@@ -303,6 +303,7 @@ export function HomePage() {
     // Apply tags filter
     if (activeFilters.selectedTags.length > 0) {
       filtered = filtered.filter(property =>
+        property.propertyTags && Array.isArray(property.propertyTags) &&
         activeFilters.selectedTags.every(tag => property.propertyTags.includes(tag))
       );
     }
