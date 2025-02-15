@@ -141,16 +141,16 @@ const ChatModal: React.FC<ChatModalProps> = ({
       className={`chat-modal ${isMinimized ? 'minimized' : ''}`}
       style={{ right: '20px' }}
     >
-      <div 
-        className="chat-header"
-        onClick={() => {
-          onMinimizedChange(!isMinimized);
-          if (!isMinimized) {
-            setUnreadCount(0); // Reset unread count when maximizing
-          }
-        }}
-      >
-        <div className="chat-recipient-info">
+      <div className="chat-header">
+        <div 
+          className="chat-recipient-info"
+          onClick={() => {
+            onMinimizedChange(!isMinimized);
+            if (!isMinimized) {
+              setUnreadCount(0);
+            }
+          }}
+        >
           <img src={recipientPhoto || '/default-avatar.png'} alt={recipientName} className="recipient-photo" />
           <span className="recipient-name">{recipientName}</span>
           {isMinimized && unreadCount > 0 && (
@@ -164,7 +164,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
               e.stopPropagation();
               onMinimizedChange(!isMinimized);
               if (!isMinimized) {
-                setUnreadCount(0); // Reset unread count when maximizing
+                setUnreadCount(0);
               }
             }}
           >
@@ -176,12 +176,9 @@ const ChatModal: React.FC<ChatModalProps> = ({
               e.stopPropagation();
               onClose();
             }}
-          >
-            ×
-          </button>
+          >×</button>
         </div>
       </div>
-
       {!isMinimized && (
         <div className="chat-content">
           <div className="chat-messages" ref={messageContainerRef}>

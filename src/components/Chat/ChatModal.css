@@ -10,6 +10,7 @@
   z-index: 1000;
   transition: height 0.3s ease;
   height: 480px;
+  overflow: hidden;
 }
 
 .chat-modal.minimized {
@@ -18,21 +19,22 @@
 }
 
 .chat-header {
-  padding: 12px;
+  padding: 8px 12px;
   background-color: #f8f9fa;
   border-bottom: 1px solid #dee2e6;
   border-radius: 8px 8px 0 0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  cursor: pointer;
+  justify-content: space-between;
 }
 
 .chat-recipient-info {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  position: relative;
+  cursor: pointer;
+  margin-right: 8px;
 }
 
 .recipient-photo {
@@ -68,22 +70,31 @@
 
 .header-actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 2px;
 }
 
-.minimize-button,
-.close-button {
-  background: none;
+.chat-header .minimize-button,
+.chat-header .close-button {
+  background: transparent !important;
   border: none;
   font-size: 16px;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #6c757d;
-  transition: color 0.2s;
+  box-shadow: none !important;
+  position: static !important;
+  margin: 0 !important;
+  transform: none !important;
 }
 
-.minimize-button:hover,
-.close-button:hover {
+.chat-header .minimize-button:hover,
+.chat-header .close-button:hover {
   color: #212529;
 }
 
