@@ -12,6 +12,7 @@
   gap: 20px; /* Space between items */
 }
 
+
 .add-listing-button {
   display: inline-flex;
   align-items: center;
@@ -694,7 +695,7 @@
   font-size: 18px;
   font-weight: bold;
   margin-bottom: 10px;
-  color: rgb(0, 0, 0)
+  color: rgb(0, 0, 0);
   text-align: center; 
 }
 
@@ -1515,10 +1516,9 @@
     object-fit: cover;
   }
 
-  .profile-image {
-    width: 100px;
-    height: 100px;
-  }
+  .superhost-badge {
+    margin: 0; /* Remove gap */
+  } 
 
   .profile-name {
     font-size: 20px;
@@ -1533,7 +1533,7 @@
   }
 
   .stat-label {
-    font-size: 18px; /* Increased font size */
+    font-size: 14px; /* Increased font size */
   }
 
   .info-card {
@@ -1666,7 +1666,7 @@
 
   .superhost-badge {
     margin: 0; /* Remove gap */
-  } 
+  }
 
   .profile-name {
     font-size: 18px;
@@ -1757,12 +1757,11 @@
   }
 
   .owner-dashboard-image-container {
-    width: 100%;
-    min-width: 200px;
+    width: 100%; /* Full width for mobile */
   }
 
   .owner-dashboard-property-image {
-    height: 150px;
+    height: 100px; /* Adjust height for mobile */
   }
 
   .owner-dashboard-actions {
@@ -1809,15 +1808,6 @@
 
   .listings-grid {
     grid-template-columns: 1fr;
-  }
-
-  .listing-image {
-    border-radius: 8px;
-  }
-
-  .show-more-button {
-    padding: 10px 16px;
-    font-size: 13px;
   }
 
   .main-content-owner {
@@ -1960,6 +1950,38 @@
     width: 100px;
     height: 100px;
   }
+}
+
+/* Property Interest Section Styles */
+.property-interest-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  width: 100%;
+  position: relative;
+}
+
+.interest-count {
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.view-link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  position: absolute;
+  right: 16px;
+}
+
+.view-link:hover {
+  text-decoration: underline;
 }
 
 /* Modal overlay for writing a review */

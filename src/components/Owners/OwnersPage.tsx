@@ -10,7 +10,10 @@ import {
   updateDoc, 
   onSnapshot, 
   arrayUnion, 
-  runTransaction 
+  runTransaction,
+  collection,
+  query,
+  where 
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
@@ -414,11 +417,70 @@ const OwnersPage: React.FC = () => {
     }
   }, [id, encryptedDocumentId]);
 
+  useEffect(() => {
+    if (!ownerData?.dashboardId) return;
+
+    // Set up real-time listener for the dashboard document
+    const dashboardRef = doc(db, 'dashboards', ownerData.dashboardId);
+    let propertyUnsubscribes: (() => void)[] = [];
+
+    // Listen to dashboard changes
+    const dashboardUnsubscribe = onSnapshot(dashboardRef, (dashboardSnap) => {
+      if (dashboardSnap.exists()) {
+        const dashboardData = dashboardSnap.data();
+        const listedDorms = dashboardData.listedDorms || [];
+
+        // Clean up any existing property listeners
+        propertyUnsubscribes.forEach(unsubscribe => unsubscribe());
+        propertyUnsubscribes = [];
+
+        // First, update properties state to match listedDorms
+        setProperties(prevProperties => {
+          // Keep only properties that are still in listedDorms
+          const updatedProperties = prevProperties.filter(prop => 
+            listedDorms.includes(prop.id)
+          );
+          return updatedProperties;
+        });
+
+        // Set up listeners for each property
+        listedDorms.forEach(propertyId => {
+          const propertyRef = doc(db, 'properties', propertyId);
+          const unsubscribe = onSnapshot(propertyRef, (propertySnap) => {
+            if (propertySnap.exists()) {
+              const propertyData = propertySnap.data();
+              setProperties(prevProperties => {
+                const otherProperties = prevProperties.filter(p => p.id !== propertyId);
+                return [...otherProperties, { id: propertyId, ...propertyData }];
+              });
+            } else {
+              // If property doesn't exist anymore, update the dashboard
+              const currentListedDorms = dashboardData.listedDorms || [];
+              const updatedDorms = currentListedDorms.filter(id => id !== propertyId);
+              updateDoc(dashboardRef, { listedDorms: updatedDorms }).catch(error => {
+                console.error("Error updating dashboard after property deletion:", error);
+              });
+            }
+          }, (error) => {
+            console.error("Error listening to property:", error);
+          });
+          
+          propertyUnsubscribes.push(unsubscribe);
+        });
+      }
+    }, (error) => {
+      console.error("Error listening to dashboard:", error);
+    });
+
+    // Cleanup function
+    return () => {
+      dashboardUnsubscribe();
+      propertyUnsubscribes.forEach(unsubscribe => unsubscribe());
+    };
+  }, [ownerData?.dashboardId]);
+
   const handleDashboardClick = () => {
     setIsDashboardOpen(prevState => !prevState);
-    if (!isDashboardOpen) {
-      fetchProperties(ownerData.dashboardId); // Fetch properties only when opening the dashboard
-    }
   };
 
   // Follow & Notification Functions
@@ -853,47 +915,64 @@ const OwnersPage: React.FC = () => {
             
             <div className="owner-image-section">
               {properties.map(property => (
-                <div key={property.id} className="owner-dashboard-image-container">
-                  <div 
-                    className="owner-dashboard-property-info"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate(`/property/${property.id}`, { state: { isOwner: true } });
-                    }}
-                  >
-                    <div className="owner-dashboard-property-name">{property.propertyName}</div>
-                    <div className="owner-dashboard-property-location">{property.propertyLocation}</div>
-                    <div className="owner-dashboard-property-type">{property.propertyType}</div>
-                    <div className="owner-dashboard-property-price">
-                      ₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month
-                    </div>
-                  </div>
-                  <div className="owner-dashboard-actions">
-                    <button 
-                      className="edit-btn" 
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        navigate(`/property/${property.id}/edit-property`);
+                <div key={property.id}>
+                  <div className="owner-dashboard-image-container">
+                    <div 
+                      className="owner-dashboard-property-info"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(`/property/${property.id}`, { state: { isOwner: true } });
                       }}
                     >
-                      Edit
-                    </button>
-                    <button 
-                      className="delete-btn" 
-                      onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}
-                    >
-                      🗑️
-                    </button>
+                      <div className="owner-dashboard-property-name">{property.propertyName}</div>
+                      <div className="owner-dashboard-property-location">{property.propertyLocation}</div>
+                      <div className="owner-dashboard-property-type">{property.propertyType}</div>
+                      <div className="owner-dashboard-property-price">
+                        ₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month
+                      </div>
+                    </div>
+                    <div className="owner-dashboard-actions">
+                      <button 
+                        className="edit-btn" 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          navigate(`/property/${property.id}/edit-property`);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        className="delete-btn" 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                    <img 
+                      src={getImageUrl(property, 0)} 
+                      onError={(e) => {
+                        e.currentTarget.src = placeholderHouse;
+                        e.currentTarget.onerror = null;
+                      }}
+                      alt={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].label : "Placeholder"} 
+                      className="owner-dashboard-property-image" 
+                    />
                   </div>
-                  <img 
-                    src={getImageUrl(property, 0)} 
-                    onError={(e) => {
-                      e.currentTarget.src = placeholderHouse;
-                      e.currentTarget.onerror = null; // prevents infinite loop if placeholder also fails
-                    }}
-                    alt={property.propertyPhotos && property.propertyPhotos['photo0'] ? property.propertyPhotos['photo0'].label : "Placeholder"} 
-                    className="owner-dashboard-property-image" 
-                  />
+                  <div className="property-interest-section">
+                    <span className="interest-count">
+                      {property.interestedCount || 0} Interested Applicant{(property.interestedCount === 1) ? '' : 's'}
+                    </span>
+                    <a 
+                      href="#" 
+                      className="view-link"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(`/property/${property.id}/applicants`);
+                      }}
+                    >
+                      View
+                    </a>
+                  </div>
                 </div>
               ))}
             </div>
