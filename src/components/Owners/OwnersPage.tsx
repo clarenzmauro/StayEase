@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import './OwnersPage.css';
 import logoSvg from '../../assets/STAY.svg';
-import placeholderHouse from '../../assets/placeholder_image.svg';
+import placeholderHouse from '../../assets/ImagePlaceholder.png';
 import { 
   deleteDoc, 
   doc, 
