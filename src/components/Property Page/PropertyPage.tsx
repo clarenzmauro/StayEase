@@ -4,6 +4,7 @@ import { collection, doc, addDoc, serverTimestamp, getDoc, getDocs, query, where
 import { db, auth } from '../../firebase/config';
 import { DocumentData } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 import PropertyHeader from './components/PropertyHeader';
 import PropertyGallery from './components/PropertyGallery';
@@ -453,7 +454,7 @@ const PropertyPage = () => {
 
   const handleLikeComment = async (commentId: string) => {
     if (!user) {
-      setShowLoginPrompt(true);
+      handleLoginPrompt();
       return;
     }
 
@@ -643,6 +644,20 @@ const PropertyPage = () => {
 
   const handleLoadMoreComments = () => {
     setVisibleComments(prev => prev + COMMENTS_PER_PAGE);
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+      setShowLoginPrompt(false);
+    } catch (error) {
+      console.error('Error signing in with Google:', error);
+    }
+  };
+
+  const handleLoginPrompt = () => {
+    handleGoogleSignIn();
   };
 
   if (loading) {

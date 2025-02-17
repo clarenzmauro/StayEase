@@ -4,11 +4,13 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { useEffect, useState } from 'react';
 import logoSvg from '../../../assets/STAY.svg';
+import LoginPrompt from './LoginPrompt';
 import '../PropertyPage.css';
 
 const PropertyHeader = () => {
   const { user } = useAuth();
   const [profilePicUrl, setProfilePicUrl] = useState<string>('');
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   useEffect(() => {
     const fetchProfilePic = async () => {
@@ -30,22 +32,44 @@ const PropertyHeader = () => {
     fetchProfilePic();
   }, [user]);
 
-  return (
-    <nav className="navbar">
-      <Link to="/" className="logo">
-        <img src={logoSvg} alt="StayEase Logo" />
-      </Link>
+  const handleProfileClick = () => {
+    if (!user) {
+      setShowLoginPrompt(true);
+    }
+  };
 
-      <div className="nav-right">
-        <Link to={user ? "/account" : "/login"}>
-          <img
-            src={profilePicUrl}
-            alt="User Profile"
-            className="user-icon"
-          />
+  return (
+    <>
+      <nav className="navbar">
+        <Link to="/" className="logo">
+          <img src={logoSvg} alt="StayEase Logo" />
         </Link>
-      </div>
-    </nav>
+
+        <div className="nav-right">
+          {user ? (
+            <Link to="/account">
+              <img
+                src={profilePicUrl}
+                alt="User Profile"
+                className="user-icon"
+              />
+            </Link>
+          ) : (
+            <div onClick={handleProfileClick}>
+              <img
+                src={profilePicUrl || "/default-profile.png"}
+                alt="User Profile"
+                className="user-icon"
+              />
+            </div>
+          )}
+        </div>
+      </nav>
+      <LoginPrompt 
+        show={showLoginPrompt} 
+        onClose={() => setShowLoginPrompt(false)} 
+      />
+    </>
   );
 };
 

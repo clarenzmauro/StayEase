@@ -45,13 +45,12 @@ const LoginPrompt = ({ show, onClose }: LoginPromptProps) => {
   };
 
   return (
-    <div className="login-prompt-overlay">
-      <div className="login-prompt-content">
+    <div className="auth-overlay">
+      <div className="auth-modal">
         <button className="close-button" onClick={onClose}>×</button>
-        <h3>Login</h3>
-        <button className="google-auth-button" onClick={handleGoogleAuth}>
-          <img src="https://authjs.dev/img/providers/google.svg" alt="Google" />
-          <span>Continue with Google</span>
+        <h2>Login to Continue</h2>
+        <button className="google-button" onClick={handleGoogleAuth}>
+          Sign in with Google
         </button>
       </div>
     </div>
