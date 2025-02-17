@@ -42,10 +42,12 @@ const ChatModal: React.FC<ChatModalProps> = ({
   useEffect(() => {
     if (!isOpen || !currentUser) return;
 
+    // Create a unique chat ID for the conversation between these two users
+    const chatId = [currentUser.uid, recipientId].sort().join('_');
+
     const q = query(
       collection(db, 'messages'),
-      where('senderId', 'in', [currentUser.uid, recipientId]),
-      where('receiverId', 'in', [currentUser.uid, recipientId]),
+      where('chatId', '==', chatId),
       orderBy('timestamp', 'asc')
     );
 
@@ -113,18 +115,18 @@ const ChatModal: React.FC<ChatModalProps> = ({
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !currentUser) return;
+    if (!currentUser || !newMessage.trim()) return;
+
+    const chatId = [currentUser.uid, recipientId].sort().join('_');
 
     try {
-      const chatId = [currentUser.uid, recipientId].sort().join('_');
-
       await addDoc(collection(db, 'messages'), {
-        chatId,
-        content: newMessage,
         senderId: currentUser.uid,
         receiverId: recipientId,
+        content: newMessage.trim(),
         timestamp: serverTimestamp(),
         isRead: false,
+        chatId: chatId
       });
 
       setNewMessage('');
