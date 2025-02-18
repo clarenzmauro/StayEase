@@ -17,9 +17,30 @@ interface PropertyGalleryProps {
 
 const PropertyGallery = ({ propertyPhotos }: PropertyGalleryProps) => {
   const [selectedImage, setSelectedImage] = useState<Photo | null>(null);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [images, setImages] = useState<Photo[]>([]);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 75) {
+      // Swipe left
+      setCurrentIndex(prev => (prev + 1) % images.length);
+    }
+
+    if (touchEnd - touchStart > 75) {
+      // Swipe right
+      setCurrentIndex(prev => (prev - 1 + images.length) % images.length);
+    }
+  };
 
   useEffect(() => {
     const fetchImages = async () => {
@@ -51,29 +72,34 @@ const PropertyGallery = ({ propertyPhotos }: PropertyGalleryProps) => {
     fetchImages();
   }, [propertyPhotos]);
 
-
-  const handleImageClick = (photo: Photo) => {
+  const handleImageClick = (photo: Photo, index: number) => {
     setSelectedImage(photo);
-    setZoomLevel(1);
+    setCurrentIndex(index);
   };
 
   const handleClose = () => {
     setSelectedImage(null);
-    setZoomLevel(1);
   };
 
-  const handleZoom = () => {
-    setZoomLevel(prev => prev === 1 ? 1.5 : 1);
+  const handlePrevious = () => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+    setSelectedImage(images[(currentIndex - 1 + images.length) % images.length]);
+  };
+
+  const handleNext = () => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+    setSelectedImage(images[(currentIndex + 1) % images.length]);
   };
 
   return (
     <>
-      <div className="property-images-grid">
+      {/* Desktop View */}
+      <div className="property-images-grid desktop-view">
         {images.map((image, index) => (
           <div
             key={index}
             className={index === 0 ? 'main-image' : ''}
-            onClick={() => handleImageClick(image)}
+            onClick={() => handleImageClick(image, index)}
           >
             <img
               src={image.pictureUrl}
@@ -84,40 +110,57 @@ const PropertyGallery = ({ propertyPhotos }: PropertyGalleryProps) => {
         ))}
       </div>
 
+      {/* Mobile Carousel View */}
+      <div 
+        className="mobile-carousel"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="carousel-image">
+          <img
+            src={images[currentIndex]?.pictureUrl}
+            alt={images[currentIndex]?.label}
+            onClick={() => handleImageClick(images[currentIndex], currentIndex)}
+          />
+        </div>
+        <div className="carousel-indicators">
+          {images.map((_, index) => (
+            <span
+              key={index}
+              className={`indicator ${index === currentIndex ? 'active' : ''}`}
+              onClick={() => setCurrentIndex(index)}
+            />
+          ))}
+        </div>
+      </div>
+
       {selectedImage && (
         <div className="image-overlay" onClick={handleClose}>
-          <div className="image-overlay-content" onClick={e => e.stopPropagation()}>
+          <div className="image-overlay-content" onClick={(e) => e.stopPropagation()}>
+            <div className="image-counter">
+              {currentIndex + 1} / {images.length}
+            </div>
             <div className="overlay-controls">
-              <button 
-                className="overlay-control-button zoom"
-                onClick={handleZoom}
-                aria-label={zoomLevel === 1 ? "Zoom in" : "Zoom out"}
-              >
-                {zoomLevel === 1 ? (
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                    <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zm.5-7H9v2H7v1h2v2h1v-2h2V9h-2V7z"/>
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                    <path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14zM7 9h5v1H7z"/>
-                  </svg>
-                )}
-              </button>
-              <button 
-                className="overlay-control-button close"
-                onClick={handleClose}
-                aria-label="Close image"
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
+              <button className="overlay-control-button" onClick={handleClose}>
+                ×
               </button>
             </div>
-            <img 
-              src={selectedImage.pictureUrl} 
-              alt={selectedImage.label} 
-              style={{ transform: `scale(${zoomLevel})` }}
-            />
+            <img src={selectedImage.pictureUrl} alt={selectedImage.label} />
+            <button 
+              className="overlay-control-button" 
+              style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)' }}
+              onClick={handlePrevious}
+            >
+              ‹
+            </button>
+            <button 
+              className="overlay-control-button" 
+              style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)' }}
+              onClick={handleNext}
+            >
+              ›
+            </button>
           </div>
         </div>
       )}

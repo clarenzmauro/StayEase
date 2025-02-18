@@ -67,7 +67,6 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
         )}
       </div>
 
-      <div className="house-rules-section">
         <h2 className="section-title">House rules</h2>
         <ul className="house-rules-list">
           {property.houseRules?.map((rule, index) => (
@@ -77,7 +76,6 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
             </li>
           ))}
         </ul>
-      </div>
     </div>
   );
 };

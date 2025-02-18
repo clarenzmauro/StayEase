@@ -4,7 +4,6 @@
   padding: 20px;
 }
 
-
 .load-more-container {
   display: flex;
   justify-content: center;
@@ -677,7 +676,7 @@
 
 .host-section {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   padding-bottom: 32px;
   border-bottom: 1px solid #dddddd;
 }
@@ -685,7 +684,8 @@
 .host-info {
   display: flex;
   flex-direction: column;
-  gap: 8px;  /* Added gap between elements */
+  text-align: left;
+
 }
 
 .host-name {
@@ -1334,7 +1334,7 @@
   content: '';
   width: 24px;
   height: 24px;
-  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="%234285f4" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/></svg>');
+  background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="%234285f4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 123 24.5 166.3 64.9l-67.5 64.9C258.5 52.6 94.3 116.6 94.3 256c0 86.5 69.1 156.6 153.7 156.6 98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 24.9 3.9 41.4z"/></svg>');
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -1983,6 +1983,7 @@
 
   .property-title {
     font-size: 22px;
+    margin-top: 30px;
   }
 
   .property-location {
@@ -2033,29 +2034,6 @@
   }
 }
 
-/* Add support for very small devices */
-@media (max-width: 360px) {
-  .property-page {
-    padding: 12px;
-    margin: 12px;
-  }
-
-  .property-title {
-    font-size: 20px;
-  }
-
-  .property-images-grid {
-    grid-template-rows: 200px repeat(4, 150px);
-  }
-
-  .main-image {
-    height: 200px !important;
-  }
-
-  .property-images-grid > div:not(.main-image) {
-    height: 150px;
-  }
-}
 
 /* Fix for the sticky header on mobile */
 @media (max-width: 768px) {
@@ -2367,4 +2345,43 @@
 .google-button:active {
   transform: translateY(0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Mobile responsiveness for host section */
+@media (max-width: 768px) {
+  .host-section {
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+  }
+
+  .host-info {
+    width: 100%;
+  }
+
+  .host-name {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+
+  .property-stats {
+    font-size: 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .host-section {
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+  }
+
+  .host-name {
+    font-size: 20px;
+  }
+
+  .property-stats {
+    font-size: 13px;
+    gap: 6px;
+  }
 }
