@@ -114,18 +114,67 @@
 }
 
 /* Responsive Styles */
-@media screen and (max-width: 768px) {
+/* For tablet devices (481px to 768px) */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+  .desktop-view {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+    height: 450px;
+  }
+
+  .property-images-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+  }
+
+  .main-image {
+    grid-row: 1 / -1;
+    grid-column: 1;
+    height: 450px !important;
+    border-radius: 16px 0 0 16px !important;
+  }
+
+  .property-images-grid > div:not(.main-image) {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 12px;
+    height: 225px;
+  }
+
+  .property-images-grid > div:nth-child(n+2) {
+    grid-column: 2;
+  }
+
+  .property-images-grid > div:nth-child(2) {
+    grid-row: 1;
+  }
+
+  .property-images-grid > div:nth-child(3) {
+    grid-row: 2;
+  }
+
+  .mobile-carousel {
+    display: none;
+  }
+}
+
+/* For mobile devices (up to 480px) */
+@media screen and (max-width: 480px) {
   .desktop-view {
     display: none;
   }
-
   .mobile-carousel {
     display: block;
   }
 }
 
-/* Ensure desktop grid is hidden on mobile */
+/* For desktop (above 768px) */
 @media screen and (min-width: 769px) {
+  .desktop-view {
+    display: grid;
+  }
   .mobile-carousel {
     display: none;
   }

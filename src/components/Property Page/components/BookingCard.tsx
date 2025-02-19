@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './BookingCard.css';
 
 interface BookingCardProps {
@@ -22,95 +22,91 @@ interface BookingCardProps {
 
 const BookingCard = ({ property, onInterestedClick, isInterested }: BookingCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  const toggleExpand = () => {
-    setIsExpanded(!isExpanded);
-  };
-
-  const handleMobileCardClick = (e: React.MouseEvent) => {
-    // Only expand if not clicking the interested button
-    if (!(e.target as HTMLElement).closest('.interested-button')) {
-      toggleExpand();
-    }
-  };
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 480);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   return (
-    <div className={`booking-card ${isExpanded ? 'expanded' : ''}`}>
-      {isExpanded && (
-        <div className="mobile-booking-header">
-          <h3>Price Details</h3>
-          <button className="close-button" onClick={toggleExpand}>×</button>
-        </div>
-      )}
-
-      <div className={isExpanded ? '' : 'mobile-footer'} onClick={!isExpanded ? handleMobileCardClick : undefined}>
+    <div className={`booking-card ${isMobile ? 'mobile' : ''} ${isExpanded ? 'expanded' : ''}`}>
+      <div className="mobile-header" onClick={() => isMobile && setIsExpanded(!isExpanded)}>
         <div className="price-info">
           <span className="price">₱{property.propertyPrice.toLocaleString()}</span>
           <span className="price-period">/month</span>
         </div>
-
-        {!isExpanded && (
+        {isMobile && !isExpanded && (
           <button 
             className={`interested-button ${isInterested ? 'interested' : ''}`} 
-            onClick={onInterestedClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              onInterestedClick();
+            }}
           >
-            {isInterested ? 'Interested ✓' : 'Interested'}
+            {isInterested ? 'Interested' : 'Interested'}
           </button>
         )}
       </div>
 
-      {isExpanded && (
-        <>
-          <div className="booking-details">
-            <div className="detail-row">
-              <span>Available from:</span>
-              <span>{new Date(property.dateAvailability?.seconds * 1000).toLocaleDateString()}</span>
-            </div>
-            <div className="detail-row">
-              <span>Max occupants:</span>
-              <span>{property.maxOccupants}</span>
-            </div>
-            <div className="detail-row">
-              <span>Floor Level:</span>
-              <span>{property.floorLevel}</span>
-            </div>
-            <div className="detail-row">
-              <span>Furnishing:</span>
-              <span>{property.furnishingStatus}</span>
-            </div>
-            <div className="detail-row">
-              <span>Lifestyle:</span>
-              <span>{property.propertyLifestyle}</span>
-            </div>
-            <div className="detail-row">
-              <span>Size:</span>
-              <span>{property.propertySize} sqm</span>
-            </div>
-            <div className="detail-row">
-              <span>Allow Viewing:</span>
-              <span>{property.allowViewing ? 'Yes' : 'No'}</span>
-            </div>
+      <div className="expandable-content">
+        <div className="booking-details">
+          <div className="detail-row">
+            <span>Available from:</span>
+            <span>{new Date(property.dateAvailability?.seconds * 1000).toLocaleDateString()}</span>
           </div>
-
-          <div className="total-calculation">
-            <div className="detail-row">
-              <span>Security Deposit:</span>
-              <span>₱{property.securityDeposit.toLocaleString()}</span>
-            </div>
-            <div className="detail-row">
-              <span>Lease Term:</span>
-              <span>{property.leaseTerm} months</span>
-            </div>
+          <div className="detail-row">
+            <span>Max occupants:</span>
+            <span>{property.maxOccupants}</span>
           </div>
+          <div className="detail-row">
+            <span>Floor Level:</span>
+            <span>{property.floorLevel}</span>
+          </div>
+          <div className="detail-row">
+            <span>Furnishing:</span>
+            <span>{property.furnishingStatus}</span>
+          </div>
+          <div className="detail-row">
+            <span>Lifestyle:</span>
+            <span>{property.propertyLifestyle}</span>
+          </div>
+          <div className="detail-row">
+            <span>Size:</span>
+            <span>{property.propertySize} sqm</span>
+          </div>
+          <div className="detail-row">
+            <span>Allow Viewing:</span>
+            <span>{property.allowViewing ? 'Yes' : 'No'}</span>
+          </div>
+        </div>
 
+        {(!isMobile || isExpanded) && (
           <button 
             className={`interested-button ${isInterested ? 'interested' : ''}`} 
             onClick={onInterestedClick}
           >
-            {isInterested ? 'Interested ✓' : 'Interested'}
+            {isInterested ? 'Interested' : 'Interested'}
           </button>
-        </>
-      )}
+        )}
+        
+        <div className="total-calculation">
+          <div className="detail-row">
+            <span>Security Deposit:</span>
+            <span>₱{property.securityDeposit.toLocaleString()}</span>
+          </div>
+          <div className="detail-row">
+            <span>Lease Term:</span>
+            <span>{property.leaseTerm} months</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -103,7 +103,7 @@ const PropertyMap = ({ locationGeo }: PropertyMapProps) => {
 
   return (
     <div className="property-map-container">
-      <h2>Where you'll be</h2>
+      <h2 className="property-map-title">Where you'll be</h2>
       <div 
         ref={mapRef} 
         className="property-map" 

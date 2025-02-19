@@ -1,34 +1,26 @@
 .booking-card {
+  position: sticky;
+  top: 80px;
   padding: 20px;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background-color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
+  border: 1px solid #dddddd;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  background: white;
+  height: fit-content;
+  min-height: min-content;
+  align-self: flex-start;
   width: 100%;
-}
-
-.price-info {
-  margin-bottom: 20px;
-}
-
-.price {
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.price-period {
-  color: #666;
-  margin-left: 4px;
-}
-
-.booking-details {
-  margin-bottom: 20px;
+  max-width: 400px;
+  z-index: 100;
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
+  padding: 6px 0;
+  font-size: 14px;
+  color: #222222;
+  border-bottom: 1px solid #f0f0f0;
   margin-bottom: 10px;
 }
 
@@ -36,20 +28,45 @@
   color: #666;
 }
 
-.interested-button {
-  width: 100%;
-  padding: 12px;
-  background-color: #ff385c;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+.total-calculation {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
 }
 
-.interested-button:hover {
-  background-color: #e31c5f;
+.price {
+  font-size: 24px;
+  font-weight: 600;
+  color: #222222;
+}
+
+.price-period {
+  font-size: 16px;
+  color: #717171;
+  margin-left: 4px;
+}
+
+.price-info {
+  margin-bottom: 20px;
+}
+
+.booking-details {
+  margin-bottom: 20px;
+}
+
+.booking-card .interested-button {
+  width: 100%;
+  padding: 14px;
+  margin: 16px 0;
+  background-color: #031529;
+  color: white;
+  border: 1px solid #dddddd;
+  border-radius: 16px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .interested-button.interested {
@@ -60,73 +77,69 @@
   background-color: #218838;
 }
 
-.total-calculation {
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
-}
-
-/* Mobile Styles */
-@media screen and (max-width: 768px) {
-  .booking-card {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    max-width: 100%;
-    border-radius: 12px 12px 0 0;
-    padding: 16px;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+@media (max-width: 480px) {
+  body .booking-card {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    padding: 16px !important;
+    border-radius: 16px 16px 0 0 !important;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
+    z-index: 1000 !important;
+    background-color: white !important;
+    max-width: none !important;
+    transition: transform 0.3s ease-in-out;
   }
 
-  .booking-card.expanded {
-    height: auto;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
-  .booking-card:not(.expanded) {
-    height: auto;
-    padding: 12px 16px;
-  }
-
-  .booking-card:not(.expanded) .booking-details,
-  .booking-card:not(.expanded) .total-calculation {
-    display: none;
-  }
-
-  .booking-card:not(.expanded) .price-info {
-    margin-bottom: 12px;
-  }
-
-  .mobile-booking-header {
+  .booking-card.mobile .mobile-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 16px;
-  }
-
-  .close-button {
-    background: none;
-    border: none;
-    font-size: 24px;
     cursor: pointer;
-    padding: 4px;
   }
 
-  .mobile-footer {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  .booking-card.mobile .expandable-content {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
   }
 
-  .mobile-footer .price-info {
+  .booking-card.mobile.expanded .expandable-content {
+    display: block;
+    opacity: 1;
+    padding-top: 16px;
+  }
+
+  .booking-card.mobile .mobile-header .interested-button {
+    padding: 10px 20px;
+    margin: 0;
+    width: 50%; /* Shorten the width */
+  }
+
+  .booking-card.mobile:not(.expanded) .price-info {
     margin-bottom: 0;
-    flex: 1;
   }
 
-  .mobile-footer .interested-button {
-    flex: 1;
+  .booking-card.mobile.expanded:before {
+    content: '';
+    width: 40px;
+    height: 4px;
+    background-color: #ddd;
+    border-radius: 2px;
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .price-info {
+    margin-bottom: 12px;
+  }
+
+  .interested-button {
+    padding: 16px;
+    font-size: 18px;
   }
 }

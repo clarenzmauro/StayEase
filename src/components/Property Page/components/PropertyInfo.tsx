@@ -67,15 +67,15 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
         )}
       </div>
 
-        <h2 className="section-title">House rules</h2>
-        <ul className="house-rules-list">
-          {property.houseRules?.map((rule, index) => (
-            <li key={`rule-${index}`} className="rule-item">
-              <span className="rule-icon">•</span>
-              {rule}
-            </li>
-          ))}
-        </ul>
+      <h2 className="rules-section">House rules</h2>
+      <ul className="house-rules-list">
+        {property.houseRules?.map((rule, index) => (
+          <li key={`rule-${index}`} className="rule-item">
+            <span className="rule-icon">!</span>
+            {rule}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
