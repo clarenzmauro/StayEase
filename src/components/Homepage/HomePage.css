@@ -315,7 +315,7 @@ body {
   display: block;
 }
 
-.properties-grid .property-card .property-location,
+.properties-grid .property-card .homepage-property-location,
 .properties-grid .property-card .property-type {
   color: #666;
   font-size: 0.9rem !important;
@@ -323,7 +323,7 @@ body {
   display: block; /* Ensure visibility */
 }
 
-.properties-grid .property-card .property-location {
+.properties-grid .property-card .homepage-property-location {
   color: #666;
   margin-bottom: 2px !important;
   font-size: 0.85rem !important;
@@ -834,7 +834,7 @@ body {
     font-size: 1rem;
   }
 
-  .property-location,
+  .homepage-property-location,
   .property-type,
   .property-price {
     font-size: 0.85rem;
@@ -874,7 +874,7 @@ body {
     font-size: 0.9rem;
   }
 
-  .property-location,
+  .homepage-property-location,
   .property-type,
   .property-price {
     font-size: 0.75rem;
@@ -897,4 +897,11 @@ body {
   .apply-button {
     font-size: 0.8rem;
   }
+}
+
+.homepage-property-location {
+  color: #666;
+  margin-bottom: 2px !important;
+  font-size: 0.85rem !important;
+  line-height: 1.2;
 }

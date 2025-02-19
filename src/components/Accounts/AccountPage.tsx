@@ -35,6 +35,7 @@ const AccountPage = () => {
   const [itemsInterested, setInterestedDorms] = useState<PropertyType[]>([]);
   const [showOwnerOverlay, setShowOwnerOverlay] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showAccountMenu, setShowAccountMenu] = useState(false); // New dropdown state
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -348,33 +349,44 @@ const AccountPage = () => {
                 </>
               ) : (
                 <>
-                  <div className="tooltip-container">
-                    <button onClick={handleEdit} className="edit-button-account">
-                      <img src="/src/assets/edit.png" alt="Edit" className="button-icon" />
-                    </button>
-                    {renderTooltip('Edit Profile')}
-                  </div>
-                  <div className="tooltip-container">
-                    <button onClick={handleLogout} className="logout-button">
-                      <img src="/src/assets/logout.png" alt="Logout" className="button-icon" />
-                    </button>
-                    {renderTooltip('Logout')}
-                  </div>
-                  {userData && userData.isOwner === false ? (
-                    <div className="tooltip-container">
-                      <button onClick={handleApplyAsOwner} className="apply-button">
-                        <img src="/src/assets/owners.png" alt="Apply as Owner" className="button-icon" />
-                      </button>
-                      {renderTooltip('Apply as Owner')}
-                    </div>
-                  ) : userData && userData.isOwner === true ? (
-                    <div className="tooltip-container">
-                      <button onClick={handleNavigateToOwnerPage} className="visit-button">
-                        <img src="/src/assets/owners.png" alt="Visit Owner Page" className="button-icon" />
-                      </button>
-                      {renderTooltip('Visit Owner Page')}
-                    </div>
-                  ) : null}
+                  {/* Show the separate Visit/Apply button outside the dropdown */}
+                  {!editMode && (
+                    <>
+                      {userData &&
+                        (userData.isOwner ? (
+                          <div className="tooltip-container">
+                            <button onClick={handleNavigateToOwnerPage} className="visit-button">
+                              <img src="/src/assets/owners.png" alt="Visit Owner Page" className="button-icon" />
+                            </button>
+                            <span className="tooltip-text">Visit Owner Page</span>
+                          </div>
+                        ) : (
+                          <div className="tooltip-container">
+                            <button onClick={handleApplyAsOwner} className="apply-button">
+                              <img src="/src/assets/apply.png" alt="Apply as Owner" className="button-icon" />
+                            </button>
+                            <span className="tooltip-text">Apply as Owner</span>
+                          </div>
+                        ))}
+                      {/* Burger dropdown for Edit Profile and Logout only */}
+                      <div 
+                        className="menu-button" 
+                        onClick={() => setShowAccountMenu(!showAccountMenu)}
+                      >
+                        <div className="menu-icon">
+                          <span></span>
+                          <span></span>
+                          <span></span>
+                        </div>
+                      </div>
+                      {showAccountMenu && (
+                        <div className="menu-dropdown">
+                          <button onClick={handleEdit}>Edit Profile</button>
+                          <button onClick={handleLogout}>Logout</button>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </>
               )}
             </>

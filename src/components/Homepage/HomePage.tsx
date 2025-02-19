@@ -661,7 +661,7 @@ export function HomePage() {
                     </button>
                   <div className="property-info">
                     <div className="property-name">{item.propertyName}</div>
-                    <div className="property-location">{item.propertyLocation}</div>
+                    <div className="homepage-property-location">{item.propertyLocation}</div> {/* Updated class name */}
                     <div className="property-type">{item.propertyType}</div>
                     <div className="property-price">₱{(item.propertyPrice ?? item.rent ?? 0).toLocaleString()}/month</div>
                   </div>
