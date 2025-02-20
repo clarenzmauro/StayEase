@@ -19,6 +19,12 @@ import {
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
 import { API_URL } from '../../config';
+import emailLogo from '../../assets/email-logo.png';
+import contactLogo from '../../assets/contact-logo.png';
+import facebookLogo from '../../assets/facebook-logo.png';
+import instagramLogo from '../../assets/instagram-logo.png';
+import xLogo from '../../assets/x-logo.png';
+import dateJoinedLogo from '../../assets/date-joined.png';
 
 const SkeletonLoading: React.FC = () => {
   return (
@@ -904,28 +910,28 @@ const OwnersPage: React.FC = () => {
               {ownerData ? (
                 <>
                   <div className="confirmed-item">
-                    <span className="check-icon">✓</span>
+                    <img src={emailLogo} alt="Email" className="info-icon" />
                     <span>{ownerData.email || "N/A"}</span>
                   </div>
                   <div className="confirmed-item">
-                    <span className="check-icon">✓</span>
+                    <img src={contactLogo} alt="Contact" className="info-icon" />
                     <span>{ownerData.contactNumber || "N/A"}</span>
                   </div>
                   <div className="confirmed-item">
-                    <span className="check-icon">✓</span>
+                    <img src={facebookLogo} alt="Facebook" className="info-icon" />
                     <span>{ownerData.socials?.Facebook || "N/A"}</span>
                   </div>
                   <div className="confirmed-item">
-                    <span className="check-icon">✓</span>
+                    <img src={instagramLogo} alt="Instagram" className="info-icon" />
                     <span>{ownerData.socials?.Instagram || "N/A"}</span>
                   </div>
                   <div className="confirmed-item">
-                    <span className="check-icon">✓</span>
+                    <img src={xLogo} alt="X" className="info-icon" />
                     <span>{ownerData.socials?.X || "N/A"}</span>
                   </div>
                   <div className="confirmed-item">
-                    <span className="check-icon">✓</span>
-                    <span>Date Joined: {ownerData.dateJoined ? formatDate(ownerData.dateJoined) : 'N/A'}</span>
+                    <img src={dateJoinedLogo} alt="Date Joined" className="info-icon" />
+                    <span>{ownerData.dateJoined ? formatDate(ownerData.dateJoined) : 'N/A'}</span>
                   </div>
                 </>
               ) : (
@@ -1009,32 +1015,27 @@ const OwnersPage: React.FC = () => {
             <section className="reviews-section">
               <div className="reviews-header">
                 <h2>{firstName}'s Reviews</h2>
-                <div className="navigation-buttons">
-                  <button className="nav-button-owner" aria-label="Previous">
-                    <span className="arrow left"></span>
+                {!isOwnerViewing && !userExistingReview && (
+                  <button 
+                    className="add-review-button"
+                    onClick={() => {
+                      if (!currentUser) {
+                        alert("Please log in to leave a review");
+                        return;
+                      }
+                      if (userExistingReview) {
+                        alert("You already have a review. Please edit or delete your existing review first.");
+                        return;
+                      }
+                      setIsReviewModalOpen(true);
+                    }}
+                  >
+                    + Add Review
                   </button>
-                  <button className="nav-button-owner" aria-label="Next">
-                    <span className="arrow right"></span>
-                  </button>
-                </div>
+                )}
               </div>
 
               <div className="reviews-grid">
-                {!isOwnerViewing && !userExistingReview && (
-                  <div className="review-card empty-review" onClick={() => {
-                    if (!currentUser) {
-                      alert("Please log in to leave a review");
-                      return;
-                    }
-                    if (userExistingReview) {
-                      alert("You already have a review. Please edit or delete your existing review first.");
-                      return;
-                    }
-                    setIsReviewModalOpen(true);
-                  }}>
-                    <p>Click here to leave a review!</p>
-                  </div>
-                )}
                 {comments.map((comment, index) => (
                   <div key={index} className="review-card">
                     <p className="review-text">{comment.content}</p>
