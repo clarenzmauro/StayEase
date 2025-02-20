@@ -483,7 +483,7 @@ const AccountPage = () => {
                 {Object.entries(userData?.socials || {}).map(([platform, url]) => (
                   url && (
                     <div key={`social-view-${platform}`} className="social-item">
-                      <span className="social-platform">{platform}:</span>
+                      <span className="social-platform">{platform}</span>
                       <a href={url as string} target="_blank" rel="noopener noreferrer">
                         {url as string}
                       </a>
