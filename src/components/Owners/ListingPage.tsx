@@ -81,8 +81,8 @@ const tagCategories = {
 };
 
 const PLACEHOLDER_IMAGE = {
-  url: '/assets/ImagePlaceholder.png', // Updated URL for the placeholder
-  label: 'Placeholder Image',
+  url: '/src/assets/ImagePlaceholder.png', // Updated URL for the placeholder
+  label: 'Click Choose File to Add Image',
   file: null,
 };
 
