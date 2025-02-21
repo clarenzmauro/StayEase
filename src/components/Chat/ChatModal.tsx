@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, query, where, orderBy, addDoc, onSnapshot, serverTimestamp, doc, updateDoc, getDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, orderBy, addDoc, onSnapshot, serverTimestamp, writeBatch } from 'firebase/firestore';
 import { db, auth } from '../../firebase/config';
 import './ChatModal.css';
 

@@ -12,9 +12,7 @@ import {
   onSnapshot, 
   arrayUnion, 
   runTransaction,
-  collection,
-  query,
-  where 
+  collection
 } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { db } from '../../firebase/config';
@@ -82,6 +80,28 @@ interface PropertyType {
   [key: string]: any;
 }
 
+interface OwnerData {
+  comments?: {
+    commentCounter?: number;
+    [key: string]: any;
+  };
+  username?: string;
+  profilePicUrl?: string;
+  email?: string;
+  contactNumber?: string;
+  socials?: {
+    Facebook?: string;
+    Instagram?: string;
+    X?: string;
+  };
+  dateJoined?: TimestampType;
+  description?: string;
+  dashboardId?: string;
+  notifications?: any[];
+  followerCount?: number;
+  followers?: { [key: string]: boolean };
+}
+
 interface Notification {
   id: string;
   message: string;
@@ -90,6 +110,11 @@ interface Notification {
   type: string;
   propertyName: string;
   userName: string;
+}
+
+interface TimestampType {
+  seconds: number;
+  nanoseconds: number;
 }
 
 const OwnersPage: React.FC = () => {
@@ -102,7 +127,7 @@ const OwnersPage: React.FC = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [userExistingReview, setUserExistingReview] = useState<any>(null);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [ownerData, setOwnerData] = useState<any>(null);
+  const [ownerData, setOwnerData] = useState<OwnerData | null>(null);
   const [isDashboardOpen, setIsDashboardOpen] = useState(false);
   const [properties, setProperties] = useState<any[]>([]);
   const [isOwnerViewing, setIsOwnerViewing] = useState(false);
@@ -110,10 +135,7 @@ const OwnersPage: React.FC = () => {
   const [newReview, setNewReview] = useState({ content: '', rating: 0 });
   const [comments, setComments] = useState<any[]>([]);
   const [averageRating, setAverageRating] = useState<number>(0);
-  const [setReviews] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [pictureUrl, setPictureUrl] = useState('');
-  const [loading, setLoading] = useState(false);
 
   // New state for notifications and overlay
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -230,7 +252,7 @@ const OwnersPage: React.FC = () => {
   };
 
   // Fetch comments & Calculate Average rating
-  const fetchComments = async (ownerData) => {
+  const fetchComments = async (ownerData: OwnerData) => {
     const commentsData = ownerData?.comments || {};
     const commentCounter = commentsData.commentCounter || 0;
     let totalRating = 0;
@@ -282,7 +304,7 @@ const OwnersPage: React.FC = () => {
   
   
 
-  const fetchUserProfilePicture = async (userId) => {
+  const fetchUserProfilePicture = async (userId: string) => {
     if (!userId) return "/placeholder.svg?height=150&width=150";
   
     try {
@@ -363,43 +385,6 @@ const OwnersPage: React.FC = () => {
     } catch (error) {
       console.error("Error submitting review:", error);
       alert("Failed to submit review. Please try again.");
-    }
-  };
-
-  // Fetch Dashboard Data and Properties
-  const fetchDashboardData = async (dashboardId: string) => {
-    const dashboardRef = doc(db, 'dashboards', dashboardId);
-    const dashboardSnap = await getDoc(dashboardRef);
-
-    if (dashboardSnap.exists()) {
-      const dashboardData = dashboardSnap.data();
-      if (dashboardData?.listedDorms) {
-        fetchProperties(dashboardData.listedDorms);
-      }
-    } else {
-      console.log('No such document!');
-    }
-  };
-
-  const fetchProperties = async (dashboardId: string) => {
-    const dashboardRef = doc(db, 'dashboards', dashboardId);
-    const dashboardSnap = await getDoc(dashboardRef);
-    console.log("Dashboard Id:", dashboardId);
-    if (dashboardSnap.exists()) {
-      const dashboardData = dashboardSnap.data();
-      if (dashboardData?.listedDorms) {
-        const propertiesPromises = dashboardData.listedDorms.map(id => getDoc(doc(db, 'properties', id)));
-        const propertiesDocs = await Promise.all(propertiesPromises);
-        const propertiesData = propertiesDocs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-
-        // Log the fetched properties
-        console.log("Fetched Properties:", propertiesData);
-        console.log("Dashboard Id:", dashboardId);
-
-        setProperties(propertiesData);
-      }
-    } else {
-      console.log('No such document!');
     }
   };
 
@@ -484,7 +469,7 @@ const OwnersPage: React.FC = () => {
         });
 
         // Set up listeners for each property
-        listedDorms.forEach(propertyId => {
+        listedDorms.forEach((propertyId: string) => {
           const propertyRef = doc(db, 'properties', propertyId);
           const unsubscribe = onSnapshot(propertyRef, (propertySnap) => {
             if (propertySnap.exists()) {
@@ -496,7 +481,7 @@ const OwnersPage: React.FC = () => {
             } else {
               // If property doesn't exist anymore, update the dashboard
               const currentListedDorms = dashboardData.listedDorms || [];
-              const updatedDorms = currentListedDorms.filter(id => id !== propertyId);
+              const updatedDorms = currentListedDorms.filter((id: string) => id !== propertyId);
               updateDoc(dashboardRef, { listedDorms: updatedDorms }).catch(error => {
                 console.error("Error updating dashboard after property deletion:", error);
               });
@@ -538,12 +523,15 @@ const OwnersPage: React.FC = () => {
     }
   };
 
-  const addNotification = (message: string) => {
+  const addNotification = (message: string, type: string = 'info', propertyName: string = '', userName: string = '') => {
     const newNotification: Notification = {
       id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       message,
       timestamp: Date.now(),
-      read: false
+      read: false,
+      type,
+      propertyName,
+      userName
     };
     setNotifications(prev => [newNotification, ...prev]);
   };
@@ -599,7 +587,7 @@ const OwnersPage: React.FC = () => {
               message: `${currentUser.displayName || 'Someone'} followed you.`,
               timestamp: Date.now(),
               read: false,
-              userId: currentUser.uid,
+              propertyName: '',
               userName: currentUser.displayName || 'Anonymous'
             };
 
@@ -822,10 +810,14 @@ const OwnersPage: React.FC = () => {
     navigate('/');
   };
 
-  const formatDate = (timestamp) => {
+  const formatDate = (timestamp: TimestampType | undefined) => {
+    if (!timestamp) return 'N/A';
     const date = new Date(timestamp.seconds * 1000);
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    return date.toLocaleDateString('en-US', options);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
   };
 
   if (isLoading) {

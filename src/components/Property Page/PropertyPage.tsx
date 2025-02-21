@@ -29,7 +29,7 @@ interface Property {
   bedroomCount: number;
   comments: string[];
   count: number;
-  dateAvailability: string;
+  dateAvailability: { seconds: number };
   datePosted: string;
   floorLevel: string | number;
   furnishingStatus: string;
@@ -45,7 +45,7 @@ interface Property {
   propertyLocation: string;
   propertyLocationGeo: any;
   propertyName: string;
-  propertyPhotos: [];
+  propertyPhotos: string[];
   propertyPrice: number;
   propertySize: number;
   propertyTags: string[];
@@ -80,20 +80,16 @@ const PropertyPage = () => {
   const [newComment, setNewComment] = useState('');
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [host, setHost] = useState<DocumentData | null>(null);
-  const [dateSort, setDateSort] = useState<'newest' | 'oldest'>('newest');
-  const [likeSort, setLikeSort] = useState<'mostLiked' | 'leastLiked'>('mostLiked');
-  const [activeSortType, setActiveSortType] = useState<'date' | 'likes'>('date');
-  const [visibleComments, setVisibleComments] = useState(4);
+  const [dateSort, ] = useState<'newest' | 'oldest'>('newest');
+  const [likeSort, ] = useState<'mostLiked' | 'leastLiked'>('mostLiked');
+  const [activeSortType, ] = useState<'date' | 'likes'>('date');
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
-  const [replyingTo, setReplyingTo] = useState<string | null>(null);
-  const [replyContent, setReplyContent] = useState('');
   const [allowChat, setAllowChat] = useState(false);
   const [editChecker, setEditChecker] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [showApplicants, setShowApplicants] = useState(false);
-  const COMMENTS_PER_PAGE = 4;
 
   useEffect(() => {
     const state = location.state as { isOwner?: boolean; ownerId?: string } | null;
@@ -244,10 +240,11 @@ const PropertyPage = () => {
   };
 
   const handleInterestedClick = async () => {
-    if (!user) {
+    if (!auth.currentUser) {
       setShowLoginPrompt(true);
       return;
     }
+
     if (!auth.currentUser || !id || !property) return;
 
     try {
@@ -265,16 +262,17 @@ const PropertyPage = () => {
 
       if (!isCurrentlyInterested) {
         // Create notification for the owner
+        const userName = auth.currentUser?.displayName || 'Anonymous';
         const newNotification = {
           id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           type: 'interested',
-          message: `${user.displayName || 'Someone'} is interested in ${property.propertyName}`,
+          message: `${userName} is interested in ${property.propertyName}`,
           timestamp: Date.now(),
           read: false,
           propertyId: id,
           propertyName: property.propertyName,
           userId: auth.currentUser.uid,
-          userName: user.displayName || 'Anonymous'
+          userName
         };
 
         // Update owner's notifications
@@ -312,7 +310,9 @@ const PropertyPage = () => {
           ...prev,
           interestedApplicants: isCurrentlyInterested
             ? currentApplicants.filter(uid => uid !== auth.currentUser?.uid)
-            : [...currentApplicants, auth.currentUser.uid],
+            : auth.currentUser?.uid 
+              ? [...currentApplicants, auth.currentUser.uid]
+              : currentApplicants,
           interestedCount: newCount
         };
       });
@@ -399,8 +399,8 @@ const PropertyPage = () => {
 
       const commentData = commentDoc.data();
 
-      // Only allow deletion if the user is the comment author
-      if (commentData.userId !== user.uid) return;
+      // Only allow deletion if the user owns this comment
+      if (!user || commentData.userId !== user.uid) return;
 
       await deleteDoc(commentRef);
 
@@ -427,32 +427,6 @@ const PropertyPage = () => {
     }).join('');
   };
 
-  const handleDateSort = () => {
-    setDateSort(prev => prev === 'newest' ? 'oldest' : 'newest');
-    setActiveSortType('date');
-    setComments(prevComments => {
-      const sortedComments = [...prevComments];
-      return sortedComments.sort((a, b) => {
-        return dateSort === 'newest'
-          ? a.commentDate?.seconds - b.commentDate?.seconds
-          : b.commentDate?.seconds - a.commentDate?.seconds;
-      });
-    });
-  };
-
-  const handleLikeSort = () => {
-    setLikeSort(prev => prev === 'mostLiked' ? 'leastLiked' : 'mostLiked');
-    setActiveSortType('likes');
-    setComments(prevComments => {
-      const sortedComments = [...prevComments];
-      return sortedComments.sort((a, b) => {
-        return likeSort === 'mostLiked'
-          ? (a.likesCounter || 0) - (b.likesCounter || 0)
-          : (b.likesCounter || 0) - (a.likesCounter || 0);
-      });
-    });
-  };
-
   const handleLikeComment = async (commentId: string) => {
     if (!user) {
       handleLoginPrompt();
@@ -467,19 +441,19 @@ const PropertyPage = () => {
 
       const commentData = commentDoc.data();
       const likedBy = commentData.likedBy || [];
-      const hasLiked = likedBy.includes(user.uid);
+      const hasLiked = user && likedBy.includes(user.uid);
 
       if (hasLiked) {
         // Unlike the comment
         await updateDoc(commentRef, {
           likesCounter: (commentData.likesCounter || 0) - 1,
-          likedBy: arrayRemove(user.uid)
+          likedBy: arrayRemove(user!.uid)
         });
       } else {
         // Like the comment
         await updateDoc(commentRef, {
           likesCounter: (commentData.likesCounter || 0) + 1,
-          likedBy: arrayUnion(user.uid)
+          likedBy: arrayUnion(user!.uid)
         });
       }
 
@@ -491,8 +465,8 @@ const PropertyPage = () => {
               ...comment,
               likesCounter: hasLiked ? (comment.likesCounter || 0) - 1 : (comment.likesCounter || 0) + 1,
               likedBy: hasLiked
-                ? (comment.likedBy || []).filter((id: string) => id !== user.uid)
-                : [...(comment.likedBy || []), user.uid]
+                ? (comment.likedBy || []).filter((id: string) => id !== user!.uid)
+                : [...(comment.likedBy || []), user!.uid]
             };
           }
           return comment;
@@ -560,19 +534,19 @@ const PropertyPage = () => {
 
       if (!replyData) return;
 
-      const hasLiked = replyData.likedBy?.includes(user.uid);
+      const hasLiked = user && replyData.likedBy?.includes(user.uid);
 
       if (hasLiked) {
         // Unlike the reply
         await updateDoc(replyRef, {
           likesCounter: (replyData.likesCounter || 0) - 1,
-          likedBy: arrayRemove(user.uid)
+          likedBy: arrayRemove(user!.uid)
         });
       } else {
         // Like the reply
         await updateDoc(replyRef, {
           likesCounter: (replyData.likesCounter || 0) + 1,
-          likedBy: arrayUnion(user.uid)
+          likedBy: arrayUnion(user!.uid)
         });
       }
 
@@ -588,8 +562,8 @@ const PropertyPage = () => {
                     ...reply,
                     likesCounter: hasLiked ? (reply.likesCounter || 0) - 1 : (reply.likesCounter || 0) + 1,
                     likedBy: hasLiked
-                      ? (reply.likedBy || []).filter((id: string) => id !== user.uid)
-                      : [...(reply.likedBy || []), user.uid]
+                      ? (reply.likedBy || []).filter((id: string) => id !== user!.uid)
+                      : [...(reply.likedBy || []), user!.uid]
                   };
                 }
                 return reply;
@@ -626,25 +600,6 @@ const PropertyPage = () => {
     } catch (error) {
       console.error('Error deleting reply:', error);
     }
-  };
-
-  const formatDate = (timestamp: any) => {
-    if (!timestamp) return '';
-    try {
-      if (timestamp.toDate) {
-        return timestamp.toDate().toLocaleDateString();
-      } else if (timestamp.seconds) {
-        return new Date(timestamp.seconds * 1000).toLocaleDateString();
-      }
-      return '';
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return '';
-    }
-  };
-
-  const handleLoadMoreComments = () => {
-    setVisibleComments(prev => prev + COMMENTS_PER_PAGE);
   };
 
   const handleGoogleSignIn = async () => {
@@ -729,11 +684,7 @@ const PropertyPage = () => {
       ) : (
         <>
 
-      <PropertyHeader 
-        title={property.propertyName} 
-        location={property.propertyLocation} 
-        isVerified={property.isVerified}
-      />
+      <PropertyHeader />
 
       {/* Favorite button */}
       <button

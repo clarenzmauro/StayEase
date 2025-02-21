@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../../firebase/config';
-import { doc, getDoc, updateDoc, addDoc, collection, GeoPoint, arrayUnion, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, addDoc, collection, arrayUnion, Timestamp } from 'firebase/firestore';
 import './ListingPage.css';
 import 'ol/ol.css';
 import Map from 'ol/Map';
@@ -231,7 +231,7 @@ export function ListingPage() {
                 setImages(loadedImages);
               } else {
                 // Firebase style - object with pictureUrl
-                const loadedImages = Object.entries(data.propertyPhotos).map(([key, value]: [string, any]) => ({
+                const loadedImages = Object.entries(data.propertyPhotos).map(([, value]: [string, any]) => ({
                   url: value.pictureUrl,
                   label: value.label || "Property Image",
                   file: null
@@ -352,7 +352,7 @@ export function ListingPage() {
 
         const photos = propertyData.propertyPhotos
         ? await Promise.all(
-              propertyData.propertyPhotos.map(async (_, index: number) => ({
+              propertyData.propertyPhotos.map(async (_: string | { pictureUrl: string, label: string }, index: number) => ({
                   label: await getImageLabel(propertyData as PropertyType, index), // Fetch label from API
                   url: getImageUrl(propertyData as PropertyType, index), // Get image URL
                   file: null,
@@ -672,7 +672,7 @@ export function ListingPage() {
     return documentIds;
   };
 
-  const deleteImage = async (propertyId: string, photoId: string) => {
+  const deleteImage = async (photoId: string) => {
     try {
       const response = await fetch(`${API_URL}/api/property-photos/${photoId}`, {
         method: 'DELETE',
@@ -693,7 +693,7 @@ export function ListingPage() {
       // If there's an existing image at this index and it's from MongoDB, delete it
       if (newImages[index]?.url?.includes('/api/property-photos/')) {
         const photoId = newImages[index].url.split('/api/property-photos/')[1].split('/')[0];
-        await deleteImage(id || '', photoId);
+        await deleteImage(photoId);
       }
 
       newImages[index] = {
@@ -811,29 +811,8 @@ export function ListingPage() {
                   }} 
                 />
                 <button
+                  className="location-button"
                   onClick={handleCurrentLocation}
-                  disabled={isLocating}
-                  title="Use my current location"
-                  style={{
-                    position: 'absolute',
-                    top: '10px',
-                    right: '10px',
-                    width: '32px',
-                    height: '32px',
-                    padding: '6px',
-                    backgroundColor: 'white',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 0.2s ease',
-                    ':hover': {
-                      backgroundColor: '#f5f5f5'
-                    }
-                  }}
                 >
                   {isLocating ? (
                     <svg 
@@ -857,7 +836,7 @@ export function ListingPage() {
                       strokeWidth="2"
                     >
                       <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                      <circle cx="12" cy="9" r="2.5" fill="#000" />
+                      <circle cx="12" cy="9" r="2.5" fill="#fff" />
                     </svg>
                   )}
                 </button>

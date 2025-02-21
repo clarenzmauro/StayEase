@@ -54,8 +54,9 @@ export function HomePage() {
     sortBy: 'most-popular'
   });
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
-  const [user, setUser] = useState<FirebaseUser| null>(null);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
+  const [authError, setAuthError] = useState<string>('');
   const navigate = useNavigate();
   // const [isLogin, setIsLogin] = useState(true);
   // const [email, setEmail] = useState('');
@@ -65,7 +66,7 @@ export function HomePage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   // const [sortBy, setSortBy] = useState('most-popular');
-  const [currentImageIndices, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
+  const [, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
   const [imageCache, setImageCache] = useState<{ [key: string]: boolean }>({});
   const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
   const [isMobileFilterVisible, setIsMobileFilterVisible] = useState(false);
@@ -114,7 +115,16 @@ export function HomePage() {
 
       // Preload the next image in sequence
       const nextIndex = (newIndex + 1) % totalImages;
-      const nextUrl = property.propertyPhotos[`photo${nextIndex}`]?.pictureUrl;
+      let nextUrl: string | undefined;
+      
+      if (property.propertyPhotos) {
+        if (Array.isArray(property.propertyPhotos)) {
+          nextUrl = property.propertyPhotos[nextIndex] as string;
+        } else {
+          nextUrl = property.propertyPhotos[`photo${nextIndex}`]?.pictureUrl;
+        }
+      }
+
       if (nextUrl) {
         preloadImage(nextUrl);
       }
@@ -204,27 +214,48 @@ export function HomePage() {
     };
   }, []); // Empty dependency array means this only runs once on mount
 
-  // Set up auth listener and fetch user favorites
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    // Set up persistence
+    import('firebase/auth').then(({ setPersistence, browserLocalPersistence }) => {
+      setPersistence(auth, browserLocalPersistence);
+    });
+
+    // Set up auth state listener
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       setUser(user);
       if (user) {
-        const accountDoc = await getDoc(doc(db, 'accounts', user.uid));
-        if (accountDoc.exists()) {
-          setUserFavorites(accountDoc.data().itemsSaved || []);
-        }
+        setShowAuthOverlay(false);
+        setAuthError('');
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-    });
-    return () => unsubscribe();
-  }, []);
+  const handleGoogleSignIn = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      // Configure custom parameters for mobile
+      provider.setCustomParameters({
+        prompt: 'select_account',
+        display: 'popup'
+      });
+      
+      // Use signInWithRedirect for mobile devices
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        const { signInWithRedirect } = await import('firebase/auth');
+        await signInWithRedirect(auth, provider);
+      } else {
+        // Use popup for desktop
+        await signInWithPopup(auth, provider);
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      setAuthError(error instanceof Error ? error.message : 'Authentication failed');
+      // Keep the overlay open on error
+      setShowAuthOverlay(true);
+    }
+  };
 
   // Add sorting function
   const sortProperties = (properties: PropertyType[], sortType: string) => {
@@ -438,21 +469,6 @@ export function HomePage() {
     setTimeout(() => {
       setShowAuthOverlay(false);
     }, 1500);
-  };
-
-  const handleGoogleAuth = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      await createUserDocument(result.user);
-      handleSuccess();
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error(error.message);
-      } else {
-        console.error("An unknown error occurred");
-      }
-    }
   };
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -711,9 +727,9 @@ export function HomePage() {
 
                 <button className="close-button" onClick={() => setShowAuthOverlay(false)} aria-label="Close">×</button>
                 <h2>Login</h2>
-                {error && <div className="error-message">{error}</div>}
+                {authError && <div className="error-message">{authError}</div>}
 
-                <button onClick={handleGoogleAuth} className="google-button">
+                <button onClick={handleGoogleSignIn} className="google-button">
                   Continue with Google
                 </button>
               </>

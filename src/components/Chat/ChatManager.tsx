@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth } from '../../firebase/config';
-import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import { onSnapshot, doc, getDoc } from 'firebase/firestore';
 import ChatModal from './ChatModal';
 
 interface ChatManagerProps {}

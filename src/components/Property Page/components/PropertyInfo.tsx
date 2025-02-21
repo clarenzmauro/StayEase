@@ -1,5 +1,5 @@
 import '../PropertyPage.css';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface PropertyInfoProps {
   property: {
@@ -11,15 +11,9 @@ interface PropertyInfoProps {
     houseRules?: string[];
     propertyName?: string;
     propertyLocation?: string;
-    propertyPhotos?: {
-      [key: string]: {
-        pictureUrl: string;
-        label: string;
-      };
-    };
+    propertyPhotos?: string[];
     interestedCount?: number;
     ownerId?: string;
-    // Add any other properties that might be used
   };
   host: {
     username?: string;
@@ -27,7 +21,7 @@ interface PropertyInfoProps {
 }
 
 const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
-  const [visibleAmenities, setVisibleAmenities] = useState(6);
+  const [visibleAmenities, ] = useState(6);
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (

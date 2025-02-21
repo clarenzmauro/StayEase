@@ -29,6 +29,7 @@ const OwnerSection: React.FC<OwnerSectionProps> = ({
   const [ownerData, setOwnerData] = useState<OwnerData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
   const [showAuthOverlay, setShowAuthOverlay] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -127,6 +128,8 @@ const OwnerSection: React.FC<OwnerSectionProps> = ({
           recipientId={ownerId}
           recipientName={ownerData.username}
           recipientPhoto={ownerData.profilePicUrl || '/default-profile.png'}
+          isMinimized={isMinimized}
+          onMinimizedChange={setIsMinimized}
         />
       )}
       {showAuthOverlay && (

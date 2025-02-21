@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import '../PropertyPage.css';
 import './PropertyGallery.css';
-import { getDoc } from 'firebase/firestore';
-import { doc } from 'firebase/firestore';
-import { db } from '../../../firebase/config';
 import { API_URL } from '../../../config';
 
 interface Photo {
