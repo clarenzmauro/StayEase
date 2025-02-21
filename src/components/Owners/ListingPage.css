@@ -359,11 +359,35 @@
 .modal-overlay {
   background-color: rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(4px);
-}
+  justify-content: center;
+  align-items: center;
+} 
 
 .modal {
   border-radius: 1rem;
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  background: white;
+  width: 90%;
+  max-width: 600px;
+  padding: 3rem;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 640px) {
+  .modal {
+    width: 95%;
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+  
+  .modal-content {
+    gap: 1rem;
+  }
+  
+  .image-item {
+    padding: 1rem;
+  }
 }
 
 /* Owner section */
