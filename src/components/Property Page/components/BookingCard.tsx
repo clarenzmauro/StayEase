@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
+import { useAuth } from '../../../hooks/useAuth';
 import './BookingCard.css';
 
 interface BookingCardProps {
@@ -24,23 +25,26 @@ interface BookingCardProps {
 const BookingCard = ({ property, onInterestedClick, isInterested }: BookingCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const { user } = useAuth();
 
   const fireConfetti = (e: React.MouseEvent) => {
-    // Calculate position relative to viewport
+    if (!user) return;
+
     const x = e.clientX / window.innerWidth;
     const y = e.clientY / window.innerHeight;
     
     confetti({
-      particleCount: 100,
-      spread: 70,
+      particleCount: isMobile ? 60 : 100,
+      spread: isMobile ? 50 : 70,
       origin: { x, y },
       colors: [
-        '#2E7D32', // Forest green
-        '#43A047', // Green
-        '#66BB6A', // Light green
-        '#81C784', // Lighter green
-        '#4CAF50'  // Material green
-      ]
+        '#2E7D32', 
+        '#43A047', 
+        '#66BB6A', 
+        '#81C784', 
+        '#4CAF50'  
+      ],
+      disableForReducedMotion: true
     });
   };
 
