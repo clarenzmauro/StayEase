@@ -199,7 +199,6 @@ export function HomePage() {
       setAvailableTags(Array.from(allTags).sort());
       setAvailableLocations(Array.from(allLocations).sort());
       setProperties(propertiesData);
-      setFilteredProperties(propertiesData);
       setIsLoading(false);
     }, (error) => {
       console.error('Error in real-time listener:', error);
@@ -354,24 +353,14 @@ export function HomePage() {
   useEffect(() => {
     let filtered = [...properties];
 
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter(property =>
-        property.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        property.propertyLocation.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (property.propertyTags && Array.isArray(property.propertyTags) && property.propertyTags.some((tag:string) => tag.toLowerCase().includes(searchQuery.toLowerCase()))) ||
-        property.propertyType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (property.owner && typeof property.owner === 'string' && property.owner.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-
-    // Apply price range filter
+    // 1. Apply ALL filters first
+    // Price range filter
     filtered = filtered.filter(property =>
       property.propertyPrice >= activeFilters.priceRange.min &&
       property.propertyPrice <= activeFilters.priceRange.max
     );
 
-    // Apply location filter
+    // Location filter
     if (activeFilters.selectedLocation) {
       filtered = filtered.filter(property => {
         const formattedPropertyLocation = property.propertyLocation
@@ -383,14 +372,14 @@ export function HomePage() {
       });
     }
 
-    // Apply property type filter
+    // Property type filter
     if (activeFilters.selectedPropertyType) {
       filtered = filtered.filter(property =>
         property.propertyType === activeFilters.selectedPropertyType
       );
     }
 
-    // Apply tags filter
+    // Tags filter
     if (activeFilters.selectedTags.length > 0) {
       filtered = filtered.filter(property =>
         property.propertyTags && Array.isArray(property.propertyTags) &&
@@ -398,44 +387,23 @@ export function HomePage() {
       );
     }
 
-    // Apply sorting
-    filtered = sortProperties(filtered, activeFilters.sortBy);
-
-    setFilteredProperties(filtered);
-  }, [properties, searchQuery, activeFilters]);
-
-  // Handle search functionality
-  useEffect(() => {
-    const query = searchQuery.toLowerCase().trim();
-    
-    if (!query) {
-      setFilteredProperties(properties);
-      return;
+    // 2. THEN apply search filter on the already filtered properties
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(property => 
+        property.propertyName.toLowerCase().includes(query) ||
+        property.propertyLocation.toLowerCase().includes(query) ||
+        (property.owner && typeof property.owner === 'string' && 
+          property.owner.toLowerCase().includes(query))
+      );
     }
 
-    const filtered = properties.filter(property => {
-      // Search by location
-      const locationMatch = property.propertyLocation.toLowerCase().includes(query);
-      
-      // Search by tags
-      const tagMatch = property.propertyTags && Array.isArray(property.propertyTags) && property.propertyTags.some((tag: string) => 
-        tag.toLowerCase().includes(query)
-      );
-      
-      // Search by property name
-      const nameMatch = property.propertyName.toLowerCase().includes(query);
-      
-      // Search by property type
-      const typeMatch = property.propertyType.toLowerCase().includes(query);
-      
-      // Search by owner name
-      const ownerMatch = property.owner && typeof property.owner === 'string' && property.owner.toLowerCase().includes(query);
+    // 3. Finally apply sorting
+    filtered = sortProperties(filtered, activeFilters.sortBy);
 
-      return locationMatch || tagMatch || nameMatch || typeMatch || ownerMatch;
-    });
-
+    // Update filtered properties state
     setFilteredProperties(filtered);
-  }, [searchQuery, properties]);
+  }, [properties, searchQuery, activeFilters]); // Dependencies for the effect
 
   const handleFilterChange = (filters: FilterType & { sortBy: string }) => {
     setActiveFilters(filters);
