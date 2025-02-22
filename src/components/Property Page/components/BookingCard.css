@@ -56,25 +56,31 @@
 
 .booking-card .interested-button {
   width: 100%;
-  padding: 14px;
-  margin: 16px 0;
-  background-color: #031529;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background-color: #4a90e2;
   color: white;
-  border: 1px solid #dddddd;
-  border-radius: 16px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease, transform 0.1s ease;
+  transition: all 0.3s ease;
 }
 
-.interested-button.interested {
-  background-color: #28a745;
+.booking-card .interested-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
 }
 
-.interested-button.interested:hover {
-  background-color: #218838;
+.booking-card .interested-button:active {
+  transform: translateY(0);
+}
+
+.booking-card .interested-button.interested {
+  background-color: #e24a4a;
+}
+
+.booking-card .interested-button.interested:hover {
+  box-shadow: 0 2px 8px rgba(226, 74, 74, 0.3);
 }
 
 @media (max-width: 480px) {

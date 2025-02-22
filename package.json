@@ -11,10 +11,12 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.48.1",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "axios": "^1.7.9",
     "body-parser": "^1.20.3",
+    "canvas-confetti": "^1.9.3",
     "cookie": "^1.0.2",
     "cors": "^2.8.5",
     "cross-spawn": "^7.0.6",

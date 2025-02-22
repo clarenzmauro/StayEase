@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
 import './BookingCard.css';
 
 interface BookingCardProps {
@@ -24,6 +25,33 @@ const BookingCard = ({ property, onInterestedClick, isInterested }: BookingCardP
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  const fireConfetti = (e: React.MouseEvent) => {
+    // Calculate position relative to viewport
+    const x = e.clientX / window.innerWidth;
+    const y = e.clientY / window.innerHeight;
+    
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { x, y },
+      colors: [
+        '#2E7D32', // Forest green
+        '#43A047', // Green
+        '#66BB6A', // Light green
+        '#81C784', // Lighter green
+        '#4CAF50'  // Material green
+      ]
+    });
+  };
+
+  const handleInterestClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isInterested) {
+      fireConfetti(e);
+    }
+    onInterestedClick();
+  };
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 480);
@@ -45,12 +73,9 @@ const BookingCard = ({ property, onInterestedClick, isInterested }: BookingCardP
         {isMobile && !isExpanded && (
           <button 
             className={`interested-button ${isInterested ? 'interested' : ''}`} 
-            onClick={(e) => {
-              e.stopPropagation();
-              onInterestedClick();
-            }}
+            onClick={handleInterestClick}
           >
-            {isInterested ? 'Interested' : 'Interested'}
+            {isInterested ? 'Uninterested' : 'Interested'}
           </button>
         )}
       </div>
@@ -90,9 +115,9 @@ const BookingCard = ({ property, onInterestedClick, isInterested }: BookingCardP
         {(!isMobile || isExpanded) && (
           <button 
             className={`interested-button ${isInterested ? 'interested' : ''}`} 
-            onClick={onInterestedClick}
+            onClick={handleInterestClick}
           >
-            {isInterested ? 'Interested' : 'Interested'}
+            {isInterested ? 'Uninterested' : 'Interested'}
           </button>
         )}
         
