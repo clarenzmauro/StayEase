@@ -55,12 +55,8 @@ const PropertyHeader = () => {
               />
             </Link>
           ) : (
-            <div onClick={handleProfileClick}>
-              <img
-                src={profilePicUrl || "/default-profile.png"}
-                alt="User Profile"
-                className="user-icon"
-              />
+            <div onClick={handleProfileClick} className="user-icon">
+              👤
             </div>
           )}
         </div>
