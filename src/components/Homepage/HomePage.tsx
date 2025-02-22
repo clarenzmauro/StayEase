@@ -277,6 +277,25 @@ export function HomePage() {
     };
   }, []);
 
+  useEffect(() => {
+    const loadUserFavorites = async () => {
+      if (user) {
+        try {
+          const accountRef = doc(db, 'accounts', user.uid);
+          const accountDoc = await getDoc(accountRef);
+          const favorites = accountDoc.data()?.itemsSaved || [];
+          setUserFavorites(favorites);
+        } catch (error) {
+          console.error('Error loading user favorites:', error);
+        }
+      } else {
+        setUserFavorites([]); // Clear favorites when user logs out
+      }
+    };
+
+    loadUserFavorites();
+  }, [user]); // Dependency on user ensures this runs when user logs in/out
+
   const handleGoogleSignIn = async () => {
     console.log('Starting Google sign in...');
     try {
@@ -463,6 +482,9 @@ export function HomePage() {
 
   interface User {
     uid: string;
+    email: string | null;
+    displayName: string | null;
+    photoURL: string | null;
   }
 
   const createUserDocument = async (user: User) => {
@@ -474,18 +496,18 @@ export function HomePage() {
         chatMates: {},
         convoId: "",
         comments: {
-          commentCounter: 0, // Initialize the comment counter
-      },
+          commentCounter: 0,
+        },
         contactNumber: "",
         dashboardId: "",
         dateJoined: serverTimestamp(),
         description: "",
-        email: "",
+        email: user.email || "",
         followerCount: 0,
         isOwner: false,
         itemsInterested: [],
         itemsSaved: [],
-        profilePicUrl: "",
+        profilePicUrl: user.photoURL || "",
         rating: 0,
         socials: {
           Facebook: "",
@@ -493,11 +515,12 @@ export function HomePage() {
           X: ""
         },
         testField: "",
-        username: ""
+        username: user.displayName || ""
       };
 
       try {
         await setDoc(accountRef, accountData);
+        console.log("User document created with Google profile data");
       } catch (error) {
         console.error("Error creating account document:", error);
       }
