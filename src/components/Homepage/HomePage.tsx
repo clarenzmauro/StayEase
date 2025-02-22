@@ -232,6 +232,26 @@ export function HomePage() {
     return () => unsubscribe();
   }, []);
 
+   // Load user favorites when user logs in
+   useEffect(() => {
+    const loadUserFavorites = async () => {
+      if (user) {
+        try {
+          const accountRef = doc(db, 'accounts', user.uid);
+          const accountDoc = await getDoc(accountRef);
+          const favorites = accountDoc.data()?.itemsSaved || [];
+          setUserFavorites(favorites);
+        } catch (error) {
+          console.error('Error loading user favorites:', error);
+        }
+      } else {
+        setUserFavorites([]); // Clear favorites when user logs out
+      }
+    };
+
+    loadUserFavorites();
+  }, [user]); // Dependency on user ensures this runs when user logs in/out
+  
   const handleGoogleSignIn = async () => {
     try {
       const provider = new GoogleAuthProvider();
