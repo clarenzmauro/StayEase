@@ -49,6 +49,7 @@ body {
 .logo-image {
   height: 40px; /* Set consistent logo size */
   width: auto;
+  margin-top: 5px;
 }
 
 .nav-button {
@@ -601,7 +602,6 @@ body {
   padding: 1.2rem;
   height: fit-content;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
 }
 
 .filters-sidebar h3 {
@@ -611,9 +611,12 @@ body {
   font-weight: 600;
 }
 
+.filters-sidebar .reset-button {
+  margin-bottom: 0;
+}
+
 .main-content {
   flex: 1;
-  margin-top: 20px;
 }
 
 /* Skeleton styles for search and filters */

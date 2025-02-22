@@ -632,6 +632,7 @@
 .logo img {
   height: 40px;
   width: auto;
+  margin-top: 5px;
 }
 
 .user-icon {
@@ -1492,8 +1493,6 @@
 }
 
 .property-header {
-  padding: 2rem;
-  border-bottom: 1px solid #e0e0e0;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;

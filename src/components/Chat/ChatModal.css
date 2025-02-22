@@ -124,7 +124,7 @@
 
 .message.sent {
   align-self: flex-end;
-  background-color: #007bff;
+  background-color: #031529;
   color: white;
   margin-left: 20%;
 }
@@ -154,6 +154,10 @@
 
 .message-status {
   font-size: 0.75rem;
+}
+
+.submit{
+  background-color: #031529;
 }
 
 .chat-input {

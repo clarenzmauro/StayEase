@@ -461,18 +461,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 !important;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  margin-left: -15px; /* Reduced from default */
+  height: 50px; /* Set consistent logo size */
+  width: 100px;
+  mar
 }
 
 .logo {
-  height: 40px; /* Set consistent logo size */
-  width: auto;
+  height: 50px !important; /* Set consistent logo size */
+  width: 100px;
 }
 
 /* Navigation buttons container */

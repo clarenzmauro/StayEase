@@ -3,6 +3,12 @@
   width: 100%;
 }
 
+.filter-menu h2{
+  border-radius: 5px;
+  border-bottom: 5px solid #041b47;
+  margin-bottom: 30px;
+}
+
 .filter-section {
   margin-bottom: 1.5rem;
   padding: 0.5rem 0;

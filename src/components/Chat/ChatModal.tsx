@@ -170,7 +170,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
               }
             }}
           >
-            {isMinimized ? '▲' : '▼'}
+            {isMinimized ? '―' : '―'}
           </button>
           <button 
             className="close-button"
@@ -178,7 +178,7 @@ const ChatModal: React.FC<ChatModalProps> = ({
               e.stopPropagation();
               onClose();
             }}
-          >×</button>
+          >🗙</button>
         </div>
       </div>
       {!isMinimized && (
