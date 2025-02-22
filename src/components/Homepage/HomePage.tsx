@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove, getDoc, setDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { db } from '../../firebase/config.js';
 import { auth } from '../../firebase/config';
-import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, User as FirebaseUser, browserLocalPersistence, setPersistence } from 'firebase/auth';
 import logoSvg from '../../assets/STAY.svg';
 import ChatManager from '../Chat/ChatManager';
 import ChatHistory from '../Chat/ChatHistory';
@@ -62,7 +62,6 @@ export function HomePage() {
   // const [email, setEmail] = useState('');
   // // const [password, setPassword] = useState('');
   // const [error, setError] = useState('');
-  const [error] = useState('');
   const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   // const [sortBy, setSortBy] = useState('most-popular');
@@ -215,64 +214,85 @@ export function HomePage() {
   }, []); // Empty dependency array means this only runs once on mount
 
   useEffect(() => {
-    // Set up persistence
-    import('firebase/auth').then(({ setPersistence, browserLocalPersistence }) => {
-      setPersistence(auth, browserLocalPersistence);
-    });
+    let isSubscribed = true;
 
-    // Set up auth state listener
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setUser(user);
-      if (user) {
-        setShowAuthOverlay(false);
-        setAuthError('');
-      }
-    });
+    const initializeAuth = async () => {
+      console.log('Initializing auth...');
+      
+      try {
+        // Set persistence explicitly
+        await setPersistence(auth, browserLocalPersistence);
+        console.log('Persistence set to browserLocal');
 
-    return () => unsubscribe();
-  }, []);
-
-   // Load user favorites when user logs in
-   useEffect(() => {
-    const loadUserFavorites = async () => {
-      if (user) {
-        try {
-          const accountRef = doc(db, 'accounts', user.uid);
-          const accountDoc = await getDoc(accountRef);
-          const favorites = accountDoc.data()?.itemsSaved || [];
-          setUserFavorites(favorites);
-        } catch (error) {
-          console.error('Error loading user favorites:', error);
+        // Check for stored auth state
+        const currentUser = auth.currentUser;
+        console.log('Current user from auth:', currentUser?.email);
+        
+        if (currentUser && isSubscribed) {
+          console.log('User already signed in:', currentUser.email);
+          setUser(currentUser);
+          setShowAuthOverlay(false);
         }
-      } else {
-        setUserFavorites([]); // Clear favorites when user logs out
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (isSubscribed) {
+          setAuthError(error instanceof Error ? error.message : 'Authentication failed');
+        }
       }
     };
 
-    loadUserFavorites();
-  }, [user]); // Dependency on user ensures this runs when user logs in/out
-  
+    // Initialize auth immediately
+    initializeAuth();
+
+    // Set up auth state listener
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      console.log('Auth state changed:', user?.email);
+      
+      if (!isSubscribed) return;
+
+      if (user) {
+        try {
+          console.log('User authenticated:', user.email);
+          setUser(user);
+          setShowAuthOverlay(false);
+          setAuthError('');
+
+          const userDoc = await getDoc(doc(db, 'accounts', user.uid));
+          if (!userDoc.exists()) {
+            console.log('Creating user document...');
+            await createUserDocument(user);
+          }
+        } catch (error) {
+          console.error('Error handling auth state change:', error);
+        }
+      } else {
+        console.log('User signed out');
+        setUser(null);
+      }
+    });
+
+    return () => {
+      isSubscribed = false;
+      unsubscribe();
+    };
+  }, []);
+
   const handleGoogleSignIn = async () => {
+    console.log('Starting Google sign in...');
     try {
       const provider = new GoogleAuthProvider();
-      // Configure custom parameters for mobile
       provider.setCustomParameters({
-        prompt: 'select_account',
-        display: 'popup'
+        prompt: 'select_account'
       });
-      
-      // Use signInWithRedirect for mobile devices
-      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        const { signInWithRedirect } = await import('firebase/auth');
-        await signInWithRedirect(auth, provider);
-      } else {
-        // Use popup for desktop
-        await signInWithPopup(auth, provider);
-      }
+
+      console.log('Using popup for sign in...');
+      const result = await signInWithPopup(auth, provider);
+      console.log('Sign in successful:', result.user.email);
+      await createUserDocument(result.user);
+      handleSuccess();
     } catch (error) {
-      console.error('Authentication error:', error);
+      console.error('Sign in error:', error);
       setAuthError(error instanceof Error ? error.message : 'Authentication failed');
-      // Keep the overlay open on error
       setShowAuthOverlay(true);
     }
   };
