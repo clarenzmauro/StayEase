@@ -12,10 +12,17 @@ interface FilterMenuProps {
   isLoading: boolean;
   availableTags: string[];
   availableLocations: string[];
+  properties: {
+    propertyTags: string[];
+    propertyPrice: number;
+    propertyLocation: string;
+    propertyType: string;
+  }[];
 }
 
-export function FilterMenu({ onFilterChange, isLoading, availableTags, availableLocations }: FilterMenuProps) {
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
+export function FilterMenu({ onFilterChange, isLoading, availableTags, availableLocations, properties }: FilterMenuProps) {
+  const MAX_PRICE = 1000000; // Define a maximum price constant
+  const [priceRange, setPriceRange] = useState({ min: 0, max: MAX_PRICE });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
@@ -47,6 +54,31 @@ export function FilterMenu({ onFilterChange, isLoading, availableTags, available
         ? prev.filter(t => t !== tag)
         : [...prev, tag]
     );
+  };
+
+  const getTagCount = (tag: string): number => {
+    // Start with all properties that have this tag
+    let matchingProperties = properties.filter(property => 
+      property.propertyTags && property.propertyTags.includes(tag)
+    );
+
+    // If there are any active filters (except tags), apply them
+    if (priceRange.min > 0 || priceRange.max < MAX_PRICE || selectedLocation || selectedPropertyType) {
+      matchingProperties = matchingProperties.filter(property => {
+        const matchesPrice = property.propertyPrice >= (priceRange.min || 0) && 
+                           property.propertyPrice <= (priceRange.max || MAX_PRICE);
+        
+        const matchesLocation = !selectedLocation || 
+                              property.propertyLocation === selectedLocation;
+        
+        const matchesType = !selectedPropertyType || 
+                          property.propertyType === selectedPropertyType;
+
+        return matchesPrice && matchesLocation && matchesType;
+      });
+    }
+
+    return matchingProperties.length;
   };
 
   if (isLoading) {
@@ -124,14 +156,26 @@ export function FilterMenu({ onFilterChange, isLoading, availableTags, available
           <input
             type="number"
             value={priceRange.min}
-            onChange={e => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) }))}
+            onChange={e => {
+              const value = e.target.value;
+              setPriceRange(prev => ({
+                ...prev,
+                min: value === '' ? 0 : parseInt(value)
+              }));
+            }}
             placeholder="Min"
           />
           <span>to</span>
           <input
             type="number"
             value={priceRange.max}
-            onChange={e => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) }))}
+            onChange={e => {
+              const value = e.target.value;
+              setPriceRange(prev => ({
+                ...prev,
+                max: value === '' ? MAX_PRICE : parseInt(value)
+              }));
+            }}
             placeholder="Max"
           />
         </div>
@@ -151,7 +195,7 @@ export function FilterMenu({ onFilterChange, isLoading, availableTags, available
               />
               <span className="checkmark"></span>
               {tag}
-              <span className="count">0</span>
+              <span className="count">{getTagCount(tag)}</span>
             </label>
           ))}
           {availableTags.length > 6 && (
@@ -204,7 +248,7 @@ export function FilterMenu({ onFilterChange, isLoading, availableTags, available
         <button
           className="reset-button"
           onClick={() => {
-            setPriceRange({ min: 0, max: 1000000 });
+            setPriceRange({ min: 0, max: MAX_PRICE });
             setSelectedTags([]);
             setSelectedLocation('');
             setSelectedPropertyType('');

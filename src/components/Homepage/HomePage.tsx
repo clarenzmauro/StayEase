@@ -654,6 +654,7 @@ export function HomePage() {
             isLoading={isLoading}
             availableTags={availableTags}
             availableLocations={availableLocations}
+            properties={properties}
           />
         </div>
 
