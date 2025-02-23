@@ -453,7 +453,7 @@
   align-items: center;
   height: 50px; /* Set consistent logo size */
   width: 100px;
-  mar
+  margin: 0; /* Fix the truncated CSS property 'mar' by completing it as 'margin' with a proper value */
 }
 
 .logo {
@@ -2317,4 +2317,5 @@
 }
 
 .applicant-item:last-child {
-  border-bott
+  border-bottom: none;
+}
