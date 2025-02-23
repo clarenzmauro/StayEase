@@ -1173,7 +1173,10 @@ export function ListingPage() {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => handleFileChange(index, e.target.files?.[0] || null)}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleFileChange(index, file);
+                      }}
                       className="file-input"
                     />
                     <button 
