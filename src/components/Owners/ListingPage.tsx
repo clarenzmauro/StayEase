@@ -80,8 +80,10 @@ const tagCategories = {
   'Payment': ['Electric Bill Included', 'Water Bill Included', 'No Security Deposit', 'Flexible Payment Terms']
 };
 
+const MAX_IMAGES = 5;
+
 const PLACEHOLDER_IMAGE = {
-  url: '/src/assets/ImagePlaceholder.png', // Updated URL for the placeholder
+  url: '/src/assets/ImagePlaceholder.png',
   label: 'Click "Choose File" to Add Image',
   file: null,
 };
@@ -693,22 +695,36 @@ export function ListingPage() {
     }
   };
 
-  const handleFileChange = async (index: number, file: File | null) => {
-    const newImages = [...images];
-    if (file) {
-      // If there's an existing image at this index and it's from MongoDB, delete it
-      if (newImages[index]?.url?.includes('/api/property-photos/')) {
-        const photoId = newImages[index].url.split('/api/property-photos/')[1].split('/')[0];
-        await deleteImage(photoId);
-      }
-
-      newImages[index] = {
-        url: URL.createObjectURL(file),
-        label: newImages[index].label || file.name,
-        file: file
-      };
-      setImages(newImages);
+  const handleFileChange = async (index: number, file: File) => {
+    if (index >= MAX_IMAGES) {
+      alert(`Maximum ${MAX_IMAGES} images allowed`);
+      return;
     }
+
+    const newImages = [...images];
+    
+    // If replacing an existing image that's not a placeholder
+    if (newImages[index] && 
+        newImages[index].url && 
+        newImages[index].url.includes('/api/property-photos/') && 
+        !newImages[index].url.includes('ImagePlaceholder.png')) {
+      try {
+        const urlParts = newImages[index].url.split('/api/property-photos/');
+        if (urlParts.length > 1) {
+          const photoId = urlParts[1].split('/')[0];
+          await deleteImage(photoId);
+        }
+      } catch (error) {
+        console.error('Error deleting existing image:', error);
+      }
+    }
+
+    newImages[index] = {
+      url: URL.createObjectURL(file),
+      label: newImages[index]?.label || file.name,
+      file: file
+    };
+    setImages(newImages);
   };
 
   const handleAddRule = () => {
@@ -726,12 +742,17 @@ export function ListingPage() {
   };
 
   const handleImageSave = () => {
-    // Ensure there are 5 images
+    // Ensure there are exactly 5 images
     const filledImages = [...images];
 
-    // Fill in missing images with the placeholder
-    while (filledImages.length < 5) {
+    // Fill in missing images with the placeholder up to 5
+    while (filledImages.length < MAX_IMAGES) {
       filledImages.push(PLACEHOLDER_IMAGE);
+    }
+
+    // Trim if somehow more than 5 images were added
+    if (filledImages.length > MAX_IMAGES) {
+      filledImages.length = MAX_IMAGES;
     }
 
     setImages(filledImages);
@@ -739,10 +760,14 @@ export function ListingPage() {
   };
 
   const handleAddMore = () => {
+    if (images.length >= MAX_IMAGES) {
+      alert(`Maximum ${MAX_IMAGES} images allowed`);
+      return;
+    }
     setImages([...images, { url: '', label: '', file: null }]);
   };
 
-  const  handleRemove = (index: number) => {
+  const handleRemove = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
   };
 
