@@ -1,5 +1,6 @@
 import { connectToDatabase } from '../../db';
 import PropertyPhoto from '../../models/PropertyPhoto';
+import mongoose from 'mongoose';
 
 export const config = {
   api: {
@@ -14,35 +15,36 @@ export default async function handler(req, res) {
   }
 
   try {
+    const { id } = req.query;
+    
+    // Validate MongoDB ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.error('Invalid MongoDB ID:', id);
+      return res.status(400).json({ message: 'Invalid photo ID format' });
+    }
+
     console.log('Connecting to database...');
     await connectToDatabase();
     
-    const { id } = req.query;
     console.log('Fetching photo with ID:', id);
-    
-    const propertyPhoto = await PropertyPhoto.findById(id).lean();
+    const propertyPhoto = await PropertyPhoto.findById(id);
     
     if (!propertyPhoto) {
-      console.log('No photo found with ID:', id);
+      console.error('No photo found with ID:', id);
       return res.status(404).json({ message: 'Property photo not found' });
     }
     
-    if (!propertyPhoto.photoURL) {
-      console.log('Photo found but no URL data for ID:', id);
-      return res.status(404).json({ message: 'Photo URL data not found' });
+    if (!propertyPhoto.photoURL || !Buffer.isBuffer(propertyPhoto.photoURL)) {
+      console.error('Invalid photo data for ID:', id);
+      return res.status(404).json({ message: 'Invalid photo data' });
     }
 
-    // Convert Buffer to proper format if needed
-    const imageBuffer = propertyPhoto.photoURL instanceof Buffer 
-      ? propertyPhoto.photoURL
-      : Buffer.from(propertyPhoto.photoURL);
-    
     // Set appropriate headers
     res.setHeader('Content-Type', 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     
     // Send the binary data
-    res.send(imageBuffer);
+    res.end(propertyPhoto.photoURL);
   } catch (error) {
     console.error('Error in image handler:', {
       error: error.message,

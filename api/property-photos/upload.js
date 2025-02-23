@@ -5,7 +5,17 @@ import initMiddleware from '../lib/init-middleware';
 
 const upload = initMiddleware(
   multer({
-    storage: multer.memoryStorage()
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed'));
+      }
+    }
   }).single('image')
 );
 
@@ -21,17 +31,42 @@ export default async function handler(req, res) {
   }
 
   try {
+    console.log('Connecting to database...');
     await connectToDatabase();
+    
+    console.log('Processing file upload...');
     await upload(req, res);
 
-    const { label } = req.body;
-    const photoURL = req.file.buffer;
+    if (!req.file) {
+      console.error('No file uploaded');
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
 
-    const newPropertyPhoto = new PropertyPhoto({ label, photoURL });
+    const { label } = req.body;
+    if (!label) {
+      console.error('No label provided');
+      return res.status(400).json({ message: 'Label is required' });
+    }
+
+    console.log('Creating new property photo...');
+    const newPropertyPhoto = new PropertyPhoto({
+      label,
+      photoURL: req.file.buffer
+    });
+
+    console.log('Saving to database...');
     const savedPhoto = await newPropertyPhoto.save();
     
-    res.status(201).json(savedPhoto);
+    console.log('Photo saved successfully:', savedPhoto._id);
+    res.status(201).json({
+      id: savedPhoto._id,
+      label: savedPhoto.label
+    });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error in upload handler:', error);
+    res.status(500).json({ 
+      message: 'Error uploading photo',
+      error: error.message 
+    });
   }
 }
