@@ -1,4 +1,4 @@
-import { connectToDatabase } from '../lib/mongodb';
+import { connectToDatabase } from '../../lib/mongodb.js';
 import PropertyPhoto from '../models/PropertyPhoto';
 import multer from 'multer';
 import initMiddleware from '../lib/init-middleware';
