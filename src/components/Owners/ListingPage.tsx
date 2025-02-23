@@ -126,6 +126,8 @@ export function ListingPage() {
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: boolean}>({});
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
@@ -542,7 +544,8 @@ export function ListingPage() {
     // Validate form
     const validationErrors = validateForm();
     if (validationErrors.length > 0) {
-      alert('Please fix the following errors:\n\n' + validationErrors.join('\n'));
+      setErrorMessages(validationErrors);
+      setShowErrorModal(true);
       return;
     }
 
@@ -1191,6 +1194,23 @@ export function ListingPage() {
                 Save Images
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="modal-overlay">
+          <div className="modal-content error-modal">
+            <h2>Please Fix the Following Errors:</h2>
+            <ul>
+              {errorMessages.map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+            <button onClick={() => setShowErrorModal(false)} className="modal-close-btn">
+              Close
+            </button>
           </div>
         </div>
       )}
