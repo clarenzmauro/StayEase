@@ -1,5 +1,5 @@
 import { connectToDatabase } from '../../lib/mongodb.js';
-import PropertyPhoto from '../../models/PropertyPhoto';
+import PropertyPhoto from '../../models/PropertyPhoto.js';
 import mongoose from 'mongoose';
 
 export const config = {

@@ -1,5 +1,5 @@
 import { connectToDatabase } from '../../lib/mongodb.js';
-import PropertyPhoto from '../models/PropertyPhoto';
+import PropertyPhoto from '../../models/PropertyPhoto.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
