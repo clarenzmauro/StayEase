@@ -8,7 +8,4 @@ const propertyPhotoSchema = new mongoose.Schema({
 });
 
 // Ensure the model is properly initialized
-const PropertyPhoto = mongoose.models.PropertyPhoto || 
-  mongoose.model('PropertyPhoto', propertyPhotoSchema, 'propertyPhotos');
-
-export { default as PropertyPhoto } from './PropertyPhoto.js';
+export default mongoose.models.PropertyPhoto || mongoose.model('PropertyPhoto', propertyPhotoSchema, 'propertyPhotos');
