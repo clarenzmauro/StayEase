@@ -15,11 +15,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { id } = req.query;
+    // Extract ID from URL path instead of query
+    const id = req.url.split('/').pop();
     console.log('Requested image ID:', id);
 
     // Validate MongoDB ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       console.error('Invalid MongoDB ID:', id);
       return res.status(400).json({ message: 'Invalid photo ID' });
     }
@@ -49,7 +50,7 @@ export default async function handler(req, res) {
     console.error('Error in image handler:', error);
     return res.status(500).json({ 
       message: 'Error fetching image',
-      error: error.message
+      error: error.message 
     });
   }
 }
