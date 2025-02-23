@@ -34,21 +34,29 @@ export default async function handler(req, res) {
     }
 
     // Debug logging
-    console.log('Full document:', JSON.stringify({
-      id: propertyPhoto._id,
-      label: propertyPhoto.label,
-      photoURLType: typeof propertyPhoto.photoURL,
-      isBuffer: Buffer.isBuffer(propertyPhoto.photoURL),
-      photoURLValue: typeof propertyPhoto.photoURL === 'string' ? propertyPhoto.photoURL : 'Buffer data'
-    }, null, 2));
+    console.log('Photo data:', {
+      type: typeof propertyPhoto.photoURL,
+      isObject: propertyPhoto.photoURL instanceof Object,
+      subtype: propertyPhoto.photoURL.subtype,
+      buffer: propertyPhoto.photoURL.buffer,
+      keys: Object.keys(propertyPhoto.photoURL || {})
+    });
 
-    // Case 1: Firebase URL
+    // Case 1: String URL
     if (typeof propertyPhoto.photoURL === 'string') {
-      console.log('Redirecting to Firebase URL');
+      console.log('Redirecting to URL');
       return res.redirect(propertyPhoto.photoURL);
     }
     
-    // Case 2: Buffer data
+    // Case 2: BSON Binary object
+    if (propertyPhoto.photoURL && propertyPhoto.photoURL.buffer) {
+      console.log('Serving BSON Binary data');
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.end(propertyPhoto.photoURL.buffer);
+    }
+
+    // Case 3: Regular Buffer
     if (Buffer.isBuffer(propertyPhoto.photoURL)) {
       console.log('Serving Buffer data');
       res.setHeader('Content-Type', 'image/jpeg');
@@ -56,21 +64,15 @@ export default async function handler(req, res) {
       return res.end(propertyPhoto.photoURL);
     }
 
-    // Case 3: Invalid data
-    console.error('Invalid photo data:', {
-      type: typeof propertyPhoto.photoURL,
-      isBuffer: Buffer.isBuffer(propertyPhoto.photoURL),
-      hasPhotoURL: 'photoURL' in propertyPhoto,
-      keys: Object.keys(propertyPhoto)
-    });
-    
+    // Case 4: Invalid data
+    console.error('Invalid photo data:', propertyPhoto.photoURL);
     return res.status(404).json({ 
       message: 'Invalid photo data',
       debug: {
         type: typeof propertyPhoto.photoURL,
-        isBuffer: Buffer.isBuffer(propertyPhoto.photoURL),
-        hasPhotoURL: 'photoURL' in propertyPhoto,
-        keys: Object.keys(propertyPhoto)
+        isObject: propertyPhoto.photoURL instanceof Object,
+        keys: Object.keys(propertyPhoto.photoURL || {}),
+        hasBuffer: propertyPhoto.photoURL && 'buffer' in propertyPhoto.photoURL
       }
     });
   } catch (error) {
