@@ -13,6 +13,14 @@
   ],
   "routes": [
     {
+      "src": "/api/property-photos/(.*)/image",
+      "dest": "/api/property-photos/[id]/image.js",
+      "headers": {
+        "Content-Type": "image/jpeg",
+        "Cache-Control": "s-maxage=31536000"
+      }
+    },
+    {
       "src": "/api/(.*)",
       "dest": "/api/$1"
     },
