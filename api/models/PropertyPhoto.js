@@ -1,14 +1,8 @@
 import mongoose from 'mongoose';
 
 const propertyPhotoSchema = new mongoose.Schema({
-  label: { 
-    type: String, 
-    required: true 
-  },
-  photoURL: { 
-    type: Buffer,
-    required: true
-  }
+  label: { type: String, required: true },
+  photoURL: { type: Buffer, required: true }
 }, {
   timestamps: true
 });
@@ -17,4 +11,4 @@ const propertyPhotoSchema = new mongoose.Schema({
 const PropertyPhoto = mongoose.models.PropertyPhoto || 
   mongoose.model('PropertyPhoto', propertyPhotoSchema, 'propertyPhotos');
 
-export default PropertyPhoto;
+export { default as PropertyPhoto } from './PropertyPhoto.js';

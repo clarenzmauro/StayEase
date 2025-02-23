@@ -1,5 +1,5 @@
-import { connectToDatabase } from '../lib/mongodb';
-import PropertyPhoto from '../models/PropertyPhoto';
+import { connectToDatabase } from '../lib/mongodb.js';
+import PropertyPhoto from '../models/PropertyPhoto.js';
 import multer from 'multer';
 import initMiddleware from '../lib/init-middleware';
 
