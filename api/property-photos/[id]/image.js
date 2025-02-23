@@ -15,8 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Extract ID from URL path instead of query
-    const id = req.url.split('/').pop();
+    const { id } = req.query;
     console.log('Requested image ID:', id);
 
     // Validate MongoDB ID
@@ -27,20 +26,25 @@ export default async function handler(req, res) {
 
     await connectToDatabase();
     
-    // Use lean() for better performance since we don't need a full mongoose document
     const propertyPhoto = await PropertyPhoto.findById(id).lean();
     
     if (!propertyPhoto) {
       console.error('No photo found with ID:', id);
       return res.status(404).json({ message: 'Property photo not found' });
     }
+
+    // If it's a Firebase URL, redirect to it
+    if (typeof propertyPhoto.photoURL === 'string' && propertyPhoto.photoURL.startsWith('http')) {
+      return res.redirect(propertyPhoto.photoURL);
+    }
     
-    if (!propertyPhoto.photoURL || !Buffer.isBuffer(propertyPhoto.photoURL)) {
+    // If it's MongoDB Buffer data
+    if (!Buffer.isBuffer(propertyPhoto.photoURL)) {
       console.error('Invalid photo data for ID:', id);
       return res.status(404).json({ message: 'Invalid photo data' });
     }
 
-    // Set appropriate headers
+    // Set appropriate headers for Buffer data
     res.setHeader('Content-Type', 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
     
