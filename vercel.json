@@ -7,28 +7,16 @@
       "config": {
         "maxDuration": 60
       }
-    },
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
     }
   ],
   "routes": [
     {
       "src": "/api/property-photos/(.*)/image",
-      "dest": "/api/property-photos/[id]/image.js",
-      "headers": {
-        "Cache-Control": "public, max-age=31536000, immutable"
-      }
+      "dest": "/api/property-photos/[id]/image.js"
     },
     {
       "src": "/api/(.*)",
       "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
     }
   ]
 }
