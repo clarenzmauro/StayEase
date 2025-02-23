@@ -33,30 +33,46 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: 'Property photo not found' });
     }
 
-    console.log('Photo data type:', typeof propertyPhoto.photoURL);
-    console.log('Is Buffer?', Buffer.isBuffer(propertyPhoto.photoURL));
-    if (typeof propertyPhoto.photoURL === 'string') {
-      console.log('URL starts with:', propertyPhoto.photoURL.substring(0, 20));
-    }
-    console.log('Photo data:', propertyPhoto.photoURL);
+    // Debug logging
+    console.log('Full document:', JSON.stringify({
+      id: propertyPhoto._id,
+      label: propertyPhoto.label,
+      photoURLType: typeof propertyPhoto.photoURL,
+      isBuffer: Buffer.isBuffer(propertyPhoto.photoURL),
+      photoURLValue: typeof propertyPhoto.photoURL === 'string' ? propertyPhoto.photoURL : 'Buffer data'
+    }, null, 2));
 
-    // If it's a Firebase URL, redirect to it
-    if (typeof propertyPhoto.photoURL === 'string' && propertyPhoto.photoURL.startsWith('http')) {
+    // Case 1: Firebase URL
+    if (typeof propertyPhoto.photoURL === 'string') {
+      console.log('Redirecting to Firebase URL');
       return res.redirect(propertyPhoto.photoURL);
     }
     
-    // If it's MongoDB Buffer data
-    if (!Buffer.isBuffer(propertyPhoto.photoURL)) {
-      console.error('Invalid photo data for ID:', id);
-      return res.status(404).json({ message: 'Invalid photo data' });
+    // Case 2: Buffer data
+    if (Buffer.isBuffer(propertyPhoto.photoURL)) {
+      console.log('Serving Buffer data');
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      return res.end(propertyPhoto.photoURL);
     }
 
-    // Set appropriate headers for Buffer data
-    res.setHeader('Content-Type', 'image/jpeg');
-    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    // Case 3: Invalid data
+    console.error('Invalid photo data:', {
+      type: typeof propertyPhoto.photoURL,
+      isBuffer: Buffer.isBuffer(propertyPhoto.photoURL),
+      hasPhotoURL: 'photoURL' in propertyPhoto,
+      keys: Object.keys(propertyPhoto)
+    });
     
-    // Send the binary data
-    res.end(propertyPhoto.photoURL);
+    return res.status(404).json({ 
+      message: 'Invalid photo data',
+      debug: {
+        type: typeof propertyPhoto.photoURL,
+        isBuffer: Buffer.isBuffer(propertyPhoto.photoURL),
+        hasPhotoURL: 'photoURL' in propertyPhoto,
+        keys: Object.keys(propertyPhoto)
+      }
+    });
   } catch (error) {
     console.error('Error in image handler:', error);
     return res.status(500).json({ 
