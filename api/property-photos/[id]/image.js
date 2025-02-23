@@ -33,6 +33,13 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: 'Property photo not found' });
     }
 
+    console.log('Photo data type:', typeof propertyPhoto.photoURL);
+    console.log('Is Buffer?', Buffer.isBuffer(propertyPhoto.photoURL));
+    if (typeof propertyPhoto.photoURL === 'string') {
+      console.log('URL starts with:', propertyPhoto.photoURL.substring(0, 20));
+    }
+    console.log('Photo data:', propertyPhoto.photoURL);
+
     // If it's a Firebase URL, redirect to it
     if (typeof propertyPhoto.photoURL === 'string' && propertyPhoto.photoURL.startsWith('http')) {
       return res.redirect(propertyPhoto.photoURL);
