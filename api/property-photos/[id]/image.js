@@ -14,13 +14,32 @@ export default async function handler(req, res) {
   }
 
   try {
-    await connectToDatabase();
-    const { id } = req.query;
+    // Log the incoming request
+    console.log('Incoming request for image:', req.query);
     
+    // Connect to database
+    console.log('Connecting to database...');
+    await connectToDatabase();
+    
+    const { id } = req.query;
+    console.log('Looking for image with ID:', id);
+    
+    // Find the photo
     const propertyPhoto = await PropertyPhoto.findById(id);
-    if (!propertyPhoto || !propertyPhoto.photoURL) {
-      return res.status(404).send('Property photo not found');
+    console.log('Found photo:', propertyPhoto ? 'yes' : 'no');
+    
+    if (!propertyPhoto) {
+      console.log('No photo found with ID:', id);
+      return res.status(404).json({ message: 'Property photo not found' });
     }
+    
+    if (!propertyPhoto.photoURL) {
+      console.log('Photo found but no URL data for ID:', id);
+      return res.status(404).json({ message: 'Photo URL data not found' });
+    }
+    
+    // Log success
+    console.log('Successfully found photo, sending response...');
     
     // Set appropriate headers
     res.setHeader('Content-Type', 'image/jpeg');
@@ -29,7 +48,19 @@ export default async function handler(req, res) {
     // Send the binary data
     res.end(propertyPhoto.photoURL);
   } catch (error) {
-    console.error('Error fetching image:', error);
-    res.status(500).json({ message: error.message });
+    // Detailed error logging
+    console.error('Error in image handler:', {
+      error: error.message,
+      stack: error.stack,
+      query: req.query,
+      path: req.path
+    });
+    
+    return res.status(500).json({ 
+      message: 'Error fetching image',
+      error: error.message,
+      path: req.path,
+      query: req.query
+    });
   }
 }
