@@ -22,6 +22,7 @@ const upload = initMiddleware(
 export const config = {
   api: {
     bodyParser: false,
+    responseLimit: '10mb'
   },
 };
 
@@ -60,7 +61,8 @@ export default async function handler(req, res) {
     console.log('Photo saved successfully:', savedPhoto._id);
     res.status(201).json({
       id: savedPhoto._id,
-      label: savedPhoto.label
+      label: savedPhoto.label,
+      message: 'Photo uploaded successfully'
     });
   } catch (error) {
     console.error('Error in upload handler:', error);

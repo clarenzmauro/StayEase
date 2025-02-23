@@ -6,19 +6,11 @@ const propertyPhotoSchema = new mongoose.Schema({
     required: true 
   },
   photoURL: { 
-    type: Buffer, 
-    required: true,
-    get: (data) => {
-      if (data) {
-        return Buffer.from(data);
-      }
-      return null;
-    }
+    type: Buffer,
+    required: true
   }
 }, {
-  timestamps: true,
-  toJSON: { getters: true },
-  toObject: { getters: true }
+  timestamps: true
 });
 
 // Ensure the model is properly initialized

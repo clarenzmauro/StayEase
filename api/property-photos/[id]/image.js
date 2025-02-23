@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 export const config = {
   api: {
     bodyParser: false,
-    responseLimit: false
+    responseLimit: '10mb'
   }
 };
 
@@ -16,18 +16,18 @@ export default async function handler(req, res) {
 
   try {
     const { id } = req.query;
-    
+    console.log('Requested image ID:', id);
+
     // Validate MongoDB ID
     if (!mongoose.Types.ObjectId.isValid(id)) {
       console.error('Invalid MongoDB ID:', id);
-      return res.status(400).json({ message: 'Invalid photo ID format' });
+      return res.status(400).json({ message: 'Invalid photo ID' });
     }
 
-    console.log('Connecting to database...');
     await connectToDatabase();
     
-    console.log('Fetching photo with ID:', id);
-    const propertyPhoto = await PropertyPhoto.findById(id);
+    // Use lean() for better performance since we don't need a full mongoose document
+    const propertyPhoto = await PropertyPhoto.findById(id).lean();
     
     if (!propertyPhoto) {
       console.error('No photo found with ID:', id);
@@ -46,12 +46,7 @@ export default async function handler(req, res) {
     // Send the binary data
     res.end(propertyPhoto.photoURL);
   } catch (error) {
-    console.error('Error in image handler:', {
-      error: error.message,
-      stack: error.stack,
-      query: req.query
-    });
-    
+    console.error('Error in image handler:', error);
     return res.status(500).json({ 
       message: 'Error fetching image',
       error: error.message
