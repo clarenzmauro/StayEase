@@ -548,7 +548,7 @@ const AccountPage = () => {
                       <h4 key={`${dorm.id}-name`}>{dorm.propertyName}</h4>
                       <p key={`${dorm.id}-location`}>{dorm.propertyLocation}</p>
                       <p key={`${dorm.id}-type`}>{dorm.propertyType}</p>
-                      <p key={`${dorm.id}-rent`}>₱{dorm.rent}/month</p>
+                      <p key={`${dorm.id}-rent`}>₱{dorm.propertyPrice}/month</p>
                     </div>
                   </div>
                 ))
