@@ -15,7 +15,7 @@ interface FilterMenuProps {
 }
 
 export function FilterMenu({ onFilterChange, isLoading, availableTags, availableLocations }: FilterMenuProps) {
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000000 });
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [selectedPropertyType, setSelectedPropertyType] = useState<string>('');
@@ -51,40 +51,47 @@ export function FilterMenu({ onFilterChange, isLoading, availableTags, available
 
   if (isLoading) {
     return (
-      <div className="filter-menu">
-        <h2>Filters</h2>
+      <div className="filter-menu skeleton-menu" aria-busy="true" aria-label="Loading filters">
+        <div className="skeleton-title skeleton-pulse" />
         
-        <div className="filter-section skeleton">
-          <h3></h3>
-          <div className="price-range">
-            <input disabled />
-            <span></span>
-            <input disabled />
+        {/* Sort Section */}
+        <div className="skeleton-section">
+          <div className="skeleton-heading skeleton-pulse" />
+          <div className="skeleton-select skeleton-pulse" />
+        </div>
+
+        {/* Price Range Section */}
+        <div className="skeleton-section">
+          <div className="skeleton-heading skeleton-pulse" />
+          <div className="skeleton-range">
+            <div className="skeleton-range-input skeleton-pulse" />
+            <div className="skeleton-range-separator skeleton-pulse" />
+            <div className="skeleton-range-input skeleton-pulse" />
           </div>
         </div>
 
-        <div className="filter-section skeleton">
-          <h3></h3>
-          <div className="tags-grid">
-            {[1, 2, 3, 4, 5, 6].map(i => (
-              <div key={i} className="tag-checkbox"></div>
-            ))}
-          </div>
+        {/* Tags Section */}
+        <div className="skeleton-section">
+          <div className="skeleton-heading skeleton-pulse" />
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="skeleton-tag skeleton-pulse" />
+          ))}
         </div>
 
-        <div className="filter-section skeleton">
-          <h3></h3>
-          <select disabled></select>
+        {/* Location Section */}
+        <div className="skeleton-section">
+          <div className="skeleton-heading skeleton-pulse" />
+          <div className="skeleton-select skeleton-pulse" />
         </div>
 
-        <div className="filter-section skeleton">
-          <h3></h3>
-          <select disabled></select>
+        {/* Property Type Section */}
+        <div className="skeleton-section">
+          <div className="skeleton-heading skeleton-pulse" />
+          <div className="skeleton-select skeleton-pulse" />
         </div>
 
-        <div className="filter-buttons skeleton">
-          <button className="reset-button" disabled></button>
-        </div>
+        {/* Reset Button */}
+        <div className="skeleton-button skeleton-pulse" />
       </div>
     );
   }
@@ -138,10 +145,13 @@ export function FilterMenu({ onFilterChange, isLoading, availableTags, available
             <label key={tag} className="tag-checkbox">
               <input
                 type="checkbox"
+                name={tag}
                 checked={selectedTags.includes(tag)}
                 onChange={() => handleTagToggle(tag)}
               />
+              <span className="checkmark"></span>
               {tag}
+              <span className="count">0</span>
             </label>
           ))}
           {availableTags.length > 6 && (
@@ -159,6 +169,7 @@ export function FilterMenu({ onFilterChange, isLoading, availableTags, available
       <div className="filter-section">
         <h3>Location</h3>
         <select
+          className="location-select"
           value={selectedLocation}
           onChange={e => setSelectedLocation(e.target.value)}
         >
@@ -175,6 +186,7 @@ export function FilterMenu({ onFilterChange, isLoading, availableTags, available
       <div className="filter-section">
         <h3>Property Type</h3>
         <select
+          className="type-select"
           value={selectedPropertyType}
           onChange={e => setSelectedPropertyType(e.target.value)}
         >

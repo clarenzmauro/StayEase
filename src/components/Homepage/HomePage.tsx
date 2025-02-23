@@ -543,47 +543,53 @@ export function HomePage() {
   return (
     <div className="homepage-container">
       {/* Navigation Bar */}
-      <nav className="navbar">
-        <div className="logo">
-          <Link to="/" onClick={() => {
-            setSearchQuery('');
-            setActiveFilters({
-              priceRange: { min: 0, max: 1000000 },
-              selectedTags: [],
-              selectedLocation: '',
-              selectedPropertyType: '',
-              sortBy: 'most-popular'
-            });
-          }}> 
-            <img src={logoSvg} alt="StayEase Logo" className="logo-image" />
-          </Link>
+      <nav className={`navbar ${isLoading ? 'skeleton' : ''}`}>
+        <div className={`logo ${isLoading ? 'skeleton' : ''}`}>
+          {!isLoading && (
+            <Link to="/" onClick={() => {
+              setSearchQuery('');
+              setActiveFilters({
+                priceRange: { min: 0, max: 1000000 },
+                selectedTags: [],
+                selectedLocation: '',
+                selectedPropertyType: '',
+                sortBy: 'most-popular'
+              });
+            }}> 
+              <img src={logoSvg} alt="StayEase Logo" className="logo-image" />
+            </Link>
+          )}
         </div>
 
-        <div className="nav-right">
+        <div className={`nav-right ${isLoading ? 'skeleton' : ''}`}>
           <div 
-            className="user-icon" 
+            className={`user-icon ${isLoading ? 'skeleton' : ''}`}
             onClick={() => {
-              if (user) {
-                navigate('/account'); // Navigate to account page if user is logged in
-              } else {
-                setShowAuthOverlay(true); // Open the auth overlay if not logged in
+              if (!isLoading) {
+                if (user) {
+                  navigate('/account');
+                } else {
+                  setShowAuthOverlay(true);
+                }
               }
             }} 
-            role="button"
-            aria-label="Account"
+            role={isLoading ? undefined : "button"}
+            aria-label={isLoading ? "Loading" : "Account"}
           >
-            {user ? (
-              user.photoURL ? (
-                <img 
-                  src={user.photoURL} 
-                  alt="Profile" 
-                  className="user-photo" 
-                />
+            {!isLoading && (
+              user ? (
+                user.photoURL ? (
+                  <img 
+                    src={user.photoURL} 
+                    alt="Profile" 
+                    className="user-photo" 
+                  />
+                ) : (
+                  user.displayName?.[0] || user.email?.[0] || '?'
+                )
               ) : (
-                user.displayName?.[0] || user.email?.[0] || '?'
+                '👤'
               )
-            ) : (
-              '👤'
             )}
           </div>
         </div>

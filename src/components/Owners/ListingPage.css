@@ -355,41 +355,6 @@
   transform: scale(1.05);
 }
 
-/* Image upload modal enhancements */
-.modal-overlay {
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  justify-content: center;
-  align-items: center;
-} 
-
-.modal {
-  border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  background: white;
-  width: 90%;
-  max-width: 600px;
-  padding: 3rem;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-@media (max-width: 640px) {
-  .modal {
-    width: 95%;
-    padding: 1rem;
-    margin: 0.5rem;
-  }
-  
-  .modal-content {
-    gap: 1rem;
-  }
-  
-  .image-item {
-    padding: 1rem;
-  }
-}
-
 /* Owner section */
 .owner-section-wrapper {
   margin-top: 0rem;
@@ -828,9 +793,8 @@
   .modal {
     background-color: white;
     border-radius: 1rem;
-    width: fit-content;
-    min-width: 500px;
-    max-width: 800px;
+    width: 100%;
+    max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -840,6 +804,7 @@
   .modal-header {
     padding: 1.5rem;
     border-bottom: 1px solid #e5e7eb;
+    margin: 0;
   }
   
   .modal-header h2 {
@@ -850,11 +815,10 @@
   }
   
   .modal-content {
-    padding: 1.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
     width: 100%;
+    padding: 0;
   }
   
   .add-image-button {
@@ -892,7 +856,7 @@
   }
   
   .save-images-button {
-    background-color: #2563eb;
+    background-color: #22c55e;
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
@@ -903,14 +867,9 @@
   }
   
   .save-images-button:hover {
-    background-color: #1d4ed8;
-  }
-  
-  .save-images-button:focus {
-    outline: none;
-    ring: 2px;
-    ring-offset: 2px;
-    ring-color: #93c5fd;
+    background-color: #16a34a;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
   /* Animation for modal */
@@ -1065,11 +1024,8 @@
   }
   
   .add-another-button {
-    width: 100%;
-    padding: 1rem;
-    background-color: #f3f4f6;
+    width: 80%;
     color: #4b5563;
-    border: 2px dashed #e5e7eb;
     border-radius: 0.75rem;
     font-weight: 500;
     cursor: pointer;
@@ -1077,13 +1033,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
-    margin-top: 1rem;
-  }
-  
-  .add-another-button:hover {
-    background-color: #e5e7eb;
-    border-color: #9ca3af;
+    margin: 1rem 3rem 1rem 3rem;
   }
   
   .add-another-button::before {
@@ -1451,29 +1401,7 @@
     border-color: #3b82f6;
     background-color: #f1f5f9;
   }
-  
-  /* Modal styles */
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-  }
-  
-  .modal {
-    background: white;
-    border-radius: 0.75rem;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
+
   
   .modal-header {
     display: flex;
@@ -1481,10 +1409,6 @@
     align-items: center;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid #e5e7eb;
-  }
-  
-  .modal-content {
-    padding: 1.5rem;
   }
   
   .modal-footer {

@@ -82,7 +82,7 @@ const tagCategories = {
 
 const PLACEHOLDER_IMAGE = {
   url: '/src/assets/ImagePlaceholder.png', // Updated URL for the placeholder
-  label: 'Click Choose File to Add Image',
+  label: 'Click "Choose File" to Add Image',
   file: null,
 };
 
@@ -122,6 +122,8 @@ export function ListingPage() {
   const [isLocating, setIsLocating] = useState(false);
   const [ownerId, setOwnerId] = useState<string|null>(null);
   const [fieldErrors, setFieldErrors] = useState<{[key: string]: boolean}>({});
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<Map | null>(null);
@@ -581,28 +583,32 @@ export function ListingPage() {
         // Update existing property
         docRef = doc(db, 'properties', id);
         await updateDoc(docRef, propertyData);
-        
-        // Handle image updates
         await handleImageUploads(id);
         
-        alert('Property updated successfully!');
-        navigate(`/property/${id}`);
+        setSuccessMessage('Property updated successfully!');
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          navigate(`/property/${id}`);
+        }, 1500);
       } else {
         // Add new property
         const propertyRef = collection(db, 'properties');
         docRef = await addDoc(propertyRef, propertyData);
-        
-        // Handle image uploads
         await handleImageUploads(docRef.id);
         
-        alert('Property added successfully!');
-        navigate(`/owner-page/${id}`, {
-          state: {
-            normalDocumentId: id,
-            encryptedDocumentId: id
-          }
-        });
-        
+        setSuccessMessage('Property added successfully!');
+        setShowSuccessModal(true);
+        setTimeout(() => {
+          setShowSuccessModal(false);
+          navigate(`/owner-page/${id}`, {
+            state: {
+              normalDocumentId: id,
+              encryptedDocumentId: id
+            }
+          });
+        }, 1500);
+
         if (!id) {
           throw new Error('Owner ID is undefined or invalid.');
         }
@@ -1151,14 +1157,25 @@ export function ListingPage() {
                   </div>
                 </div>
               ))}
-              <button className="add-button" onClick={handleAddMore}>
-                + Add Another Image
+              <button className="add-another-button" onClick={handleAddMore}>
+                Add Another Image
               </button>
             </div>
             <div className="modal-footer">
-              <button className="save-button" onClick={handleImageSave}>
+              <button className="save-images-button" onClick={handleImageSave}>
                 Save Images
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="auth-overlay">
+          <div className="auth-modal success-modal">
+            <div className="success-message">
+              {successMessage}
             </div>
           </div>
         </div>

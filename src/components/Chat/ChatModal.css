@@ -156,10 +156,6 @@
   font-size: 0.75rem;
 }
 
-.submit{
-  background-color: #031529;
-}
-
 .chat-input {
   display: flex;
   gap: 8px;
@@ -178,12 +174,12 @@
 }
 
 .chat-input input:focus {
-  border-color: #007bff;
+  border-color: rgb(7, 50, 95);
 }
 
 .chat-input button {
   padding: 8px 16px;
-  background-color: #007bff;
+  background-color: #031529;
   color: white;
   border: none;
   border-radius: 20px;
@@ -192,7 +188,7 @@
 }
 
 .chat-input button:hover {
-  background-color: #0056b3;
+  background-color: rgb(7, 50, 95);
 }
 
 .chat-input button:disabled {
