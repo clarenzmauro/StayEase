@@ -36,6 +36,14 @@ interface PropertyType {
   [key: string]: any;
 }
 
+// Add isNew helper function after the interfaces
+const isNewProperty = (datePosted?: { toMillis: () => number }) => {
+  if (!datePosted) return false;
+  const postDate = datePosted.toMillis();
+  const threeDaysAgo = Date.now() - (3 * 24 * 60 * 60 * 1000);
+  return postDate > threeDaysAgo;
+};
+
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('');
   // const [selectedItem, setSelectedItem] = useState<string | null>(null);
@@ -681,20 +689,23 @@ export function HomePage() {
                 No properties found matching your search criteria
               </div>
             ) : (
-              filteredProperties.map((item) => (
+              filteredProperties.map((property) => (
                 <div 
-                  key={item.id} 
+                  key={property.id} 
                   className="property-card"
-                  onClick={() => handlePropertyClick(item.id)}
+                  onClick={() => handlePropertyClick(property.id)}
                 >
                   <div className="image-container">
+                    {isNewProperty(property.datePosted) && (
+                      <div className="new-tag">New</div>
+                    )}
                     <img 
-                      src={getImageUrl(item)} 
-                      alt={item.propertyName} 
-                      className={`property-image ${loadingImages[item.id] ? 'loading' : ''}`}
-                      onLoad={() => handleImageLoad(item.id)}
+                      src={getImageUrl(property)} 
+                      alt={property.propertyName} 
+                      className={`property-image ${loadingImages[property.id] ? 'loading' : ''}`}
+                      onLoad={() => handleImageLoad(property.id)}
                     />
-                    {loadingImages[item.id] && (
+                    {loadingImages[property.id] && (
                       <div className="image-loading-overlay">
                         <div className="loading-spinner"></div>
                       </div>
@@ -705,34 +716,34 @@ export function HomePage() {
                       onClick={(e) => {
                         e.stopPropagation();
                         if (user) {
-                          handleFavorite(e, item.id, user);
+                          handleFavorite(e, property.id, user);
                         } else {
                           setShowAuthOverlay(true);
                         }
                       }}
                     >
-                      {userFavorites.includes(item.id) ? '❤️' : '🤍'}
+                      {userFavorites.includes(property.id) ? '❤️' : '🤍'}
                     </button>
                   <div className="property-info">
-                    <div className="property-name">{item.propertyName}</div>
-                    <div className="homepage-property-location">{item.propertyLocation}</div> {/* Updated class name */}
-                    <div className="property-type">{item.propertyType}</div>
-                    <div className="property-price">₱{(item.propertyPrice ?? item.rent ?? 0).toLocaleString()}/month</div>
+                    <div className="property-name">{property.propertyName}</div>
+                    <div className="homepage-property-location">{property.propertyLocation}</div> {/* Updated class name */}
+                    <div className="property-type">{property.propertyType}</div>
+                    <div className="property-price">₱{(property.propertyPrice ?? property.rent ?? 0).toLocaleString()}/month</div>
                   </div>
                   
 
-                  {Object.keys(item.propertyPhotos || {}).filter(key => key.startsWith('photo')).length > 1 && (
+                  {Object.keys(property.propertyPhotos || {}).filter(key => key.startsWith('photo')).length > 1 && (
       <>
 
         <button 
           className="nav-button prev"
-          onClick={(e) => getNextImage(e, item.id, 'prev')}
+          onClick={(e) => getNextImage(e, property.id, 'prev')}
         >
           ‹
         </button>
         <button 
           className="nav-button next"
-          onClick={(e) => getNextImage(e, item.id, 'next')}
+          onClick={(e) => getNextImage(e, property.id, 'next')}
         >
           ›
         </button>
