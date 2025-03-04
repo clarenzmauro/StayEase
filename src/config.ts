@@ -1,8 +1,10 @@
-// Dynamically determine the API URL based on the current window location
-const getApiUrl = () => {
+// Determine API URL based on environment and current host
+export function getApiUrl() {
+  if (process.env.NODE_ENV === 'production') {
+    return ''; // Empty string for production (uses relative paths)
+  }
   const host = window.location.hostname;
   return `http://${host}:5000`;
-};
+}
 
 export const API_URL = getApiUrl();
-  
