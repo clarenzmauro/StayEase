@@ -168,7 +168,7 @@ const OwnersPage: React.FC = () => {
       // Delete all associated photos from MongoDB if there are any
       if (photoIds.length > 0) {
         try {
-          const response = await fetch(`${API_URL}/api/property-photos/bulk-delete`, {
+          await fetch(`${API_URL}/api/property-photos/bulk-delete`, {
             method: 'DELETE',
             headers: {
               'Content-Type': 'application/json',
@@ -176,9 +176,6 @@ const OwnersPage: React.FC = () => {
             body: JSON.stringify({ photoIds }),
           });
 
-          if (!response.ok) {
-            throw new Error('Failed to delete photos');
-          }
         } catch (error) {
           console.error("Error deleting photos:", error);
           alert("Error deleting photos. Please try again.");
@@ -609,7 +606,7 @@ const OwnersPage: React.FC = () => {
               `;
               
               // Send the email notification asynchronously
-              const emailSent = await sendEmailNotification(ownerData.email, emailSubject, emailMessage);
+              await sendEmailNotification(ownerData.email, emailSubject, emailMessage);
             }
 
             setIsFollowing(true);
@@ -809,92 +806,18 @@ const OwnersPage: React.FC = () => {
         `
       };
       
-      const response = await fetch(endpoint, {
+      await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestBody),
       });
-
-      let responseData;
-      try {
-        responseData = await response.json();
-      } catch (jsonError) {
-        // Silent catch - no need to log
-      }
-
-      if (!response.ok) {
-        throw new Error(`Failed to send email notification: ${response.status} ${response.statusText}`);
-      }
       
       return true;
     } catch (error) {
       console.error("Error sending email notification:", error);
       return false;
-    }
-  };
-
-  // Show interest in property
-  const handleShowInterest = async (propertyId: string, propertyName: string) => {
-    if (!currentUser) {
-      alert("Please log in to show interest in properties");
-      return;
-    }
-
-    // Check if user has already expressed interest
-    const userRef = doc(db, 'accounts', currentUser.uid);
-    const userDoc = await getDoc(userRef);
-    
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      const userInterests = userData.itemsInterested || [];
-      
-      if (userInterests.includes(propertyId)) {
-        alert("You have already expressed interest in this property!");
-        return;
-      }
-      
-      // Add property to user's interests
-      await updateDoc(userRef, {
-        itemsInterested: arrayUnion(propertyId)
-      });
-
-      // Create notification for property owner
-      const ownerRef = doc(db, 'accounts', normalDocumentId);
-      
-      const notificationMessage = `${currentUser.displayName || 'Someone'} is interested in your property: ${propertyName}.`;
-      const newNotification = {
-        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        type: 'interest',
-        message: notificationMessage,
-        timestamp: Date.now(),
-        read: false,
-        propertyName: propertyName,
-        userName: currentUser.displayName || 'Anonymous'
-      };
-      
-      await updateDoc(ownerRef, {
-        notifications: arrayUnion(newNotification)
-      });
-
-      // Send email notification if owner has an email
-      if (ownerData?.email) {
-        const emailSubject = "New Interest in Your Property on StayEase";
-        const emailMessage = `
-          <p>Hello ${ownerData.username || 'there'},</p>
-          <p><strong>${currentUser.displayName || 'Someone'}</strong> has expressed interest in your property: <strong>${propertyName}</strong>.</p>
-          <p>Log in to your account to see more details and respond to this interest.</p>
-          <p>Best regards,<br/>The StayEase Team</p>
-        `;
-        
-        // Send the email notification asynchronously
-        const emailSent = await sendEmailNotification(ownerData.email, emailSubject, emailMessage);
-      }
-      
-      alert("Interest shown successfully!");
-    } else {
-      console.error("User document not found!");
     }
   };
 
