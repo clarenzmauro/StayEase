@@ -1,8 +1,12 @@
 // Determine API URL based on environment and current host
 export function getApiUrl() {
   if (process.env.NODE_ENV === 'production') {
-    return ''; // Empty string for production (uses relative paths)
+    // In production (Vercel), use the same domain for API calls
+    // This allows the frontend to make API calls to the same domain where it's hosted
+    return '';
   }
+  
+  // In development, use localhost with port 3000
   const host = window.location.hostname;
   const apiUrl = `http://${host}:3000`;
   

@@ -36,15 +36,18 @@ try {
 } catch (error) {
   console.error("[Server] Error parsing Firebase service account from environment variable:", error.message);
   
-  // Try loading from a file if environment variable parsing fails
-  try {
-    const serviceAccountPath = '/Users/clarenzmauro/Desktop/stayease-ca1cb-firebase-adminsdk-dg5uv-74e5cd4c1e.json';
-    if (fs.existsSync(serviceAccountPath)) {
-      serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-      console.log("[Server] Firebase service account loaded from file");
+  // In Vercel environment, we don't try to load from a local file
+  if (process.env.NODE_ENV !== 'production') {
+    // Only try loading from a file in development environment
+    try {
+      const serviceAccountPath = '/Users/clarenzmauro/Desktop/stayease-ca1cb-firebase-adminsdk-dg5uv-74e5cd4c1e.json';
+      if (fs.existsSync(serviceAccountPath)) {
+        serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+        console.log("[Server] Firebase service account loaded from file");
+      }
+    } catch (fileError) {
+      console.error("[Server] Error loading Firebase service account from file:", fileError.message);
     }
-  } catch (fileError) {
-    console.error("[Server] Error loading Firebase service account from file:", fileError.message);
   }
 }
 
@@ -72,9 +75,14 @@ app.use(cors({
 }));
 app.use(express.json()); // For parsing application/json
 
-mongoose.connect(process.env.MONGODB_URI)
-.then(() => console.log('MongoDB connected'))
-.catch(err => console.error('MongoDB connection error:', err));
+// Connect to MongoDB only if MONGODB_URI is provided
+if (process.env.MONGODB_URI) {
+  mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
+} else {
+  console.warn('[Server] MongoDB URI not provided. Database features will not work.');
+}
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -491,8 +499,15 @@ app.delete('/api/property-photos/bulk-delete', async (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Email configured for: ${process.env.EMAIL_USER}`);
-  console.log('Server initialization complete');
-});
+if (process.env.NODE_ENV !== 'production') {
+  // Only start the server in development mode
+  // In Vercel, this file is imported as a serverless function
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Email configured for: ${process.env.EMAIL_USER}`);
+    console.log('Server initialization complete');
+  });
+}
+
+// Export the Express app for Vercel serverless functions
+export default app;
