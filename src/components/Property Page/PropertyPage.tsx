@@ -5,6 +5,7 @@ import { db, auth } from '../../firebase/config';
 import { DocumentData } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { API_URL } from '../../config';
 
 import PropertyHeader from './components/PropertyHeader';
 import PropertyGallery from './components/PropertyGallery';
@@ -279,8 +280,57 @@ const PropertyPage = () => {
         await updateDoc(ownerRef, {
           notifications: arrayUnion(newNotification)
         });
+        
+        // Get owner data to access owner's email
+        const ownerDocSnap = await getDoc(ownerRef);
+        
+        if (ownerDocSnap.exists()) {
+          const ownerData = ownerDocSnap.data();
+          
+          if (ownerData.email) {
+            // Prepare email subject and content
+            const emailSubject = `New Interest in Your Property on StayEase: ${property.propertyName}`;
+            const emailMessage = `
+              <p>Hello ${ownerData.username || 'there'},</p>
+              <p><strong>${userName}</strong> has expressed interest in your property: <strong>${property.propertyName}</strong>.</p>
+              <p>Log in to your account to see more details and respond to this interest.</p>
+              <p>Best regards,<br/>The StayEase Team</p>
+            `;
+            
+            // Send the email notification
+            try {
+              const response = await fetch(`${API_URL}/api/email/nodemailer/send`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  to: ownerData.email,
+                  subject: emailSubject,
+                  html: `
+                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                      <h2 style="color: #4a6ee0; text-align: center;">StayEase Notification</h2>
+                      <div style="line-height: 1.6; margin: 20px 0;">
+                        ${emailMessage.replace(/\n/g, '<br/>')}
+                      </div>
+                      <div style="background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #777; margin-top: 20px; border-top: 1px solid #ddd;">
+                        <p>This is an automated email from StayEase. Please do not reply to this email.</p>
+                        <p>&copy; ${new Date().getFullYear()} StayEase. All rights reserved.</p>
+                      </div>
+                    </div>
+                  `
+                }),
+              });
+              
+              if (!response.ok) {
+                console.error('Failed to send email notification:', await response.text());
+              }
+            } catch (emailError) {
+              console.error('Error sending email notification:', emailError);
+            }
+          }
+        }
       }
-
       // Toggle interest status and update count
       await updateDoc(propertyRef, {
         interestedApplicants: isCurrentlyInterested 
@@ -616,6 +666,133 @@ const PropertyPage = () => {
     handleGoogleSignIn();
   };
 
+  const checkUpcomingAvailability = async (propertyId: string, dateAvailability: { seconds: number }) => {
+    if (!dateAvailability?.seconds) {
+      return;
+    }
+
+    // Calculate the difference in days between now and the availability date
+    const availabilityDate = new Date(dateAvailability.seconds * 1000);
+    const now = new Date();
+    
+    // Calculate days difference
+    const timeDiff = availabilityDate.getTime() - now.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    
+    // If the property will be available in 3 days, send notifications to interested users
+    if (daysDiff === 3) {
+      try {
+        // Get property details
+        const propertyRef = doc(db, 'properties', propertyId);
+        const propertyDoc = await getDoc(propertyRef);
+        
+        if (!propertyDoc.exists()) {
+          console.error(`Property ${propertyId} not found`);
+          return;
+        }
+        
+        const propertyData = propertyDoc.data() as Property;
+        const interestedUserIds = propertyData.interestedApplicants || [];
+        
+        if (interestedUserIds.length === 0) {
+          return;
+        }
+        
+        // For each interested user, get their email and send a notification
+        for (const userId of interestedUserIds) {
+          try {
+            const userRef = doc(db, 'accounts', userId);
+            const userDoc = await getDoc(userRef);
+            
+            if (!userDoc.exists()) {
+              console.error(`User ${userId} not found`);
+              continue;
+            }
+            
+            const userData = userDoc.data();
+            
+            if (!userData.email) {
+              console.error(`User ${userId} has no email`);
+              continue;
+            }
+            
+            // Send email notification
+            const emailSubject = `Property Alert: ${propertyData.propertyName} will be available soon!`;
+            const emailMessage = `
+              <p>Hello ${userData.username || 'there'},</p>
+              <p>Good news! <strong>${propertyData.propertyName}</strong> that you're interested in will be available in 3 days (${availabilityDate.toLocaleDateString()}).</p>
+              <p>Property details:</p>
+              <ul>
+                <li>Location: ${propertyData.propertyLocation}</li>
+                <li>Price: $${propertyData.propertyPrice.toLocaleString()}</li>
+                <li>Type: ${propertyData.propertyType}</li>
+                <li>Size: ${propertyData.propertySize} sq ft</li>
+              </ul>
+              <p>Don't miss this opportunity! Log in to StayEase to take action on this property.</p>
+              <p>Best regards,<br/>The StayEase Team</p>
+            `;
+            
+            try {
+              const response = await fetch(`${API_URL}/api/email/nodemailer/send`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  to: userData.email,
+                  subject: emailSubject,
+                  html: `
+                    <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                      <h2 style="color: #4a6ee0; text-align: center;">StayEase Property Alert</h2>
+                      <div style="line-height: 1.6; margin: 20px 0;">
+                        ${emailMessage.replace(/\n/g, '<br/>')}
+                      </div>
+                      <div style="background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #777; margin-top: 20px; border-top: 1px solid #ddd;">
+                        <p>This is an automated email from StayEase. Please do not reply to this email.</p>
+                        <p>&copy; ${new Date().getFullYear()} StayEase. All rights reserved.</p>
+                      </div>
+                    </div>
+                  `
+                }),
+              });
+              
+              if (!response.ok) {
+                console.error(`Failed to send email notification: ${await response.text()}`);
+              }
+            } catch (emailError) {
+              console.error(`Error sending email notification:`, emailError);
+            }
+          } catch (userError) {
+            console.error(`Error processing user ${userId}:`, userError);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking upcoming availability:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Only run this if we have a property loaded
+    if (property && property.dateAvailability) {
+      checkUpcomingAvailability(property.id, property.dateAvailability);
+    }
+  }, [property]);
+
+  const testAvailabilityNotification = async () => {
+    if (!property || !id) return;
+    
+    // Create a test date exactly 3 days from now
+    const testDate = {
+      seconds: Math.floor(Date.now() / 1000) + (3 * 24 * 60 * 60) // 3 days from now
+    };
+    
+    await checkUpcomingAvailability(id, testDate);
+    
+    // Confirmation message
+    alert('Test availability notification sent to interested users!');
+  };
+
   if (loading) {
     return (
       <div className="property-page">
@@ -777,6 +954,22 @@ const PropertyPage = () => {
           isMinimized={isChatMinimized}
           onMinimizedChange={setIsChatMinimized}
         />
+      )}
+      {isOwner && (
+        <button 
+          onClick={testAvailabilityNotification}
+          style={{
+            backgroundColor: '#5bc0de',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '8px 16px',
+            margin: '10px 0',
+            cursor: 'pointer'
+          }}
+        >
+          Test Availability Notification
+        </button>
       )}
       </>
 

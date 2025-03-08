@@ -581,10 +581,11 @@ const OwnersPage: React.FC = () => {
             currentFollowers[currentUser.uid] = true;
             newFollowerCount += 1;
 
+            const notificationMessage = `${currentUser.displayName || 'Someone'} followed you.`;
             const newNotification = {
               id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               type: 'follow',
-              message: `${currentUser.displayName || 'Someone'} followed you.`,
+              message: notificationMessage,
               timestamp: Date.now(),
               read: false,
               propertyName: '',
@@ -596,6 +597,20 @@ const OwnersPage: React.FC = () => {
               followerCount: newFollowerCount,
               notifications: arrayUnion(newNotification)
             }); 
+
+            // Send email notification if owner has an email
+            if (ownerData?.email) {
+              const emailSubject = "New Follower on StayEase";
+              const emailMessage = `
+                <p>Hello ${ownerData.username || 'there'},</p>
+                <p><strong>${currentUser.displayName || 'Someone'}</strong> just followed you on StayEase!</p>
+                <p>Log in to your account to see your profile and interact with your followers.</p>
+                <p>Best regards,<br/>The StayEase Team</p>
+              `;
+              
+              // Send the email notification asynchronously
+              const emailSent = await sendEmailNotification(ownerData.email, emailSubject, emailMessage);
+            }
 
             setIsFollowing(true);
             addNotification(`You are now following ${ownerData?.username || 'this owner'}!`);
@@ -752,35 +767,6 @@ const OwnersPage: React.FC = () => {
     );
   };
 
-  // ------------------------------
-  // EXPRESS INTEREST FUNCTION (for non-owners)
-  // ------------------------------
-  // const handleExpressInterest = async () => {
-  //   if (!currentUser || !normalDocumentId) {
-  //     alert("Please log in to express interest");
-  //     return;
-  //   }
-  //   try {
-  //     const ownerRef = doc(db, 'accounts', normalDocumentId);
-  //     const newNotification = {
-  //       type: 'interest',
-  //       message: `${currentUser.displayName || 'Someone'} is interested in your property.`,
-  //       date: new Date().toISOString(),
-  //       read: false,
-  //     };
-  //     await updateDoc(ownerRef, {
-  //       notifications: arrayUnion(newNotification)
-  //     });
-  //     alert("Your interest has been sent!");
-  //   } catch (error) {
-  //     console.error("Error expressing interest:", error);
-  //     alert("Failed to express interest. Please try again.");
-  //   }
-  // };
-
-  // ------------------------------
-  // GET PROPERTY IMAGE URL
-  // ------------------------------
   const getImageUrl = (property: PropertyType, index: number = 0) => {
     if (!property.propertyPhotos) return '';
 
@@ -794,6 +780,122 @@ const OwnersPage: React.FC = () => {
     const photoKeys = Object.keys(property.propertyPhotos).filter(key => key.startsWith('photo'));
     const photoKey = photoKeys[index];
     return property.propertyPhotos[photoKey]?.pictureUrl || '';
+  };
+
+  // Enhanced sendEmailNotification function
+  const sendEmailNotification = async (recipient: string, subject: string, message: string) => {
+    if (!recipient) {
+      console.error("No email recipient provided");
+      return;
+    }
+    
+    try {
+      const endpoint = `${API_URL}/api/email/nodemailer/send`;
+      
+      const requestBody = {
+        to: recipient,
+        subject: subject,
+        html: `
+          <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+            <h2 style="color: #4a6ee0; text-align: center;">StayEase Notification</h2>
+            <div style="line-height: 1.6; margin: 20px 0;">
+              ${message.replace(/\n/g, '<br/>')}
+            </div>
+            <div style="background-color: #f5f5f5; padding: 15px; text-align: center; font-size: 12px; color: #777; margin-top: 20px; border-top: 1px solid #ddd;">
+              <p>This is an automated email from StayEase. Please do not reply to this email.</p>
+              <p>&copy; ${new Date().getFullYear()} StayEase. All rights reserved.</p>
+            </div>
+          </div>
+        `
+      };
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      let responseData;
+      try {
+        responseData = await response.json();
+      } catch (jsonError) {
+        // Silent catch - no need to log
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to send email notification: ${response.status} ${response.statusText}`);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error sending email notification:", error);
+      return false;
+    }
+  };
+
+  // Show interest in property
+  const handleShowInterest = async (propertyId: string, propertyName: string) => {
+    if (!currentUser) {
+      alert("Please log in to show interest in properties");
+      return;
+    }
+
+    // Check if user has already expressed interest
+    const userRef = doc(db, 'accounts', currentUser.uid);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const userInterests = userData.itemsInterested || [];
+      
+      if (userInterests.includes(propertyId)) {
+        alert("You have already expressed interest in this property!");
+        return;
+      }
+      
+      // Add property to user's interests
+      await updateDoc(userRef, {
+        itemsInterested: arrayUnion(propertyId)
+      });
+
+      // Create notification for property owner
+      const ownerRef = doc(db, 'accounts', normalDocumentId);
+      
+      const notificationMessage = `${currentUser.displayName || 'Someone'} is interested in your property: ${propertyName}.`;
+      const newNotification = {
+        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        type: 'interest',
+        message: notificationMessage,
+        timestamp: Date.now(),
+        read: false,
+        propertyName: propertyName,
+        userName: currentUser.displayName || 'Anonymous'
+      };
+      
+      await updateDoc(ownerRef, {
+        notifications: arrayUnion(newNotification)
+      });
+
+      // Send email notification if owner has an email
+      if (ownerData?.email) {
+        const emailSubject = "New Interest in Your Property on StayEase";
+        const emailMessage = `
+          <p>Hello ${ownerData.username || 'there'},</p>
+          <p><strong>${currentUser.displayName || 'Someone'}</strong> has expressed interest in your property: <strong>${propertyName}</strong>.</p>
+          <p>Log in to your account to see more details and respond to this interest.</p>
+          <p>Best regards,<br/>The StayEase Team</p>
+        `;
+        
+        // Send the email notification asynchronously
+        const emailSent = await sendEmailNotification(ownerData.email, emailSubject, emailMessage);
+      }
+      
+      alert("Interest shown successfully!");
+    } else {
+      console.error("User document not found!");
+    }
   };
 
   const handleLogout = async () => {
@@ -876,12 +978,8 @@ const OwnersPage: React.FC = () => {
                   className={`follow-button ${isFollowing ? 'following' : ''}`}
                   onClick={handleFollowToggle}
                 >
-                  {isFollowing ? 'Following' : 'Follow'}
+                  {isFollowing ? 'Unfollow' : 'Follow'}
                 </button>
-                {/* Express Interest button for non-owners
-                <button className="interest-button" onClick={handleExpressInterest}>
-                  I'm interested in your property
-                </button> */}
               </>
             )}
             <div className="stats-container">

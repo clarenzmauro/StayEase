@@ -4,7 +4,13 @@ export function getApiUrl() {
     return ''; // Empty string for production (uses relative paths)
   }
   const host = window.location.hostname;
-  return `http://${host}:5000`;
+  const apiUrl = `http://${host}:3000`;
+  
+  return apiUrl;
 }
 
+// Export the API_URL and log it for debugging
 export const API_URL = getApiUrl();
+
+// Log when this file is imported
+console.log('[Config] config.ts loaded, API_URL is:', API_URL);
