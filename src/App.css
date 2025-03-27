@@ -1,42 +1,9 @@
-/* Global Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@import "tailwindcss";
 
-/* Body Styles */
-body {
-  font-family: Arial, sans-serif;
-  line-height: 1.6;
-  background-color: #ffff;
-  color: #333;
-}
-
-/* Flexbox Layout */
-.app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-/* Typography */
-h1, h2, h3 {
-  margin-bottom: 1rem;
-  font-weight: bold;
-}
-
-/* Button Styles */
-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 5px;
-  background-color: #007bff;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-button:hover {
-  background-color: #0056b3;
+.truncate-multiline {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2lh;
 }
