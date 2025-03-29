@@ -22,25 +22,18 @@ interface FilterMenuProps {
 
 export function FilterMenu({
   onFilterChange,
-  isLoading,
   availableTags,
   availableLocations,
   properties,
 }: FilterMenuProps) {
   const MAX_PRICE = 1000000; // Define a maximum price constant
-  const [priceRange, setPriceRange] = useState({ min: 0, max: MAX_PRICE });
+  const [priceRange,] = useState({ min: 0, max: MAX_PRICE });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string>("");
-  const [selectedPropertyType, setSelectedPropertyType] = useState<string>("");
-  const [sortBy, setSortBy] = useState("most-popular");
+  const [selectedLocation, ] = useState<string>("");
+  const [selectedPropertyType, ] = useState<string>("");
+  const [sortBy, ] = useState("most-popular");
   const [showAllTags, setShowAllTags] = useState(false);
 
-  const propertyTypes = [
-    "Dormitory",
-    "Apartment",
-    "Boarding House",
-    "Student Housing",
-  ];
 
   const visibleTags = showAllTags ? availableTags : availableTags.slice(0, 4);
 

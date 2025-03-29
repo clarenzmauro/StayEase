@@ -1,32 +1,23 @@
 import { useState, useEffect } from "react";
 import "./HomePage.css";
-import ItemsContext from "./ItemsContext.jsx";
 import { FilterMenu } from "./FilterMenu.jsx";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   collection,
   onSnapshot,
   doc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
   getDoc,
   setDoc,
   serverTimestamp,
-  increment,
 } from "firebase/firestore";
 import { db } from "../../firebase/config.js";
 import { auth } from "../../firebase/config";
 import {
-  GoogleAuthProvider,
-  signInWithPopup,
   User as FirebaseUser,
   browserLocalPersistence,
   setPersistence,
 } from "firebase/auth";
 import logoSvg from "../../assets/STAY.svg";
-import ChatManager from "../Chat/ChatManager";
-import ChatHistory from "../Chat/ChatHistory";
 import { API_URL } from "../../config";
 
 interface FilterType {
@@ -53,20 +44,8 @@ interface PropertyType {
   [key: string]: any;
 }
 
-// Add isNew helper function after the interfaces
-const isNewProperty = (datePosted?: { toMillis: () => number }) => {
-  if (!datePosted) return false;
-  const postDate = datePosted.toMillis();
-  const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
-  return postDate > threeDaysAgo;
-};
-
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
-  // const [selectedItem, setSelectedItem] = useState<string | null>(null);
-  const [selectedItem] = useState<string | null>(null);
-  const [isItemDetailsOpen, setIsItemDetailsOpen] = useState(false);
-  // const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [properties, setProperties] = useState<PropertyType[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<PropertyType[]>(
     []
@@ -82,94 +61,12 @@ export function HomePage() {
     selectedPropertyType: "",
     sortBy: "most-popular",
   });
-  const [showAuthOverlay, setShowAuthOverlay] = useState(false);
+  const [, setShowAuthOverlay] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [userFavorites, setUserFavorites] = useState<string[]>([]);
-  const [authError, setAuthError] = useState<string>("");
-  const navigate = useNavigate();
-  // const [isLogin, setIsLogin] = useState(true);
-  // const [email, setEmail] = useState('');
-  // // const [password, setPassword] = useState('');
-  // const [error, setError] = useState('');
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [, setUserFavorites] = useState<string[]>([]);
+  const [, setAuthError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  // const [sortBy, setSortBy] = useState('most-popular');
-  const [, setCurrentImageIndices] = useState<{ [key: string]: number }>({});
-  const [imageCache, setImageCache] = useState<{ [key: string]: boolean }>({});
-  const [loadingImages, setLoadingImages] = useState<{
-    [key: string]: boolean;
-  }>({});
   const [isMobileFilterVisible, setIsMobileFilterVisible] = useState(false);
-
-  const getNextImage = (
-    e: React.MouseEvent,
-    itemId: string,
-    direction: "next" | "prev"
-  ) => {
-    e.stopPropagation();
-
-    const property = filteredProperties.find((p) => p.id === itemId);
-    if (!property?.propertyPhotos) return;
-
-    // Handle MongoDB-style photos (array of strings)
-    if (Array.isArray(property.propertyPhotos)) {
-      const totalImages = property.propertyPhotos.length;
-      if (totalImages <= 1) return;
-
-      setCurrentImageIndices((prev) => {
-        const currentIndex = prev[itemId] || 0;
-        let newIndex;
-        if (direction === "next") {
-          newIndex = (currentIndex + 1) % totalImages;
-        } else {
-          newIndex = (currentIndex - 1 + totalImages) % totalImages;
-        }
-
-        // Set loading state
-        setLoadingImages((prev) => ({ ...prev, [itemId]: true }));
-
-        return { ...prev, [itemId]: newIndex };
-      });
-      return;
-    }
-
-    // Handle Firebase-style photos (object with pictureUrl)
-    const photoKeys = Object.keys(property.propertyPhotos).filter((key) =>
-      key.startsWith("photo")
-    );
-    const totalImages = photoKeys.length;
-    if (totalImages <= 1) return;
-
-    setCurrentImageIndices((prev) => {
-      const currentIndex = prev[itemId] || 0;
-      let newIndex;
-      if (direction === "next") {
-        newIndex = (currentIndex + 1) % totalImages;
-      } else {
-        newIndex = (currentIndex - 1 + totalImages) % totalImages;
-      }
-
-      // Preload the next image in sequence
-      const nextIndex = (newIndex + 1) % totalImages;
-      let nextUrl: string | undefined;
-
-      if (property.propertyPhotos) {
-        if (Array.isArray(property.propertyPhotos)) {
-          nextUrl = property.propertyPhotos[nextIndex] as string;
-        } else {
-          nextUrl = property.propertyPhotos[`photo${nextIndex}`]?.pictureUrl;
-        }
-      }
-
-      if (nextUrl) {
-        preloadImage(nextUrl);
-      }
-
-      // Set loading state
-      setLoadingImages((prev) => ({ ...prev, [itemId]: true }));
-      return { ...prev, [itemId]: newIndex };
-    });
-  };
 
   const getImageUrl = (property: PropertyType, index: number = 0) => {
     if (!property.propertyPhotos) return "";
@@ -186,20 +83,6 @@ export function HomePage() {
     );
     const photoKey = photoKeys[index];
     return property.propertyPhotos[photoKey]?.pictureUrl || "";
-  };
-
-  const preloadImage = (url: string) => {
-    if (!imageCache[url]) {
-      const img = new Image();
-      img.src = url;
-      img.onload = () => {
-        setImageCache((prev) => ({ ...prev, [url]: true }));
-      };
-    }
-  };
-
-  const handleImageLoad = (itemId: string) => {
-    setLoadingImages((prev) => ({ ...prev, [itemId]: false }));
   };
 
   // Set up real-time listener for properties
@@ -340,28 +223,6 @@ export function HomePage() {
     loadUserFavorites();
   }, [user]); // Dependency on user ensures this runs when user logs in/out
 
-  const handleGoogleSignIn = async () => {
-    console.log("Starting Google sign in...");
-    try {
-      const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({
-        prompt: "select_account",
-      });
-
-      console.log("Using popup for sign in...");
-      const result = await signInWithPopup(auth, provider);
-      console.log("Sign in successful:", result.user.email);
-      await createUserDocument(result.user);
-      handleSuccess();
-    } catch (error) {
-      console.error("Sign in error:", error);
-      setAuthError(
-        error instanceof Error ? error.message : "Authentication failed"
-      );
-      setShowAuthOverlay(true);
-    }
-  };
-
   // Add sorting function
   const sortProperties = (properties: PropertyType[], sortType: string) => {
     switch (sortType) {
@@ -472,49 +333,6 @@ export function HomePage() {
     setActiveFilters(filters);
   };
 
-  // const handleItemClick = (itemId: string) => {
-  //   console.log('HomePage: Item clicked with id:', itemId);
-  //   setSelectedItem(itemId);
-  //   setIsItemDetailsOpen(true);
-  // };
-
-  const handleFavorite = async (
-    e: React.MouseEvent<HTMLElement>,
-    itemId: string,
-    user: { uid: string }
-  ) => {
-    e.stopPropagation();
-    if (!user) {
-      setShowAuthOverlay(true);
-      return;
-    }
-
-    try {
-      const accountRef = doc(db, "accounts", user.uid);
-      const accountDoc = await getDoc(accountRef);
-      const currentFavorites = accountDoc.data()?.itemsSaved || [];
-      const isFavorited = currentFavorites.includes(itemId);
-
-      if (isFavorited) {
-        // Remove from favorites
-        await updateDoc(accountRef, {
-          itemsSaved: arrayRemove(itemId),
-          favorites: arrayRemove(itemId),
-        });
-        setUserFavorites((prev) => prev.filter((id) => id !== itemId));
-      } else {
-        // Add to favorites
-        await updateDoc(accountRef, {
-          itemsSaved: arrayUnion(itemId),
-          favorites: arrayUnion(itemId),
-        });
-        setUserFavorites((prev) => [...prev, itemId]);
-      }
-    } catch (error) {
-      console.error("Error updating favorites:", error);
-    }
-  };
-
   interface User {
     uid: string;
     email: string | null;
@@ -560,51 +378,6 @@ export function HomePage() {
         console.error("Error creating account document:", error);
       }
     }
-  };
-
-  const handleSuccess = () => {
-    setIsSuccess(true);
-    setTimeout(() => {
-      setShowAuthOverlay(false);
-    }, 1500);
-  };
-
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      setShowAuthOverlay(false);
-    }
-  };
-
-  const handlePropertyClick = async (itemId: string) => {
-    if (!auth.currentUser) {
-      navigate(`/property/${itemId}`);
-      return;
-    }
-
-    try {
-      const userRef = doc(db, "accounts", auth.currentUser.uid);
-      const userDoc = await getDoc(userRef);
-      const propertyRef = doc(db, "properties", itemId);
-
-      if (userDoc.exists()) {
-        const viewedProperties = userDoc.data().viewedProperties || [];
-        if (!viewedProperties.includes(itemId)) {
-          await Promise.all([
-            updateDoc(userRef, { viewedProperties: arrayUnion(itemId) }),
-            updateDoc(propertyRef, { viewCount: increment(1) }),
-          ]);
-        }
-      } else {
-        await Promise.all([
-          setDoc(userRef, { viewedProperties: [itemId] }, { merge: true }),
-          updateDoc(propertyRef, { viewCount: increment(1) }),
-        ]);
-      }
-    } catch (error) {
-      console.error("Error updating view count:", error);
-    }
-
-    navigate(`/property/${itemId}`);
   };
 
   const NavBar = () => {
