@@ -46,6 +46,13 @@ interface PropertyType {
   [key: string]: any;
 }
 
+// Add global type declaration for the search timeout
+declare global {
+  interface Window {
+    searchTimeout?: NodeJS.Timeout;
+  }
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -443,15 +450,58 @@ export function HomePage() {
   };
 
   const SearchBar = () => {
-    // TODO: Search bar function
+    // Initialize inputValue from the current searchQuery
+    const [inputValue, setInputValue] = useState(searchQuery);
+    
+    // Update inputValue if searchQuery changes externally
+    useEffect(() => {
+      setInputValue(searchQuery);
+    }, [searchQuery]);
+    
+    // Debounce search to avoid excessive filtering while typing
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const newValue = e.target.value;
+      setInputValue(newValue);
+      
+      // Clear any existing timeout
+      if (window.searchTimeout) {
+        clearTimeout(window.searchTimeout);
+      }
+      
+      // Set a new timeout
+      window.searchTimeout = setTimeout(() => {
+        setSearchQuery(newValue);
+      }, 500);
+    };
+    
+    const handleClear = () => {
+      setInputValue("");
+      setSearchQuery("");
+      if (window.searchTimeout) {
+        clearTimeout(window.searchTimeout);
+      }
+    };
+    
     return (
       <div className="relative w-full">
         <input
-          className="w-full pl-10 pr-4 py-2 md:py-4 border border-gray-300 rounded-lg shadow-sm"
+          className="w-full pl-10 pr-10 py-2 md:py-4 border border-gray-300 rounded-lg shadow-sm"
           type="text"
-          placeholder="Search..."
+          placeholder="Search properties by name or location..."
+          value={inputValue}
+          onChange={handleInputChange}
         />
         <i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        
+        {inputValue && (
+          <button
+            onClick={handleClear}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            aria-label="Clear search"
+          >
+            <i className="fa-solid fa-times"></i>
+          </button>
+        )}
       </div>
     );
   };
