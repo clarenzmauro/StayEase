@@ -531,7 +531,11 @@ export function HomePage() {
           ) : (
             <section className="gap-2 md:gap-3 xl:gap-4 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 mt-4">
               {filteredProperties.map((property) => (
-                <div key={property.id} className="bg-white rounded-b-lg">
+                <Link 
+                  to={`/property/${property.id}`} 
+                  key={property.id} 
+                  className="bg-white rounded-b-lg hover:shadow-md transition-shadow duration-300 cursor-pointer"
+                >
                   <img
                     className="aspect-square object-cover rounded-t-xl"
                     src={getImageUrl(property)}
@@ -570,7 +574,7 @@ export function HomePage() {
                       </p>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </section>
           )}
