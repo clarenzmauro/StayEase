@@ -59,7 +59,7 @@ export function HomePage() {
     selectedTags: [],
     selectedLocation: "",
     selectedPropertyType: "",
-    sortBy: "most-popular",
+    sortBy: "newest",
   });
   const [, setShowAuthOverlay] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -392,7 +392,7 @@ export function HomePage() {
               selectedTags: [],
               selectedLocation: "",
               selectedPropertyType: "",
-              sortBy: "most-popular",
+              sortBy: "newest",
             });
           }}
         >
@@ -456,17 +456,26 @@ export function HomePage() {
   };
 
   const SortByDropdown = () => (
-    // TODO: Sort function
     <div className="flex items-center gap-2 text-gray-700 text-sm font-medium p-0">
       <label htmlFor="sort">Sort by:</label>
 
-      <select id="sort" className="focus:outline-none focus:ring-0">
-        <option value="price-asc">Low to High</option>
-        <option value="price-desc">High to Low</option>
-        <option value="name-asc">A - Z</option>
-        <option value="name-desc">Z - A</option>
+      <select 
+        id="sort" 
+        className="focus:outline-none focus:ring-0"
+        value={activeFilters.sortBy}
+        onChange={(e) => {
+          setActiveFilters(prev => ({
+            ...prev,
+            sortBy: e.target.value
+          }));
+        }}
+      >
         <option value="newest">Newest</option>
         <option value="oldest">Oldest</option>
+        <option value="price-low">Price: Low to High</option>
+        <option value="price-high">Price: High to Low</option>
+        <option value="most-popular">Most Popular</option>
+        <option value="top-rated">Top Rated</option>
       </select>
     </div>
   );
@@ -517,8 +526,7 @@ export function HomePage() {
         <main className="xl:w-3/4">
           <div className="flex justify-between items-center">
             <p className="text-lg font-medium text-gray-700">
-              {/* TODO: count results */}
-              <span className="font-bold">XX</span> results found
+              <span className="font-bold">{filteredProperties.length}</span> results found
             </p>
 
             <SortByDropdown />

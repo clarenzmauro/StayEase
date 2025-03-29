@@ -27,12 +27,15 @@ export function FilterMenu({
   properties,
 }: FilterMenuProps) {
   const MAX_PRICE = 1000000; // Define a maximum price constant
-  const [priceRange,] = useState({ min: 0, max: MAX_PRICE });
+  const [priceRange, setPriceRange] = useState({ min: 0, max: MAX_PRICE });
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedLocation, ] = useState<string>("");
-  const [selectedPropertyType, ] = useState<string>("");
-  const [sortBy, ] = useState("most-popular");
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [selectedPropertyType, setSelectedPropertyType] = useState<string>("");
+  const [sortBy, setSortBy] = useState("newest");
   const [showAllTags, setShowAllTags] = useState(false);
+  
+  // Extract unique property types from properties
+  const propertyTypes = [...new Set(properties.map(p => p.propertyType).filter(Boolean))];
 
 
   const visibleTags = showAllTags ? availableTags : availableTags.slice(0, 4);
@@ -92,6 +95,27 @@ export function FilterMenu({
   };
 
   const PriceRange = () => {
+    // Use local state for input values to prevent losing focus
+    const [minInput, setMinInput] = useState(priceRange.min === 0 ? '' : priceRange.min.toString());
+    const [maxInput, setMaxInput] = useState(priceRange.max === MAX_PRICE ? '' : priceRange.max.toString());
+
+    // Handle blur events to update the actual filter
+    const handleMinBlur = () => {
+      const newMin = minInput === '' ? 0 : parseInt(minInput);
+      setPriceRange(prev => ({ ...prev, min: newMin }));
+    };
+
+    const handleMaxBlur = () => {
+      const newMax = maxInput === '' ? MAX_PRICE : parseInt(maxInput);
+      setPriceRange(prev => ({ ...prev, max: newMax }));
+    };
+
+    // Update local inputs when filter is reset
+    useEffect(() => {
+      if (priceRange.min === 0) setMinInput('');
+      if (priceRange.max === MAX_PRICE) setMaxInput('');
+    }, [priceRange]);
+
     return (
       <div className="mb-4">
         <label className="block text-sm font-medium">Price Range</label>
@@ -99,11 +123,17 @@ export function FilterMenu({
           <input
             type="number"
             placeholder="Min"
+            value={minInput}
+            onChange={(e) => setMinInput(e.target.value)}
+            onBlur={handleMinBlur}
             className="w-full p-2 border rounded-lg"
           />
           <input
             type="number"
             placeholder="Max"
+            value={maxInput}
+            onChange={(e) => setMaxInput(e.target.value)}
+            onBlur={handleMaxBlur}
             className="w-full p-2 border rounded-lg"
           />
         </div>
@@ -115,7 +145,11 @@ export function FilterMenu({
     return (
       <div className="mb-4">
         <label className="block text-sm font-medium">Location</label>
-        <select className="w-full p-2 mt-1 border rounded-lg">
+        <select 
+          className="w-full p-2 mt-1 border rounded-lg"
+          value={selectedLocation}
+          onChange={(e) => setSelectedLocation(e.target.value)}
+        >
           <option value="">All Locations</option>
           {availableLocations.map((location) => (
             <option key={location} value={location}>
@@ -130,30 +164,32 @@ export function FilterMenu({
   const PropertyType = () => {
     return (
       <div className="mb-4">
-        <label className="block text-sm font-medium">Type</label>
+        <label className="block text-sm font-medium mb-2">Type</label>
         <div className="flex flex-col gap-2 mt-1">
-          <label className="flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
             <input
               type="radio"
-              name="type"
-              value="apartment"
-              className="w-4 h-4"
+              name="propertyType"
+              value=""
+              checked={selectedPropertyType === ""}
+              onChange={() => setSelectedPropertyType("")}
+              className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
             />
-            Apartment
+            All Properties
           </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="type"
-              value="bedspace"
-              className="w-4 h-4"
-            />
-            Bedspace
-          </label>
-          <label className="flex items-center gap-2">
-            <input type="radio" name="type" value="room" className="w-4 h-4" />
-            Room
-          </label>
+          {propertyTypes.map((type) => (
+            <label key={type} className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+              <input
+                type="radio"
+                name="propertyType"
+                value={type}
+                checked={selectedPropertyType === type}
+                onChange={() => setSelectedPropertyType(type)}
+                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </label>
+          ))}
         </div>
       </div>
     );
@@ -201,7 +237,18 @@ export function FilterMenu({
 
   const ResetButton = () => {
     return (
-      <button className="w-full border rounded py-3">Reset Filters</button>
+      <button 
+        className="w-full border rounded py-3 hover:bg-gray-100 transition-colors"
+        onClick={() => {
+          setPriceRange({ min: 0, max: MAX_PRICE });
+          setSelectedTags([]);
+          setSelectedLocation('');
+          setSelectedPropertyType('');
+          setSortBy('newest');
+        }}
+      >
+        Reset Filters
+      </button>
     );
   };
 
