@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./HomePage.css";
 import { FilterMenu } from "./FilterMenu.jsx";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   collection,
   onSnapshot,
@@ -16,6 +16,8 @@ import {
   User as FirebaseUser,
   browserLocalPersistence,
   setPersistence,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth";
 import logoSvg from "../../assets/STAY.svg";
 import { API_URL } from "../../config";
@@ -45,6 +47,7 @@ interface PropertyType {
 }
 
 export function HomePage() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [properties, setProperties] = useState<PropertyType[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<PropertyType[]>(
@@ -381,6 +384,25 @@ export function HomePage() {
   };
 
   const NavBar = () => {
+    const handleGoogleSignIn = async () => {
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        // User will be set by the auth state listener
+      } catch (error) {
+        console.error("Google sign-in error:", error);
+        setAuthError(error instanceof Error ? error.message : "Authentication failed");
+      }
+    };
+
+    const handleUserIconClick = () => {
+      if (user) {
+        navigate('/account');
+      } else {
+        handleGoogleSignIn();
+      }
+    };
+
     return (
       <nav className="flex justify-between">
         <Link
@@ -407,23 +429,14 @@ export function HomePage() {
           <SearchBar />
         </div>
 
-        {/* TODO: conditional display (sign in and other buttons) */}
-        {/* <button className="flex items-center justify-center gap-2 px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg shadow-md hover:bg-gray-100 transition text-sm font-bold">
-          <img
-            className="h-6"
-            src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png"
-            alt=""
-          />
-          <div>
-            <span>Sign in</span>
-            <span className="hidden md:inline-block">&nbsp;with Google</span>
-          </div>
-        </button> */}
-
         <div className="text-gray-700 flex gap-4 md:gap-6 lg:gap-8 items-center text-2xl">
           <i className="fa-regular fa-message"></i>
           <i className="fa-regular fa-bell"></i>
-          <i className="fa-regular fa-user"></i>
+          <i 
+            className="fa-regular fa-user cursor-pointer hover:text-gray-500 transition-colors"
+            onClick={handleUserIconClick}
+            title={user ? "My Profile" : "Sign in with Google"}
+          ></i>
         </div>
       </nav>
     );
