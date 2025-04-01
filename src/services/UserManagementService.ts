@@ -76,46 +76,120 @@ class UserManagementService {
   // Get users with filtering and pagination
   async getUsers(params: UserSearchParams): Promise<UserSearchResult> {
     try {
+      console.log('Fetching users with exact params:', params);
+      
+      // First, directly fetch a single document to verify field structure
+      try {
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
+        
+        if (currentUser) {
+          const userDocRef = doc(db, 'accounts', currentUser.uid);
+          const userSnapshot = await getDoc(userDocRef);
+          
+          if (userSnapshot.exists()) {
+            console.log('Current user document exists in accounts collection:', 
+              { id: userSnapshot.id, ...userSnapshot.data() });
+          } else {
+            console.warn('Current user document does NOT exist in accounts collection!');
+          }
+        } else {
+          console.log('No current user to check');
+        }
+      } catch (error) {
+        console.error('Error checking current user document:', error);
+      }
+      
+      // Continue with normal collection query
       const pageSize = params.pageSize || 10;
       
-      // Start building the query
-      let userQuery = query(
-        collection(db, 'accounts'),
-        orderBy(params.sortBy || 'createdAt', params.sortDirection || 'desc')
-      );
+      // Default to a simple query on accounts collection
+      // This is more reliable than trying complex queries that might not match the data structure
+      const userQuery = query(collection(db, 'accounts'));
       
-      // Apply role filter if specified and not 'all'
-      if (params.role && params.role !== 'all') {
-        userQuery = query(userQuery, where('role', '==', params.role));
-      }
-      
-      // Apply status filter if specified and not 'all'
-      if (params.status && params.status !== 'all') {
-        userQuery = query(userQuery, where('status', '==', params.status));
-      }
-      
-      // Apply pagination
-      if (params.lastVisible) {
-        userQuery = query(userQuery, startAfter(params.lastVisible), limit(pageSize));
-      } else {
-        userQuery = query(userQuery, limit(pageSize));
-      }
-      
+      console.log('Executing simple collection query on accounts');
       const snapshot = await getDocs(userQuery);
       
-      // Get the users
-      const users = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as UserProfile[];
+      console.log(`Found ${snapshot.docs.length} raw user documents`);
       
-      // Filter by search query if provided (client-side filtering)
-      const filteredUsers = params.query 
-        ? users.filter(user => 
-            user.email.toLowerCase().includes(params.query!.toLowerCase()) ||
-            (user.displayName && user.displayName.toLowerCase().includes(params.query!.toLowerCase()))
-          )
-        : users;
+      if (snapshot.empty) {
+        console.log('No users found in accounts collection');
+        return { users: [], lastVisible: null, hasMore: false };
+      }
+      
+      // Map fields from account doc to UserProfile
+      const users = snapshot.docs.map(doc => {
+        const data = doc.data();
+        
+        // Handle different possible field names for profile image
+        let photoURL = data.profilePicUrl;
+        if (!photoURL) {
+          // Try alternative field names that might contain the profile image
+          photoURL = data.profilePic || data.photoURL || data.avatar || data.pictureUrl;
+        }
+        
+        return {
+          id: doc.id,
+          email: data.email || '',
+          displayName: data.username || data.displayName || '',
+          photoURL: photoURL || '',
+          role: data.isOwner ? 'owner' : 'user',
+          status: 'active', // Default status
+          createdAt: data.dateJoined || Timestamp.now(),
+          lastLogin: data.lastLogin,
+          metadata: {}
+        } as UserProfile;
+      });
+      
+      console.log(`Transformed ${users.length} users:`, users);
+      
+      // Apply client-side filtering and sorting
+      let filteredUsers = [...users];
+      
+      // Apply role filter
+      if (params.role && params.role !== 'all') {
+        filteredUsers = filteredUsers.filter(user => user.role === params.role);
+      }
+      
+      // Apply status filter
+      if (params.status && params.status !== 'all') {
+        filteredUsers = filteredUsers.filter(user => user.status === params.status);
+      }
+      
+      // Apply search query
+      if (params.query) {
+        filteredUsers = filteredUsers.filter(user => 
+          (user.email && user.email.toLowerCase().includes(params.query!.toLowerCase())) ||
+          (user.displayName && user.displayName.toLowerCase().includes(params.query!.toLowerCase()))
+        );
+      }
+      
+      // Sort users
+      filteredUsers.sort((a, b) => {
+        const field = params.sortBy || 'createdAt';
+        const direction = params.sortDirection === 'asc' ? 1 : -1;
+        
+        if (field === 'email') {
+          return (a.email || '').localeCompare(b.email || '') * direction;
+        }
+        
+        if (field === 'displayName') {
+          return (a.displayName || '').localeCompare(b.displayName || '') * direction;
+        }
+        
+        if (field === 'lastLogin') {
+          const aTime = a.lastLogin ? a.lastLogin.toMillis() : 0;
+          const bTime = b.lastLogin ? b.lastLogin.toMillis() : 0;
+          return (aTime - bTime) * direction;
+        }
+        
+        // Default to createdAt
+        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
+        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
+        return (aTime - bTime) * direction;
+      });
+      
+      console.log(`Returning ${filteredUsers.length} filtered users`);
       
       return {
         users: filteredUsers,
@@ -123,23 +197,45 @@ class UserManagementService {
         hasMore: snapshot.docs.length === pageSize
       };
     } catch (error) {
-      console.error('Error fetching users:', error);
-      throw error;
+      console.error('Error fetching users from accounts collection:', error);
+      return {
+        users: [],
+        lastVisible: null,
+        hasMore: false
+      };
     }
   }
   
   // Get a single user by ID
   async getUserById(userId: string): Promise<UserProfile | null> {
     try {
+      console.log(`Fetching user with ID ${userId}`);
       const userDoc = await getDoc(doc(db, 'accounts', userId));
       
       if (!userDoc.exists()) {
+        console.log(`User ${userId} not found`);
         return null;
       }
       
+      const data = userDoc.data();
+      console.log(`Found user ${userId}:`, data);
+      
+      // Map Firestore document to UserProfile structure
       return {
         id: userDoc.id,
-        ...userDoc.data()
+        email: data.email || '',
+        displayName: data.username || '',
+        photoURL: data.profilePicUrl || '',
+        role: data.role || 'user',
+        status: data.status || 'active',
+        createdAt: data.dateJoined || Timestamp.now(),
+        lastLogin: data.lastLogin,
+        metadata: {
+          lastIpAddress: data.lastIpAddress,
+          lastDevice: data.lastDevice,
+          lastBrowser: data.lastBrowser,
+          lastOs: data.lastOs
+        }
       } as UserProfile;
     } catch (error) {
       console.error(`Error fetching user ${userId}:`, error);
@@ -320,17 +416,24 @@ class UserManagementService {
   // Get user activity history
   async getUserActivityHistory(userId: string, limitParam = 20): Promise<UserActivity[]> {
     try {
-      // Ensure limit is a number
-      const pageLimit = typeof limitParam === 'number' ? limitParam : parseInt(String(limitParam), 10) || 20;
+      console.log(`Fetching activity history for user ${userId}`);
       
+      // Check if the activities collection exists
       const activitiesQuery = query(
         collection(db, 'user_activities'),
         where('userId', '==', userId),
         orderBy('timestamp', 'desc'),
-        limit(pageLimit)
+        limit(limitParam)
       );
       
       const snapshot = await getDocs(activitiesQuery);
+      console.log(`Found ${snapshot.docs.length} activity records`);
+      
+      if (snapshot.empty) {
+        console.log('No activity records found');
+        // Return empty array if no activities found
+        return [];
+      }
       
       return snapshot.docs.map(doc => ({
         id: doc.id,
@@ -338,6 +441,7 @@ class UserManagementService {
       })) as UserActivity[];
     } catch (error) {
       console.error(`Error fetching activity history for user ${userId}:`, error);
+      // Return empty array instead of failing completely
       return [];
     }
   }

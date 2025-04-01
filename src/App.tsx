@@ -7,9 +7,11 @@ import OwnersPage from './components/Owners/OwnersPage';
 import PropertyPage from './components/Property Page/PropertyPage';
 import ListingPage from './components/Owners/ListingPage';
 import DevPage from './components/DevPage/DevPage';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
+    <AuthProvider>
       <Router>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -25,6 +27,7 @@ function App() {
         </Routes>
         <ChatManager />
       </Router>
+    </AuthProvider>
   );
 }
 
