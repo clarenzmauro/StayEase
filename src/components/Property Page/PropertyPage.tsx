@@ -39,7 +39,7 @@ interface Property {
   isVerified: boolean;
   leaseTerm: number;
   maxOccupants: number;
-  ownerId: string;
+  ownerId: string; 
   propertyLifestyle: string;
   propertyLocation: string;
   propertyLocationGeo: any;
