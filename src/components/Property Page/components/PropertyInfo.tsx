@@ -6,7 +6,6 @@ interface PropertyInfoProps {
     bedroomCount: number;
     bathroomCount: number;
     viewCount: number;
-    propertyDesc: string;
     propertyTags?: string[];
     houseRules?: string[];
     propertyName?: string;
@@ -37,11 +36,6 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
             <span>{property.viewCount} views</span>
           </div>
         </div>
-      </div>
-
-      <div className="property-details">
-        <div className="section-title">About this place</div>
-        <p>{property.propertyDesc}</p>
       </div>
 
       <div className="amenities-section">
