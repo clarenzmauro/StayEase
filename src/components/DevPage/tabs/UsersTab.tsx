@@ -175,6 +175,14 @@ const UsersTab: React.FC = () => {
   const toggleUserAccess = async (userId: string, currentStatus: 'active' | 'restricted') => {
     const newStatus = currentStatus === 'active' ? 'restricted' : 'active';
     
+    // Ask for confirmation when restricting a user
+    if (newStatus === 'restricted') {
+      const confirmRestrict = window.confirm(
+        "This action will immediately prevent the user from accessing any part of StayEase. Are you sure you want to restrict this user?"
+      );
+      if (!confirmRestrict) return;
+    }
+    
     try {
       const userRef = doc(db, 'accounts', userId);
       await updateDoc(userRef, { status: newStatus });
