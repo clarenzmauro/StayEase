@@ -43,6 +43,7 @@ interface PropertyType {
   viewCount?: number;
   interestedCount?: number;
   propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[]; // Updated to handle both Firebase and MongoDB
+  isHidden?: boolean; // Added to track if property should be hidden from users
   [key: string]: any;
 }
 
@@ -279,6 +280,9 @@ export function HomePage() {
   // Filter properties based on search and filters
   useEffect(() => {
     let filtered = [...properties];
+
+    // First filter out hidden properties
+    filtered = filtered.filter(property => !property.isHidden);
 
     // 1. Apply ALL filters first
     // Price range filter
