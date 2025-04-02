@@ -79,6 +79,7 @@ export function HomePage() {
   const [isMobileFilterVisible, setIsMobileFilterVisible] = useState(false);
 
   const getImageUrl = (property: PropertyType, index: number = 0) => {
+    // This function uses API_URL from config, which defaults the server port to 3000, to fetch images.
     if (!property.propertyPhotos) return "";
 
     // Handle MongoDB-style photos (array of strings)

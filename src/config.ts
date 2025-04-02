@@ -1,10 +1,12 @@
 // Determine API URL based on environment and current host
 export function getApiUrl() {
-  if (process.env.NODE_ENV === 'production') {
-    return ''; // Empty string for production (uses relative paths)
+  const nodeEnv = (typeof process !== 'undefined' && process.env && process.env.NODE_ENV) || 'development';
+  if (nodeEnv === 'production') {
+    return ''; // Use relative paths in production
   }
   const host = window.location.hostname;
-  return `http://${host}:3000`;
+  const port = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_PORT) || "3000";
+  return `http://${host}:${port}`;
 }
 
 export const API_URL = getApiUrl();
