@@ -40,14 +40,12 @@ interface Property {
   leaseTerm: number;
   maxOccupants: number;
   ownerId: string;
-  propertyDesc: string;
   propertyLifestyle: string;
   propertyLocation: string;
   propertyLocationGeo: any;
   propertyName: string;
   propertyPhotos: string[];
   propertyPrice: number;
-  propertySize: number;
   propertyTags: string[];
   propertyType: string;
   securityDeposit: number;
