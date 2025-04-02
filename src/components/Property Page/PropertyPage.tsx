@@ -726,7 +726,19 @@ const PropertyPage = () => {
         <PropertyInfo property={property} host={host} />
 
         <BookingCard
-          property={property}
+          property={{
+            propertyPrice: property.propertyPrice,
+            dateAvailability: property.dateAvailability,
+            maxOccupants: property.maxOccupants,
+            floorLevel: property.floorLevel,
+            furnishingStatus: property.furnishingStatus,
+            propertyLifestyle: property.propertyLifestyle,
+            propertyType: property.propertyType,
+            securityDeposit: property.securityDeposit,
+            leaseTerm: property.leaseTerm,
+            allowViewing: property.allowViewing,
+            interestedApplicants: property.interestedApplicants
+          }}
           onInterestedClick={handleInterestedClick}
           isInterested={property.interestedApplicants?.includes(auth.currentUser?.uid || '') || false}
         />
