@@ -6,6 +6,7 @@ import ReportsTab from './tabs/ReportsTab';
 import RoadmapTab from './tabs/RoadmapTab';
 import ChangelogTab from './tabs/ChangelogTab';
 import './FeedbackPage.css';
+import logoSvg from '../../assets/STAY.svg';
 
 // Tab definition interface for maintainability
 interface TabConfig {
@@ -62,7 +63,7 @@ const FeedbackPage: React.FC = () => {
     <div className="feedback-page">
       <header className="feedback-page-header">
         <div className="feedback-page-logo" onClick={() => navigate('/')}>
-          <img src="/src/assets/STAY.svg" alt="StayEase Logo" />
+          <img src={logoSvg} alt="StayEase Logo" />
         </div>
         <h1>Feedback Portal</h1>
         <div className="feedback-page-user">

@@ -8,6 +8,7 @@ import UsersTab from './tabs/UsersTab';
 import PropertiesTab from './tabs/PropertiesTab';
 import SystemTab from './tabs/SystemTab';
 import './DevPage.css';
+import logoSvg from '../../assets/STAY.svg';
 
 // Email that has instant developer access
 const DEVELOPER_EMAIL = 'm27oflegend@gmail.com';
@@ -111,7 +112,7 @@ const DevPage: React.FC = () => {
     <div className="dev-page">
       <header className="dev-page-header">
         <div className="dev-page-logo" onClick={() => navigate('/')}>
-          <img src="/src/assets/STAY.svg" alt="StayEase Logo" />
+          <img src={logoSvg} alt="StayEase Logo" />
         </div>
         <h1>Developer Dashboard</h1>
         <div className="dev-page-user">
