@@ -57,14 +57,14 @@ interface PropertyType {
   propertyType: string;
   propertyTags: string[];
   owner?: string;
-  label: string;
+  label?: string;
   datePosted?: {
     toMillis: () => number;
   };
   viewCount?: number;
   interestedCount?: number;
-  propertyPhotos?: { [key: string]: { pictureUrl: string, label: string } } | string[]; // Updated to handle both Firebase and MongoDB
-  [key: string]: any;
+  propertyPhotos?: { [key: string]: { pictureUrl: string; label: string } } | string[];
+  pictureUrl?: string;
 }
 
 const propertyTypes = ['Dormitory', 'Apartment', 'Room', 'House', 'Condo'];
@@ -86,7 +86,7 @@ const PLACEHOLDER_IMAGE = {
   file: null,
 };
 
-export function ListingPage() {
+export function ListingPage(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -425,7 +425,7 @@ export function ListingPage() {
 };
 
 
-  const getImageUrl = (property: PropertyType, index: number = 0) => {
+  const getImageUrl = (property: PropertyType, index = 0): string => {
     if (!property.propertyPhotos) return '';
 
     // Handle MongoDB-style photos (array of strings)
@@ -564,6 +564,7 @@ export function ListingPage() {
         interestedApplicants: [],
         comments: [],
         propertyPhotos: [],
+        isDisabled: false, // Adding the new field with default value false
       };
 
       if (isEditing && id) {
