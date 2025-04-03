@@ -316,5 +316,5 @@ const ShowApplicants: React.FC<ShowApplicantsProps> = ({
     </div>
   );
 };
-
+ 
 export default ShowApplicants;
