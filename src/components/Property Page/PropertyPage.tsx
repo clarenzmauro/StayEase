@@ -744,11 +744,20 @@ const PropertyPage = () => {
         />
       </div>
 
-      {property && (
+      {property && id && (
         <ShowApplicants
           show={showApplicants}
           onClose={() => setShowApplicants(false)}
-          interestedApplicants={property.interestedApplicants}
+          interestedApplicants={property.interestedApplicants || []}
+          propertyId={id}
+          setInterestedApplicants={(newApplicants: string[]) => {
+            if (property) {
+              setProperty({
+                ...property,
+                interestedApplicants: newApplicants
+              });
+            }
+          }}
         />
       )}
 
