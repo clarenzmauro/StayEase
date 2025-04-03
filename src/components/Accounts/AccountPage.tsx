@@ -21,6 +21,8 @@ interface PropertyType {
   viewCount?: number;
   interestedCount?: number;
   propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[];
+  applicationStatus?: 'pending' | 'accepted' | 'denied';
+  appliedAt?: number;
   [key: string]: any;
 }
 
@@ -575,7 +577,10 @@ const AccountPage = () => {
                       <h4 key={`${dorm.id}-name`}>{dorm.propertyName}</h4>
                       <p key={`${dorm.id}-location`}>{dorm.propertyLocation}</p>
                       <p key={`${dorm.id}-type`}>{dorm.propertyType}</p>
-                      <p key={`${dorm.id}-rent`}>₱{dorm.rent}/month</p>
+                      <p key={`${dorm.id}-rent`}>₱{dorm.propertyPrice}/month</p>
+                      <div className={`application-status ${dorm.applicationStatus || 'pending'}`}>
+                        {dorm.applicationStatus ? dorm.applicationStatus.charAt(0).toUpperCase() + dorm.applicationStatus.slice(1) : 'Pending'}
+                      </div>
                     </div>
                   </div>
                 ))
