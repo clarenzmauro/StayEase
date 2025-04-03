@@ -9,7 +9,7 @@ import {
   Timestamp,
   where
 } from 'firebase/firestore';
-import { db, auth } from '../../../firebase/config';
+import { db } from '../../../firebase/config';
 import { User } from 'firebase/auth';
 import { API_URL } from '../../../config';
 import './ChangelogTab.css';
@@ -57,7 +57,7 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
     description: '',
     changes: [{ type: 'new', description: '' }]
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -215,8 +215,6 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
     try {
       setSubmitting(true);
       setError(null);
-      
-      let imageId = '';
       
       // Skip image upload for now since API endpoint isn't available
       // Add entry to Firestore without image
