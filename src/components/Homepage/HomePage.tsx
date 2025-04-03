@@ -90,6 +90,8 @@ export function HomePage(): JSX.Element {
     // Handle MongoDB-style photos (array of strings)
     if (Array.isArray(property.propertyPhotos)) {
       const photoId = property.propertyPhotos[index];
+      // Use relative paths in production (API_URL will be empty string)
+      // Otherwise use the full API_URL path
       return `${API_URL}/api/property-photos/${photoId}/image`;
     }
 

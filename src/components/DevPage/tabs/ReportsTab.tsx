@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { collection, getDocs, query, where, addDoc, doc, updateDoc, Timestamp, orderBy, DocumentData } from 'firebase/firestore';
+import { collection, getDocs, query, where, addDoc, doc, updateDoc, Timestamp, orderBy, DocumentData, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import './ReportsTab.css';
 
@@ -57,6 +57,8 @@ interface ReportsState {
     assignee: string;
   };
   error: string | null;
+  isDeleteConfirmOpen: boolean;
+  commentToDelete: Comment | null;
 }
 
 // Initial state
@@ -80,7 +82,9 @@ const initialState: ReportsState = {
     category: 'bug',
     assignee: '',
   },
-  error: null
+  error: null,
+  isDeleteConfirmOpen: false,
+  commentToDelete: null
 };
 
 const ReportsTab: React.FC = () => {
@@ -312,8 +316,86 @@ const ReportsTab: React.FC = () => {
     }
   }, [state.developers, state.newComment, state.selectedReport, showError]);
 
+  const handleDeleteReport = useCallback(async () => {
+    if (!state.selectedReport) return;
+    
+    try {
+      const reportRef = doc(db, 'reports', state.selectedReport.id);
+      await deleteDoc(reportRef);
+      
+      setState(prev => ({
+        ...prev,
+        reports: prev.reports.filter(report => report.id !== state.selectedReport!.id),
+        filteredReports: prev.filteredReports.filter(report => report.id !== state.selectedReport!.id),
+        isModalOpen: false,
+        selectedReport: null,
+        isDeleteConfirmOpen: false,
+        commentToDelete: null
+      }));
+      
+      showError('Report successfully deleted');
+    } catch (error) {
+      console.error('Error deleting report:', error);
+      showError('Failed to delete report. Please try again.');
+    }
+  }, [state.selectedReport, showError]);
+
+  const handleDeleteComment = useCallback(async () => {
+    if (!state.selectedReport || !state.commentToDelete) return;
+    
+    try {
+      const updatedComments = state.selectedReport.comments.filter(
+        comment => comment.id !== state.commentToDelete!.id
+      );
+      
+      const reportRef = doc(db, 'reports', state.selectedReport.id);
+      const dateUpdated = new Date();
+      await updateDoc(reportRef, { 
+        comments: updatedComments,
+        dateUpdated
+      });
+      
+      const updatedReport = {
+        ...state.selectedReport,
+        comments: updatedComments,
+        dateUpdated
+      };
+      
+      setState(prev => ({
+        ...prev,
+        reports: prev.reports.map(report => 
+          report.id === updatedReport.id ? updatedReport : report
+        ),
+        selectedReport: updatedReport,
+        commentToDelete: null
+      }));
+      
+      showError('Comment deleted successfully');
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      showError('Failed to delete comment. Please try again.');
+    }
+  }, [state.selectedReport, state.commentToDelete, showError]);
+
+  const confirmDeleteComment = useCallback((comment: Comment) => {
+    setState(prev => ({ ...prev, commentToDelete: comment }));
+  }, []);
+
+  const cancelDeleteComment = useCallback(() => {
+    setState(prev => ({ ...prev, commentToDelete: null }));
+  }, []);
+
+  const toggleDeleteConfirm = useCallback(() => {
+    setState(prev => ({ ...prev, isDeleteConfirmOpen: !prev.isDeleteConfirmOpen }));
+  }, []);
+
   const closeModal = useCallback(() => {
-    setState(prev => ({ ...prev, isModalOpen: false, selectedReport: null }));
+    setState(prev => ({ 
+      ...prev, 
+      isModalOpen: false, 
+      selectedReport: null,
+      isDeleteConfirmOpen: false 
+    }));
   }, []);
   
   const toggleCreateModal = useCallback(() => {
@@ -649,7 +731,16 @@ const ReportsTab: React.FC = () => {
       <div className="report-modal" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3>{state.selectedReport.title}</h3>
-          <button className="close-modal" onClick={closeModal}>×</button>
+          <div className="modal-header-actions">
+            <button 
+              className="delete-report-btn"
+              onClick={toggleDeleteConfirm}
+              title="Delete report"
+            >
+              Delete
+            </button>
+            <button className="close-modal" onClick={closeModal}>×</button>
+          </div>
         </div>
         
         <div className="modal-content">
@@ -712,7 +803,16 @@ const ReportsTab: React.FC = () => {
                   <div key={comment.id} className="comment-item">
                     <div className="comment-header">
                       <span className="comment-author">{getDeveloperName(comment.author)}</span>
-                      <span className="comment-date">{formatDate(comment.dateCreated)}</span>
+                      <div className="comment-actions">
+                        <span className="comment-date">{formatDate(comment.dateCreated)}</span>
+                        <button
+                          className="delete-comment-btn"
+                          onClick={() => confirmDeleteComment(comment)}
+                          title="Delete comment"
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
                     <div className="comment-text">{comment.text}</div>
                   </div>
@@ -739,6 +839,40 @@ const ReportsTab: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Delete Confirmation Modal */}
+      {state.isDeleteConfirmOpen && (
+        <div className="delete-confirm-overlay" onClick={e => e.stopPropagation()}>
+          <div className="delete-confirm-modal">
+            <h4>Confirm Delete</h4>
+            <p>Are you sure you want to delete this report?</p>
+            <p>Title: <strong>{state.selectedReport.title}</strong></p>
+            <p>This action cannot be undone.</p>
+            <div className="confirm-actions">
+              <button className="cancel-btn" onClick={toggleDeleteConfirm}>Cancel</button>
+              <button className="delete-btn" onClick={handleDeleteReport}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {state.commentToDelete && (
+        <div className="delete-confirm-overlay" onClick={e => e.stopPropagation()}>
+          <div className="delete-confirm-modal">
+            <h4>Delete Comment</h4>
+            <p>Are you sure you want to delete this comment?</p>
+            <div className="comment-preview">
+              <div className="preview-author">{getDeveloperName(state.commentToDelete.author)}</div>
+              <div className="preview-content">{state.commentToDelete.text}</div>
+            </div>
+            <p>This action cannot be undone.</p>
+            <div className="confirm-actions">
+              <button className="cancel-btn" onClick={cancelDeleteComment}>Cancel</button>
+              <button className="delete-btn" onClick={handleDeleteComment}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 

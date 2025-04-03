@@ -10,6 +10,7 @@ import DevPage from './components/DevPage/DevPage';
 import { AuthProvider } from './context/AuthContext';
 import { withRestrictionCheck } from './components/common/RestrictedAccessScreen';
 import RestrictedAccessScreen from './components/common/RestrictedAccessScreen';
+import FeedbackPage from './components/Feedback/FeedbackPage';
 
 // Wrap all components with restriction check
 const ProtectedHomePage = withRestrictionCheck(HomePage);
@@ -19,6 +20,7 @@ const ProtectedPropertyPage = withRestrictionCheck(PropertyPage);
 const ProtectedListingPage = withRestrictionCheck(ListingPage);
 const ProtectedDevPage = withRestrictionCheck(DevPage);
 const ProtectedChatManager = withRestrictionCheck(ChatManager);
+const ProtectedFeedbackPage = withRestrictionCheck(FeedbackPage);
 
 function App() {
   return (
@@ -35,6 +37,7 @@ function App() {
           <Route path="/property/:id/:owner-id/view-property" element={<ProtectedPropertyPage />} />
           <Route path="/owner-page/:id/add-property" element={<ProtectedListingPage />} />
           <Route path="/dev" element={<ProtectedDevPage />} />
+          <Route path="/feedback" element={<ProtectedFeedbackPage />} />
           <Route path="/restricted" element={<RestrictedAccessScreen />} />
         </Routes>
         <ProtectedChatManager />
