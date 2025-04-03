@@ -271,6 +271,13 @@
   border-radius: var(--border-radius-md);
   padding: 1.5rem;
   box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.changelog-entry:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .changelog-entry .changelog-header {
@@ -377,6 +384,141 @@
   align-items: center;
   min-height: 200px;
   color: var(--text-secondary);
+}
+
+/* Entry thumbnail */
+.entry-thumbnail img {
+  max-height: 120px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Modal overlay */
+.changelog-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* Modal container */
+.changelog-modal {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 20px 20px 10px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-title {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.modal-title h3 {
+  margin: 5px 0;
+  font-size: 1.4rem;
+}
+
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+}
+
+.close-modal:hover {
+  color: #000;
+}
+
+/* Modal content */
+.modal-content {
+  padding: 20px;
+}
+
+.modal-info {
+  margin-bottom: 15px;
+  color: #666;
+}
+
+.modal-image img {
+  max-width: 100%;
+  border-radius: 6px;
+  margin: 10px 0 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-changes {
+  margin-top: 10px;
+}
+
+/* Modal actions */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 30px;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 20px;
+}
+
+.delete-button {
+  background-color: #ff3b30;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.delete-button:hover {
+  background-color: #e02e24;
+}
+
+.delete-button:disabled {
+  background-color: #ffaaa6;
+  cursor: not-allowed;
+}
+
+/* Error message in modal */
+.modal-content .error-message {
+  margin-bottom: 15px;
 }
 
 /* Responsive styles */

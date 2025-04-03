@@ -7,7 +7,9 @@ import {
   query, 
   serverTimestamp,
   Timestamp,
-  where
+  where,
+  doc,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { User } from 'firebase/auth';
@@ -57,11 +59,17 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
     description: '',
     changes: [{ type: 'new', description: '' }]
   });
-  const [, setImageFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Modal state
+  const [selectedEntry, setSelectedEntry] = useState<ChangelogEntry | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Fetch user role and changelog entries
   useEffect(() => {
@@ -197,6 +205,52 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
     setImagePreview(null);
   };
 
+  // View entry details
+  const handleViewEntry = (entry: ChangelogEntry) => {
+    setSelectedEntry(entry);
+    setShowModal(true);
+  };
+
+  // Close modal
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedEntry(null);
+    setDeleteError(null);
+  };
+
+  // Delete changelog entry
+  const handleDeleteEntry = async (id: string) => {
+    if (!isDeveloper) {
+      setDeleteError('You do not have permission to delete changelog entries');
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setDeleteError(null);
+      
+      await deleteDoc(doc(db, 'changelog', id));
+      
+      // Update entries list after deletion
+      setEntries(entries.filter(entry => entry.id !== id));
+      setShowModal(false);
+      setSelectedEntry(null);
+      
+      // Show success message
+      setSuccessMessage('Changelog entry deleted successfully!');
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 3000);
+    } catch (error) {
+      console.error('Error deleting changelog entry:', error);
+      setDeleteError('An error occurred while deleting the changelog entry');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // Submit new changelog entry
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,8 +270,34 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
       setSubmitting(true);
       setError(null);
       
-      // Skip image upload for now since API endpoint isn't available
-      // Add entry to Firestore without image
+      let imageId = '';
+      
+      // Upload image to MongoDB if it exists
+      if (imageFile) {
+        try {
+          const formData = new FormData();
+          formData.append('image', imageFile);
+          formData.append('label', `Changelog - v${newEntry.version}`);
+          
+          // Use the property-photos endpoint instead of changelog-images
+          const response = await fetch(`${API_URL}/api/property-photos/upload`, {
+            method: 'POST',
+            body: formData,
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to upload image');
+          }
+          
+          const uploadedImage = await response.json();
+          imageId = uploadedImage._id;
+        } catch (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          // Continue without image if upload fails
+        }
+      }
+      
+      // Add entry to Firestore
       const entryData = {
         version: newEntry.version,
         title: newEntry.title,
@@ -226,6 +306,7 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
         releaseDate: serverTimestamp(),
         createdBy: user?.uid,
         createdByEmail: user?.email,
+        ...(imageId && { imageId }),
       };
       
       await addDoc(collection(db, 'changelog'), entryData);
@@ -349,14 +430,13 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
                   </div>
                 ) : (
                   <div className="upload-placeholder">
-                    <p>Image uploads temporarily disabled</p>
-                    <label className="upload-button" style={{ opacity: 0.5, cursor: 'not-allowed' }}>
+                    <p>Click to upload an image</p>
+                    <label className="upload-button">
                       Choose File
                       <input
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
-                        disabled
                       />
                     </label>
                   </div>
@@ -422,7 +502,12 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
       ) : (
         <div className="changelog-timeline">
           {entries.map((entry, index) => (
-            <div className="changelog-entry" key={entry.id}>
+            <div 
+              className="changelog-entry" 
+              key={entry.id} 
+              onClick={() => handleViewEntry(entry)}
+              style={{ cursor: 'pointer' }}
+            >
               <div className="changelog-header">
                 <div>
                   <span className="version-badge">v{entry.version}</span>
@@ -432,10 +517,11 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
               
               <h3>{entry.title}</h3>
               
+              {/* Show a thumbnail version of image in timeline */}
               {entry.imageId && (
-                <div className="entry-image">
+                <div className="entry-image entry-thumbnail">
                   <img 
-                    src={`${API_URL}/api/changelog-images/${entry.imageId}`} 
+                    src={`${API_URL}/api/property-photos/${entry.imageId}/image`} 
                     alt={`Screenshot for v${entry.version}`} 
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
@@ -460,6 +546,68 @@ const ChangelogTab: React.FC<ChangelogTabProps> = ({ user }) => {
               {index < entries.length - 1 && <div className="entry-divider"></div>}
             </div>
           ))}
+        </div>
+      )}
+      
+      {/* Modal for entry details */}
+      {showModal && selectedEntry && (
+        <div className="changelog-modal-overlay" onClick={handleCloseModal}>
+          <div className="changelog-modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="modal-title">
+                <span className="version-badge">v{selectedEntry.version}</span>
+                <h3>{selectedEntry.title}</h3>
+              </div>
+              <button className="close-modal" onClick={handleCloseModal}>×</button>
+            </div>
+            
+            <div className="modal-content">
+              <div className="modal-info">
+                <span className="entry-date">{formatDate(selectedEntry.releaseDate)}</span>
+              </div>
+              
+              {deleteError && <div className="error-message">{deleteError}</div>}
+              
+              {/* Full size image in modal */}
+              {selectedEntry.imageId && (
+                <div className="entry-image modal-image">
+                  <img 
+                    src={`${API_URL}/api/property-photos/${selectedEntry.imageId}/image`} 
+                    alt={`Screenshot for v${selectedEntry.version}`} 
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+              
+              <div className="entry-description">
+                <p>{selectedEntry.description}</p>
+              </div>
+              
+              <h4>Changes</h4>
+              <ul className="changes-list modal-changes">
+                {selectedEntry.changes.map((change, changeIndex) => (
+                  <li className={`change-item ${change.type}`} key={changeIndex}>
+                    <span className="change-badge">{change.type === 'new' ? 'New' : change.type === 'improvement' ? 'Improved' : 'Fixed'}</span>
+                    <span className="change-description">{change.description}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              {isDeveloper && (
+                <div className="modal-actions">
+                  <button 
+                    className="delete-button"
+                    onClick={() => handleDeleteEntry(selectedEntry.id)}
+                    disabled={deleting}
+                  >
+                    {deleting ? 'Deleting...' : 'Delete Entry'}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
