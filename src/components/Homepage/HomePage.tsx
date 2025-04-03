@@ -40,10 +40,14 @@ interface PropertyType {
   datePosted?: {
     toMillis: () => number;
   };
+  toMillis: () => number;
   viewCount?: number;
   interestedCount?: number;
-  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[]; // Updated to handle both Firebase and MongoDB
-  isHidden?: boolean; // Added to track if property should be hidden from users
+  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[];
+  isHidden?: boolean;
+  isDisabled?: boolean;
+  rent?: number;
+  pictureUrl?: string;
   [key: string]: any;
 }
 
@@ -54,7 +58,7 @@ declare global {
   }
 }
 
-export function HomePage() {
+export function HomePage(): JSX.Element {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [properties, setProperties] = useState<PropertyType[]>([]);
@@ -79,7 +83,7 @@ export function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileFilterVisible, setIsMobileFilterVisible] = useState(false);
 
-  const getImageUrl = (property: PropertyType, index: number = 0) => {
+  const getImageUrl = (property: PropertyType, index = 0): string => {
     // This function uses API_URL from config, which defaults the server port to 3000, to fetch images.
     if (!property.propertyPhotos) return "";
 
@@ -281,8 +285,8 @@ export function HomePage() {
   useEffect(() => {
     let filtered = [...properties];
 
-    // First filter out hidden properties
-    filtered = filtered.filter(property => !property.isHidden);
+    // First filter out hidden and disabled properties
+    filtered = filtered.filter(property => !property.isHidden && !property.isDisabled);
 
     // 1. Apply ALL filters first
     // Price range filter
