@@ -6,6 +6,7 @@ import {
   onSnapshot,
   doc,
   getDoc,
+  getDocs,
   setDoc,
   serverTimestamp,
   updateDoc,
@@ -94,6 +95,12 @@ export function HomePage(): JSX.Element {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showChatUsers, setShowChatUsers] = useState(false);
+  const [availableChatUsers, setAvailableChatUsers] = useState<Array<{
+    id: string;
+    username: string;
+    profilePicUrl: string;
+  }>>([]);
 
   const getImageUrl = (property: PropertyType, index = 0): string => {
     // This function uses API_URL from config, which defaults the server port to 3000, to fetch images.
@@ -254,6 +261,34 @@ export function HomePage(): JSX.Element {
   }, [user]); // Dependency on user ensures this runs when user logs in/out
 
   useEffect(() => {
+    const fetchChatUsers = async () => {
+      if (!user || !showChatUsers) return;
+
+      try {
+        // Get all users except current user
+        const usersSnapshot = await getDocs(collection(db, 'accounts'));
+        const users = usersSnapshot.docs
+          .map(doc => ({
+            id: doc.id,
+            ...(doc.data() as { username?: string; profilePicUrl?: string })
+          }))
+          .filter(u => u.id !== user.uid)
+          .map(u => ({
+            id: u.id,
+            username: u.username || 'Unknown User',
+            profilePicUrl: u.profilePicUrl || ''
+          }));
+
+        setAvailableChatUsers(users);
+      } catch (error) {
+        console.error('Error fetching chat users:', error);
+      }
+    };
+
+    fetchChatUsers();
+  }, [user, showChatUsers]);
+
+  useEffect(() => {
     const fetchNotifications = async () => {
       if (user) {
         const accountRef = doc(db, "accounts", user.uid);
@@ -291,13 +326,16 @@ export function HomePage(): JSX.Element {
   };
 
   const clearAllNotifications = async () => {
-    if (!user) return;
+    if (!user?.uid) return;
 
     try {
-      const accountRef = doc(db, "accounts", user.uid);
-      await updateDoc(accountRef, {
+      // Update notifications in Firestore
+      const userRef = doc(db, 'accounts', user.uid);
+      await updateDoc(userRef, {
         notifications: []
       });
+
+      // Update local state
       setNotifications([]);
       setUnreadCount(0);
       setShowNotifications(false);
@@ -306,7 +344,41 @@ export function HomePage(): JSX.Element {
     }
   };
 
-  // Add sorting function
+  const startChat = async (userId: string) => {
+    if (!user) return;
+
+    try {
+      // Update current user's chatMates
+      const userRef = doc(db, 'accounts', user.uid);
+      await updateDoc(userRef, {
+        [`chatMates.${userId}`]: true
+      });
+
+      // Update selected user's chatMates
+      const recipientRef = doc(db, 'accounts', userId);
+      await updateDoc(recipientRef, {
+        [`chatMates.${user.uid}`]: true
+      });
+
+      // Store in session that this chat should be active
+      const activeChats = JSON.parse(sessionStorage.getItem('activeChats') || '{}');
+      activeChats[userId] = true;
+      sessionStorage.setItem('activeChats', JSON.stringify(activeChats));
+
+      // Manually dispatch storage event since it doesn't fire in the same window
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'activeChats',
+        newValue: JSON.stringify(activeChats),
+        storageArea: sessionStorage
+      }));
+
+      // Close the dropdown
+      setShowChatUsers(false);
+    } catch (error) {
+      console.error('Error starting chat:', error);
+    }
+  };
+
   const sortProperties = (properties: PropertyType[], sortType: string) => {
     switch (sortType) {
       case "most-popular":
@@ -524,7 +596,53 @@ export function HomePage(): JSX.Element {
         </div>
 
         <div className="text-gray-700 flex gap-4 md:gap-6 lg:gap-8 items-center text-2xl">
-          <i className="fa-regular fa-message"></i>
+          <div className="relative">
+            <i 
+              className="fa-regular fa-message cursor-pointer hover:text-gray-500 transition-colors"
+              onClick={() => {
+                if (!user) {
+                  handleGoogleSignIn();
+                  return;
+                }
+                setShowChatUsers(!showChatUsers);
+              }}
+            ></i>
+            {showChatUsers && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                <div className="p-4 border-b">
+                  <h3 className="text-lg font-semibold">Chat Users</h3>
+                </div>
+                <div className="divide-y">
+                  {availableChatUsers.length > 0 ? (
+                    availableChatUsers.map((chatUser) => (
+                      <div
+                        key={chatUser.id}
+                        className="p-4 hover:bg-gray-50 cursor-pointer flex items-center gap-3"
+                        onClick={() => startChat(chatUser.id)}
+                      >
+                        {chatUser.profilePicUrl ? (
+                          <img 
+                            src={chatUser.profilePicUrl} 
+                            alt={chatUser.username}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                            <i className="fa-regular fa-user text-gray-400"></i>
+                          </div>
+                        )}
+                        <span className="text-sm text-gray-800">{chatUser.username}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-gray-500">
+                      No users available
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="relative">
             <i 
               className="fa-regular fa-bell cursor-pointer hover:text-gray-500 transition-colors"
