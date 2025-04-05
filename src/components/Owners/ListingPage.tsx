@@ -34,7 +34,6 @@ interface PropertyDetails {
   type: string;
   bedrooms: number;
   bathrooms: number;
-  description: string;
   tags: string[];
   views: number;
   interested: number,
@@ -45,7 +44,6 @@ interface PropertyDetails {
   furnishing: string;
   allowViewing: boolean;
   allowChat: boolean;
-  size: number;
   securityDeposit: number;
   leaseTerm: number;
   lifestyle: string;
@@ -59,14 +57,14 @@ interface PropertyType {
   propertyType: string;
   propertyTags: string[];
   owner?: string;
-  label: string;
+  label?: string;
   datePosted?: {
     toMillis: () => number;
   };
   viewCount?: number;
   interestedCount?: number;
-  propertyPhotos?: { [key: string]: { pictureUrl: string, label: string } } | string[]; // Updated to handle both Firebase and MongoDB
-  [key: string]: any;
+  propertyPhotos?: { [key: string]: { pictureUrl: string; label: string } } | string[];
+  pictureUrl?: string;
 }
 
 const propertyTypes = ['Dormitory', 'Apartment', 'Room', 'House', 'Condo'];
@@ -88,7 +86,7 @@ const PLACEHOLDER_IMAGE = {
   file: null,
 };
 
-export function ListingPage() {
+export function ListingPage(): JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -104,7 +102,6 @@ export function ListingPage() {
     type: 'Dormitory',
     bedrooms: 0,
     bathrooms: 0,
-    description: 'Enter Property Description',
     tags: [],
     views: 0,
     interested: 0,
@@ -115,7 +112,6 @@ export function ListingPage() {
     furnishing: "Not Furnished",
     allowViewing: true,
     allowChat: true,
-    size: 0,
     securityDeposit: 0,
     leaseTerm: 0,
     lifestyle: "Mixed Gender"
@@ -198,7 +194,6 @@ export function ListingPage() {
               type: data.propertyType || "Dormitory",
               bedrooms: data.bedrooms || 0,
               bathrooms: data.bathrooms || 0,
-              description: data.description || "",
               tags: data.propertyTags || [],
               views: data.viewCount || 0,
               interested: data.interestedCount || 0,
@@ -209,7 +204,6 @@ export function ListingPage() {
               furnishing: data.furnishing || "Not Furnished",
               allowViewing: data.allowViewing || false,
               allowChat: data.allowChat || false,
-              size: data.size || 0,
               securityDeposit: data.securityDeposit || 0,
               leaseTerm: data.leaseTerm || 0,
               lifestyle: data.lifestyle || "Mixed Gender"
@@ -375,7 +369,6 @@ export function ListingPage() {
           type: propertyData.propertyType || 'Dormitory',
           bedrooms: propertyData.bedroomCount || 0,
           bathrooms: propertyData.bathroomCount || 0,
-          description: propertyData.propertyDesc || 'Enter Property Description',
           tags: propertyData.propertyTags || [],
           views: propertyData.viewCount || 0,
           interested: propertyData.interestedCount || 0,
@@ -386,7 +379,6 @@ export function ListingPage() {
           furnishing: propertyData.furnishingStatus || "Not Furnished",
           allowViewing: propertyData.allowViewing !== undefined ? propertyData.allowViewing : true,
           allowChat: propertyData.allowChat !== undefined ? propertyData.allowChat : true,
-          size: propertyData.propertySize || 0,
           securityDeposit: propertyData.securityDeposit || 0,
           leaseTerm: propertyData.leaseTerm || 0,
           lifestyle: propertyData.lifestyle || "Mixed Gender",
@@ -433,7 +425,7 @@ export function ListingPage() {
 };
 
 
-  const getImageUrl = (property: PropertyType, index: number = 0) => {
+  const getImageUrl = (property: PropertyType, index = 0): string => {
     if (!property.propertyPhotos) return '';
 
     // Handle MongoDB-style photos (array of strings)
@@ -465,10 +457,6 @@ export function ListingPage() {
       errors.push("Valid property type is required");
       newFieldErrors.type = true;
     }
-    if (!details.description || details.description === "Enter Property Description") {
-      errors.push("Property description is required");
-      newFieldErrors.description = true;
-    }
 
     // Numbers and Measurements
     if (details.price <= 0) {
@@ -486,10 +474,6 @@ export function ListingPage() {
     if (details.maxOccupants <= 0) {
       errors.push("Maximum number of occupants is required");
       newFieldErrors.maxOccupants = true;
-    }
-    if (details.size <= 0) {
-      errors.push("Property size is required");
-      newFieldErrors.size = true;
     }
     if (details.securityDeposit <= 0) {
       errors.push("Security deposit amount is required");
@@ -554,7 +538,6 @@ export function ListingPage() {
 
       const propertyData = {
         propertyName: details.name,
-        propertyDesc: details.description,
         propertyLocation: details.location,
         propertyLocationGeo: details.coordinates,
         propertyType: details.type,
@@ -573,7 +556,6 @@ export function ListingPage() {
         furnishingStatus: details.furnishing,
         allowViewing: details.allowViewing,
         allowChat: details.allowChat,
-        propertySize: details.size,
         securityDeposit: details.securityDeposit,
         leaseTerm: details.leaseTerm,
         propertyLifestyle: details.lifestyle,
@@ -582,6 +564,7 @@ export function ListingPage() {
         interestedApplicants: [],
         comments: [],
         propertyPhotos: [],
+        isDisabled: false, // Adding the new field with default value false
       };
 
       if (isEditing && id) {
@@ -890,16 +873,6 @@ export function ListingPage() {
               )}
             </div>
 
-            <div className="form-group">
-              <label htmlFor="propertyDescription">Property Description</label>
-              <textarea
-                id="propertyDescription"
-                placeholder="Enter Property Description"
-                value={details.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-              />
-              {fieldErrors.description && <div className="error-message">Property description is required</div>}
-            </div>
           </div>
 
           <div className="card">
@@ -974,17 +947,6 @@ export function ListingPage() {
                   ))}
                 </select>
                 {fieldErrors.lifestyle && <div className="error-message">Lifestyle preference is required</div>}
-              </div>
-              <div className="form-group">
-                <label htmlFor="size">Size (sqm)</label>
-                <input
-                  id="size"
-                  type="number"
-                  value={details.size}
-                  onChange={(e) => handleChange('size', parseInt(e.target.value))}
-                  min={0}
-                />
-                {fieldErrors.size && <div className="error-message">Property size is required</div>}
               </div>
               <div className="form-group">
                 <label htmlFor="bedroomCount">Bedroom Count</label>

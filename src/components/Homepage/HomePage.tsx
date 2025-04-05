@@ -39,9 +39,14 @@ interface PropertyType {
   datePosted?: {
     toMillis: () => number;
   };
+  toMillis: () => number;
   viewCount?: number;
   interestedCount?: number;
-  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[]; // Updated to handle both Firebase and MongoDB
+  propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[];
+  isHidden?: boolean;
+  isDisabled?: boolean;
+  rent?: number;
+  pictureUrl?: string;
   [key: string]: any;
 }
 
@@ -52,7 +57,7 @@ declare global {
   }
 }
 
-export function HomePage() {
+export function HomePage(): JSX.Element {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [properties, setProperties] = useState<PropertyType[]>([]);
@@ -77,12 +82,15 @@ export function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileFilterVisible, setIsMobileFilterVisible] = useState(false);
 
-  const getImageUrl = (property: PropertyType, index: number = 0) => {
+  const getImageUrl = (property: PropertyType, index = 0): string => {
+    // This function uses API_URL from config, which defaults the server port to 3000, to fetch images.
     if (!property.propertyPhotos) return "";
 
     // Handle MongoDB-style photos (array of strings)
     if (Array.isArray(property.propertyPhotos)) {
       const photoId = property.propertyPhotos[index];
+      // Use relative paths in production (API_URL will be empty string)
+      // Otherwise use the full API_URL path
       return `${API_URL}/api/property-photos/${photoId}/image`;
     }
 
@@ -277,6 +285,9 @@ export function HomePage() {
   // Filter properties based on search and filters
   useEffect(() => {
     let filtered = [...properties];
+
+    // First filter out hidden and disabled properties
+    filtered = filtered.filter(property => !property.isHidden && !property.isDisabled);
 
     // 1. Apply ALL filters first
     // Price range filter

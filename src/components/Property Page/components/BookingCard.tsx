@@ -10,7 +10,6 @@ interface BookingCardProps {
     maxOccupants: number;
     floorLevel: string | number;
     furnishingStatus: string;
-    propertySize: number;
     propertyLifestyle: string;
     propertyType: string;
     securityDeposit: number;
@@ -105,10 +104,6 @@ const BookingCard = ({ property, onInterestedClick, isInterested }: BookingCardP
           <div className="detail-row">
             <span>Lifestyle:</span>
             <span>{property.propertyLifestyle}</span>
-          </div>
-          <div className="detail-row">
-            <span>Size:</span>
-            <span>{property.propertySize} sqm</span>
           </div>
           <div className="detail-row">
             <span>Allow Viewing:</span>

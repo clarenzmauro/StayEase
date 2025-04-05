@@ -4,7 +4,7 @@ export function getApiUrl() {
     return ''; // Empty string for production (uses relative paths)
   }
   const host = window.location.hostname;
-  return `http://${host}:3000`;
+  return `http://${host}:3000`; // Use HTTP instead of HTTPS for local development
 }
 
 export const API_URL = getApiUrl();

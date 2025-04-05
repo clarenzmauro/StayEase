@@ -22,7 +22,7 @@
 }
 
 /* Base styles */
-.dev-page {
+.feedback-page {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -30,7 +30,7 @@
 }
 
 /* Header styles */
-.dev-page-header {
+.feedback-page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -39,27 +39,27 @@
   box-shadow: var(--shadow-sm);
 }
 
-.dev-page-logo {
+.feedback-page-logo {
   cursor: pointer;
 }
 
-.dev-page-logo img {
+.feedback-page-logo img {
   height: 40px;
 }
 
-.dev-page-user {
+.feedback-page-user {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
 }
 
-.dev-page-user span {
+.feedback-page-user span {
   font-size: 0.9rem;
   color: var(--text-secondary);
 }
 
-.dev-page-user button {
-  background-color: var(--error-color);
+.feedback-page-user button {
+  background-color: var(--primary-color);
   color: var(--text-light);
   border: none;
   padding: var(--spacing-xs) var(--spacing-md);
@@ -69,12 +69,12 @@
   transition: background-color 0.2s ease;
 }
 
-.dev-page-user button:hover {
-  background-color: var(--error-hover);
+.feedback-page-user button:hover {
+  background-color: var(--primary-hover);
 }
 
 /* Content area */
-.dev-page-content {
+.feedback-page-content {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -82,7 +82,7 @@
 }
 
 /* Tabs navigation */
-.dev-page-tabs {
+.feedback-page-tabs {
   display: flex;
   gap: var(--spacing-xs);
   margin-bottom: var(--spacing-xl);
@@ -90,7 +90,7 @@
   padding-bottom: var(--spacing-md);
 }
 
-.dev-page-tabs button {
+.feedback-page-tabs button {
   background-color: transparent;
   border: none;
   padding: var(--spacing-sm) var(--spacing-lg);
@@ -100,17 +100,17 @@
   transition: all 0.2s ease;
 }
 
-.dev-page-tabs button:hover {
+.feedback-page-tabs button:hover {
   background-color: #f1f1f1;
 }
 
-.dev-page-tabs button.active {
+.feedback-page-tabs button.active {
   background-color: var(--primary-color);
   color: var(--text-light);
 }
 
 /* Tab content area */
-.dev-page-tab-content {
+.feedback-page-tab-content {
   background-color: var(--bg-light);
   border-radius: var(--border-radius-lg);
   padding: var(--spacing-xl);
@@ -119,7 +119,7 @@
 }
 
 /* Loading and error states */
-.dev-page-loading {
+.feedback-page-loading {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -128,58 +128,29 @@
   color: var(--text-secondary);
 }
 
-.dev-page-unauthorized {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  gap: var(--spacing-md);
-}
-
-.dev-page-unauthorized h1 {
-  color: var(--error-color);
-  margin-bottom: var(--spacing-xs);
-}
-
-.dev-page-unauthorized button {
-  background-color: var(--primary-color);
-  color: var(--text-light);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background-color 0.2s ease;
-}
-
-.dev-page-unauthorized button:hover {
-  background-color: var(--primary-hover);
-}
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .dev-page-header {
+  .feedback-page-header {
     flex-direction: column;
     gap: var(--spacing-md);
     padding: var(--spacing-md);
   }
   
-  .dev-page-content {
+  .feedback-page-content {
     padding: var(--spacing-md);
   }
   
-  .dev-page-tab-content {
+  .feedback-page-tab-content {
     padding: var(--spacing-md);
   }
   
-  .dev-page-tabs {
+  .feedback-page-tabs {
     overflow-x: auto;
     width: 100%;
     padding-bottom: var(--spacing-sm);
   }
   
-  .dev-page-tabs button {
+  .feedback-page-tabs button {
     white-space: nowrap;
     padding: var(--spacing-xs) var(--spacing-md);
   }

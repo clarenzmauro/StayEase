@@ -8,6 +8,8 @@ interface Applicant {
   profilePicUrl: string;
   username: string;
   contactNumber: string;
+  status: 'pending' | 'accepted' | 'denied';
+  appliedAt: number;
   // Add any other fields you expect from the applicant data
 }
 

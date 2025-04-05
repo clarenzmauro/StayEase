@@ -3,13 +3,13 @@ interface PropertyInfoProps {
     bedroomCount: number;
     bathroomCount: number;
     viewCount: number;
-    propertyDesc: string;
     propertyTags?: string[];
     houseRules?: string[];
     propertyName?: string;
     propertyLocation?: string;
     propertyPhotos?: string[];
     interestedCount?: number;
+    propertyDesc?: string[];
     ownerId?: string;
   };
   host: {
@@ -49,8 +49,8 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
           </p>
         </div>
       </div>
-    )
-  }
+    );
+  };
 
   const About = () => {
     return (
@@ -58,16 +58,22 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
         <h2 className="text-xl font-semibold mb-2">About this place</h2>
         <p className="font-light">{property.propertyDesc}</p>
       </div>
-    )
-  }
+    );
+  };
 
   const Amenities = () => {
     return (
       <div className="py-8">
         <h2 className="text-xl font-semibold mb-2">What this place offers</h2>
-        
-        <div><i className="fa-solid fa-circle-check me-4 text-indigo-400 bg-clip-text"></i>{property.bedroomCount} bedroom</div>
-        <div><i className="fa-solid fa-circle-check me-4 text-indigo-400 bg-clip-text"></i>{property.bathroomCount} bath</div>
+
+        <div>
+          <i className="fa-solid fa-circle-check me-4 text-indigo-400 bg-clip-text"></i>
+          {property.bedroomCount} bedroom
+        </div>
+        <div>
+          <i className="fa-solid fa-circle-check me-4 text-indigo-400 bg-clip-text"></i>
+          {property.bathroomCount} bath
+        </div>
 
         {property.propertyTags?.map((tag, index) => (
           <div key={`tag-${index}`}>
@@ -76,8 +82,8 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
           </div>
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   const Rules = () => {
     return (
@@ -90,8 +96,8 @@ const PropertyInfo = ({ property, host }: PropertyInfoProps) => {
           </div>
         ))}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <div className="px-4">

@@ -51,15 +51,13 @@ interface Property {
   isVerified: boolean;
   leaseTerm: number;
   maxOccupants: number;
-  ownerId: string;
-  propertyDesc: string;
+  ownerId: string; 
   propertyLifestyle: string;
   propertyLocation: string;
   propertyLocationGeo: any;
   propertyName: string;
   propertyPhotos: string[];
   propertyPrice: number;
-  propertySize: number;
   propertyTags: string[];
   propertyType: string;
   securityDeposit: number;
@@ -850,7 +848,19 @@ export default PropertyPage;
         <PropertyInfo property={property} host={host} />
 
         <BookingCard
-          property={property}
+          property={{
+            propertyPrice: property.propertyPrice,
+            dateAvailability: property.dateAvailability,
+            maxOccupants: property.maxOccupants,
+            floorLevel: property.floorLevel,
+            furnishingStatus: property.furnishingStatus,
+            propertyLifestyle: property.propertyLifestyle,
+            propertyType: property.propertyType,
+            securityDeposit: property.securityDeposit,
+            leaseTerm: property.leaseTerm,
+            allowViewing: property.allowViewing,
+            interestedApplicants: property.interestedApplicants
+          }}
           onInterestedClick={handleInterestedClick}
           isInterested={
             property.interestedApplicants?.includes(
@@ -860,11 +870,20 @@ export default PropertyPage;
         />
       </div>
 
-      {property && (
+      {property && id && (
         <ShowApplicants
           show={showApplicants}
           onClose={() => setShowApplicants(false)}
-          interestedApplicants={property.interestedApplicants}
+          interestedApplicants={property.interestedApplicants || []}
+          propertyId={id}
+          setInterestedApplicants={(newApplicants: string[]) => {
+            if (property) {
+              setProperty({
+                ...property,
+                interestedApplicants: newApplicants
+              });
+            }
+          }}
         />
       )}
 

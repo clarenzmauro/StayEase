@@ -24,7 +24,7 @@ import instagramLogo from '../../assets/instagram-logo.png';
 import xLogo from '../../assets/x-logo.png';
 import dateJoinedLogo from '../../assets/date-joined.png';
 
-const SkeletonLoading: React.FC = () => {
+const SkeletonLoading: React.FC = (): JSX.Element => {
   return (
     <div className="skeleton-container">
       {/* Skeleton Navbar */}
@@ -77,7 +77,8 @@ interface PropertyType {
   viewCount?: number;
   interestedCount?: number;
   propertyPhotos?: { [key: string]: { pictureUrl: string } } | string[];
-  [key: string]: any;
+  isDisabled?: boolean;
+  pictureUrl?: string;
 }
 
 interface OwnerData {
@@ -117,7 +118,7 @@ interface TimestampType {
   nanoseconds: number;
 }
 
-const OwnersPage: React.FC = () => {
+const OwnersPage: React.FC = (): JSX.Element => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -128,7 +129,7 @@ const OwnersPage: React.FC = () => {
   const [userExistingReview, setUserExistingReview] = useState<any>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [ownerData, setOwnerData] = useState<OwnerData | null>(null);
-  const [isDashboardOpen, setIsDashboardOpen] = useState(false);
+  const [isDashboardOpen, setIsDashboardOpen] = useState(true);
   const [properties, setProperties] = useState<any[]>([]);
   const [isOwnerViewing, setIsOwnerViewing] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -146,6 +147,19 @@ const OwnersPage: React.FC = () => {
   const [showMenuDropdown, setShowMenuDropdown] = useState(false);
 
   const firstName = ownerData?.username ? ownerData.username.split(' ')[0] : 'Owner';
+
+  // Toggle property disabled state
+  const handleToggleDisabled = async (propertyId: string, currentState: boolean) => {
+    try {
+      const propertyRef = doc(db, 'properties', propertyId);
+      await updateDoc(propertyRef, {
+        isDisabled: !currentState
+      });
+    } catch (error) {
+      console.error("Error toggling property state:", error);
+      alert("Error updating property status. Please try again.");
+    }
+  };
 
   // Delete Property Function
   const handleDeleteProperty = async (propertyId: string) => {
@@ -781,7 +795,7 @@ const OwnersPage: React.FC = () => {
   // ------------------------------
   // GET PROPERTY IMAGE URL
   // ------------------------------
-  const getImageUrl = (property: PropertyType, index: number = 0) => {
+  const getImageUrl = (property: PropertyType, index = 0): string => {
     if (!property.propertyPhotos) return '';
 
     // Handle MongoDB-style photos (array of strings)
@@ -950,7 +964,7 @@ const OwnersPage: React.FC = () => {
                 <div key={property.id}>
                   <div className="owner-dashboard-image-container">
                     <div 
-                      className="owner-dashboard-property-info"
+                      className={`owner-dashboard-property-info ${property.isDisabled ? 'disabled' : ''}`}
                       onClick={(e) => {
                         e.preventDefault();
                         navigate(`/property/${property.id}`, { state: { isOwner: true } });
@@ -978,6 +992,15 @@ const OwnersPage: React.FC = () => {
                         onClick={(e) => { e.stopPropagation(); handleDeleteProperty(property.id); }}
                       >
                         🗑️
+                      </button>
+                      <button 
+                        className="toggle-disabled-btn" 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          handleToggleDisabled(property.id, property.isDisabled);
+                        }}
+                      >
+                        {property.isDisabled ? 'Enable' : 'Disable'}
                       </button>
                     </div>
                     <img 

@@ -6,31 +6,81 @@ import {
   browserLocalPersistence 
 } from 'firebase/auth';
 import { auth, db } from '../firebase/config';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  serverTimestamp, 
+  onSnapshot, 
+  Timestamp,
+  FieldValue 
+} from 'firebase/firestore';
+
+// Define specific types for user statuses and roles
+export type UserStatus = 'active' | 'restricted' | null;
+export type UserRole = 'user' | 'owner' | 'admin' | null;
+
+// Define the structure of account data in Firestore
+export interface AccountData {
+  chatMates: Record<string, unknown>;
+  convoId: string;
+  comments: {
+    commentCounter: number;
+  };
+  contactNumber: string;
+  dashboardId: string;
+  dateJoined: Timestamp | FieldValue | null;
+  description: string;
+  email: string;
+  followerCount: number;
+  isOwner: boolean;
+  role?: UserRole;
+  itemsInterested: string[];
+  itemsSaved: string[];
+  profilePicUrl: string;
+  rating: number;
+  socials: {
+    Facebook: string;
+    Instagram: string;
+    X: string;
+  };
+  testField: string;
+  username: string;
+  status: UserStatus;
+}
 
 interface AuthContextType {
   user: User | null;
+  userStatus: UserStatus;
+  userRole: UserRole;
+  userDoc: AccountData | null;
   loading: boolean;
   error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
+  userStatus: null,
+  userRole: null,
+  userDoc: null,
   loading: true,
   error: null
 });
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = (): AuthContextType => useContext(AuthContext);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [userStatus, setUserStatus] = useState<UserStatus>(null);
+  const [userRole, setUserRole] = useState<UserRole>(null);
+  const [userDoc, setUserDoc] = useState<AccountData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let isSubscribed = true;
 
-    const initializeAuth = async () => {
+    const initializeAuth = async (): Promise<void> => {
       try {
         // Set persistence explicitly
         await setPersistence(auth, browserLocalPersistence);
@@ -43,6 +93,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (currentUser && isSubscribed) {
           console.log("User already signed in:", currentUser.email);
           setUser(currentUser);
+          
+          // Fetch user status
+          const userDocRef = doc(db, "accounts", currentUser.uid);
+          const userDocSnapshot = await getDoc(userDocRef);
+          
+          if (userDocSnapshot.exists()) {
+            const userData = userDocSnapshot.data() as AccountData;
+            setUserStatus(userData.status || 'active');
+            setUserRole(userData.role || 'user');
+            setUserDoc(userData);
+          }
         }
       } catch (error) {
         console.error("Auth initialization error:", error);
@@ -60,21 +121,49 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initializeAuth();
 
     // Set up auth state listener
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      console.log("Auth state changed:", user?.email);
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      console.log("Auth state changed:", currentUser?.email);
 
       if (!isSubscribed) return;
 
-      if (user) {
+      if (currentUser) {
         try {
-          console.log("User authenticated:", user.email);
-          setUser(user);
+          console.log("User authenticated:", currentUser.email);
+          setUser(currentUser);
           setError(null);
 
-          const userDoc = await getDoc(doc(db, "accounts", user.uid));
-          if (!userDoc.exists()) {
+          const userDocRef = doc(db, "accounts", currentUser.uid);
+          const userDocSnapshot = await getDoc(userDocRef);
+          
+          if (!userDocSnapshot.exists()) {
             console.log("Creating user document...");
-            await createUserDocument(user);
+            await createUserDocument(currentUser);
+            setUserStatus('active');
+            setUserRole('user');
+            
+            // Fetch the newly created document
+            const newUserDocSnapshot = await getDoc(userDocRef);
+            const newUserData = newUserDocSnapshot.data() as AccountData;
+            setUserDoc(newUserData);
+          } else {
+            const userData = userDocSnapshot.data() as AccountData;
+            setUserStatus(userData.status || 'active');
+            setUserRole(userData.role || 'user');
+            setUserDoc(userData);
+            
+            // Setup a listener for real-time status updates
+            const userStatusUnsubscribe = onSnapshot(userDocRef, (doc) => {
+              if (doc.exists() && isSubscribed) {
+                const updatedData = doc.data() as AccountData;
+                setUserStatus(updatedData.status || 'active');
+                setUserRole(updatedData.role || 'user');
+                setUserDoc(updatedData);
+              }
+            });
+            
+            return () => {
+              userStatusUnsubscribe();
+            };
           }
         } catch (error) {
           console.error("Error handling auth state change:", error);
@@ -83,6 +172,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         console.log("User signed out");
         setUser(null);
+        setUserStatus(null);
+        setUserRole(null);
+        setUserDoc(null);
       }
       
       setLoading(false);
@@ -94,12 +186,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const createUserDocument = async (user: User) => {
+  const createUserDocument = async (user: User): Promise<void> => {
     const accountRef = doc(db, "accounts", user.uid);
     const accountSnap = await getDoc(accountRef);
 
     if (!accountSnap.exists()) {
-      const accountData = {
+      const accountData: AccountData = {
         chatMates: {},
         convoId: "",
         comments: {
@@ -112,6 +204,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: user.email || "",
         followerCount: 0,
         isOwner: false,
+        role: 'user',
         itemsInterested: [],
         itemsSaved: [],
         profilePicUrl: user.photoURL || "",
@@ -123,6 +216,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         },
         testField: "",
         username: user.displayName || "",
+        status: 'active', // Default status for new users
       };
 
       try {
@@ -130,12 +224,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("User document created with Google profile data");
       } catch (error) {
         console.error("Error creating account document:", error);
+        throw error;
       }
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error }}>
+    <AuthContext.Provider value={{ user, userStatus, userRole, userDoc, loading, error }}>
       {children}
     </AuthContext.Provider>
   );
