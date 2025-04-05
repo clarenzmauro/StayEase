@@ -564,6 +564,7 @@ export function HomePage(): JSX.Element {
         return;
       }
       setShowNotifications(!showNotifications);
+      setShowChatUsers(false); // Close chat users dropdown when notifications is opened
       if (!showNotifications) {
         markNotificationsAsRead();
       }
@@ -605,6 +606,7 @@ export function HomePage(): JSX.Element {
                   return;
                 }
                 setShowChatUsers(!showChatUsers);
+                setShowNotifications(false); // Close notifications dropdown when chat is opened
               }}
             ></i>
             {showChatUsers && (
