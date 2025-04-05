@@ -8,6 +8,7 @@ import {
   getDoc,
   setDoc,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../../firebase/config.js";
 import { auth } from "../../firebase/config";
@@ -50,6 +51,15 @@ interface PropertyType {
   [key: string]: any;
 }
 
+interface Notification {
+  message: string;
+  type: string;
+  propertyName?: string;
+  userName?: string;
+  timestamp: number;
+  read?: boolean;
+}
+
 // Add global type declaration for the search timeout
 declare global {
   interface Window {
@@ -81,6 +91,9 @@ export function HomePage(): JSX.Element {
   const [, setAuthError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isMobileFilterVisible, setIsMobileFilterVisible] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const getImageUrl = (property: PropertyType, index = 0): string => {
     // This function uses API_URL from config, which defaults the server port to 3000, to fetch images.
@@ -239,6 +252,59 @@ export function HomePage(): JSX.Element {
 
     loadUserFavorites();
   }, [user]); // Dependency on user ensures this runs when user logs in/out
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (user) {
+        const accountRef = doc(db, "accounts", user.uid);
+        const accountDoc = await getDoc(accountRef);
+        const userNotifications = accountDoc.data()?.notifications || [];
+        setNotifications(userNotifications);
+        
+        // Calculate unread count
+        const unread = userNotifications.filter((notif: Notification) => !notif.read).length;
+        setUnreadCount(unread);
+      } else {
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    };
+
+    fetchNotifications();
+  }, [user]);
+
+  const markNotificationsAsRead = async () => {
+    if (!user) return;
+
+    try {
+      const accountRef = doc(db, "accounts", user.uid);
+      await updateDoc(accountRef, {
+        'notifications': notifications.map(notif => ({
+          ...notif,
+          read: true
+        }))
+      });
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+  };
+
+  const clearAllNotifications = async () => {
+    if (!user) return;
+
+    try {
+      const accountRef = doc(db, "accounts", user.uid);
+      await updateDoc(accountRef, {
+        notifications: []
+      });
+      setNotifications([]);
+      setUnreadCount(0);
+      setShowNotifications(false);
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+    }
+  };
 
   // Add sorting function
   const sortProperties = (properties: PropertyType[], sortType: string) => {
@@ -420,6 +486,17 @@ export function HomePage(): JSX.Element {
       }
     };
 
+    const handleBellClick = () => {
+      if (!user) {
+        handleGoogleSignIn();
+        return;
+      }
+      setShowNotifications(!showNotifications);
+      if (!showNotifications) {
+        markNotificationsAsRead();
+      }
+    };
+
     return (
       <nav className="flex justify-between">
         <Link
@@ -448,7 +525,56 @@ export function HomePage(): JSX.Element {
 
         <div className="text-gray-700 flex gap-4 md:gap-6 lg:gap-8 items-center text-2xl">
           <i className="fa-regular fa-message"></i>
-          <i className="fa-regular fa-bell"></i>
+          <div className="relative">
+            <i 
+              className="fa-regular fa-bell cursor-pointer hover:text-gray-500 transition-colors"
+              onClick={handleBellClick}
+            ></i>
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+            {showNotifications && (
+              <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                <div className="p-4 border-b">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-lg font-semibold">Notifications</h3>
+                    <button
+                      onClick={clearAllNotifications}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                </div>
+                <div className="divide-y">
+                  {notifications.length > 0 ? (
+                    notifications.map((notification, index) => (
+                      <div
+                        key={index}
+                        className={`p-4 hover:bg-gray-50 ${
+                          !notification.read ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <p className="text-sm text-gray-800">{notification.message}</p>
+                        <div className="mt-1 text-xs text-gray-500 flex justify-between">
+                          <span>{notification.propertyName}</span>
+                          <span>
+                            {new Date(notification.timestamp).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-gray-500">
+                      No notifications
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <i 
             className="fa-regular fa-user cursor-pointer hover:text-gray-500 transition-colors"
             onClick={handleUserIconClick}
