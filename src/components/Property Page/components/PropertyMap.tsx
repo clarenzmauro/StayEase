@@ -102,20 +102,17 @@ const PropertyMap = ({ locationGeo }: PropertyMapProps) => {
   }, [locationGeo]);
 
   return (
-    <div className="property-map-container">
-      <h2 className="property-map-title">Where you'll be</h2>
-      <div 
-        ref={mapRef} 
-        className="property-map" 
-        style={{ 
-          height: '400px', 
-          width: '100%',
-          borderRadius: '12px',
-          overflow: 'hidden',
-          border: '1px solid #e2e8f0'
-        }} 
-      />
-    </div>
+    <>
+      <div className="py-8 px-4">
+        <h2 className="text-xl font-semibold mb-2">Where you'll be</h2>
+        <div 
+          ref={mapRef} 
+          className="w-full aspect-square overflow-hidden rounded-2xl" 
+        />
+      </div>
+
+      <hr className="text-gray-200 border-t-16" />
+    </>
   );
 };
 

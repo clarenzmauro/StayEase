@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import "./FilterMenu.css";
 
 interface FilterMenuProps {
   onFilterChange: (filters: {

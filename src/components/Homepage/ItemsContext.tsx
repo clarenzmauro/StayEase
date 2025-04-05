@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import './ItemsContext.css';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config.js';
 

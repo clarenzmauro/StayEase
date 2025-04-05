@@ -1,25 +1,37 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { collection, doc, addDoc, serverTimestamp, getDoc, getDocs, query, where, updateDoc, arrayUnion, arrayRemove, deleteDoc } from 'firebase/firestore';
-import { db, auth } from '../../firebase/config';
-import { DocumentData } from 'firebase/firestore';
-import { useAuth } from '../../hooks/useAuth';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import {
+  collection,
+  doc,
+  addDoc,
+  serverTimestamp,
+  getDoc,
+  getDocs,
+  query,
+  where,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  deleteDoc,
+} from "firebase/firestore";
+import { db, auth } from "../../firebase/config";
+import { DocumentData } from "firebase/firestore";
+import { useAuth } from "../../hooks/useAuth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { Link } from "react-router-dom";
 
-import PropertyHeader from './components/PropertyHeader';
-import PropertyGallery from './components/PropertyGallery';
-import PropertyInfo from './components/PropertyInfo';
-import BookingCard from './components/BookingCard';
-import CommentSection from './components/CommentSection';
-import LoginPrompt from './components/LoginPrompt';
-import PropertySkeleton from './components/PropertySkeleton';
-import OwnerSection from './components/OwnerSection';
-import PropertyMap from './components/PropertyMap';
-import ChatModal from '../Chat/ChatModal';
-import ShowApplicants from './components/ShowApplicants';
+import PropertyGallery from "./components/PropertyGallery";
+import PropertyInfo from "./components/PropertyInfo";
+import BookingCard from "./components/BookingCard";
+import CommentSection from "./components/CommentSection";
+import LoginPrompt from "./components/LoginPrompt";
+import PropertySkeleton from "./components/PropertySkeleton";
+import OwnerSection from "./components/OwnerSection";
+import PropertyMap from "./components/PropertyMap";
+import ChatModal from "../Chat/ChatModal";
+import ShowApplicants from "./components/ShowApplicants";
 
-import './PropertyPage.css';
-import ApplicantDetails from './ApplicantDetails';
+import ApplicantDetails from "./ApplicantDetails";
 
 interface Property {
   id: string;
@@ -77,12 +89,12 @@ const PropertyPage = () => {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [newComment, setNewComment] = useState('');
+  const [newComment, setNewComment] = useState("");
   const [userFavorites, setUserFavorites] = useState<string[]>([]);
   const [host, setHost] = useState<DocumentData | null>(null);
-  const [dateSort, ] = useState<'newest' | 'oldest'>('newest');
-  const [likeSort, ] = useState<'mostLiked' | 'leastLiked'>('mostLiked');
-  const [activeSortType, ] = useState<'date' | 'likes'>('date');
+  const [dateSort] = useState<"newest" | "oldest">("newest");
+  const [likeSort] = useState<"mostLiked" | "leastLiked">("mostLiked");
+  const [activeSortType] = useState<"date" | "likes">("date");
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [allowChat, setAllowChat] = useState(false);
   const [editChecker, setEditChecker] = useState(false);
@@ -92,7 +104,10 @@ const PropertyPage = () => {
   const [showApplicants, setShowApplicants] = useState(false);
 
   useEffect(() => {
-    const state = location.state as { isOwner?: boolean; ownerId?: string } | null;
+    const state = location.state as {
+      isOwner?: boolean;
+      ownerId?: string;
+    } | null;
     if (state?.isOwner) {
       setIsOwner(true);
     }
@@ -100,8 +115,12 @@ const PropertyPage = () => {
 
   useEffect(() => {
     // Log the current pathname to identify which URL is used
-    console.log('Current URL:', location.pathname);
-    if (location.pathname.includes('/property/') && location.pathname.includes('/view-property') && !editChecker) {
+    console.log("Current URL:", location.pathname);
+    if (
+      location.pathname.includes("/property/") &&
+      location.pathname.includes("/view-property") &&
+      !editChecker
+    ) {
       setEditChecker(true);
     }
   }, [location, editChecker]);
@@ -114,40 +133,48 @@ const PropertyPage = () => {
     const fetchPropertyData = async () => {
       try {
         if (!id) {
-          console.error('Property ID is undefined');
+          console.error("Property ID is undefined");
           setLoading(false);
           return;
         }
 
-        const propertyDoc = await getDoc(doc(db, 'properties', id));
+        const propertyDoc = await getDoc(doc(db, "properties", id));
         if (propertyDoc.exists()) {
-          const propertyData = { id: propertyDoc.id, ...propertyDoc.data() } as Property;
-          
+          const propertyData = {
+            id: propertyDoc.id,
+            ...propertyDoc.data(),
+          } as Property;
+
           setAllowChat(propertyData.allowChat);
           const propertyPhotosArray = propertyData.propertyPhotos || []; // Assuming this is now an array
 
-      setProperty({
-        ...propertyData,
-        propertyPhotos: propertyPhotosArray // Update the propertyPhotos structure
-      });
+          setProperty({
+            ...propertyData,
+            propertyPhotos: propertyPhotosArray, // Update the propertyPhotos structure
+          });
 
           // Fetch host data using ownerId
           if (propertyData.ownerId) {
-            const hostDoc = await getDoc(doc(db, 'accounts', propertyData.ownerId));
+            const hostDoc = await getDoc(
+              doc(db, "accounts", propertyData.ownerId)
+            );
             if (hostDoc.exists()) {
               setHost(hostDoc.data());
             }
           }
 
           // Fetch all comments for this property (both parent comments and replies)
-          const commentsQuery = query(collection(db, 'comments'), where('propertyId', '==', id));
+          const commentsQuery = query(
+            collection(db, "comments"),
+            where("propertyId", "==", id)
+          );
           const commentsSnapshot = await getDocs(commentsQuery);
 
           // Separate parent comments and replies
           const parentComments: Comment[] = [];
           const repliesMap = new Map<string, Comment[]>();
 
-          commentsSnapshot.docs.forEach(doc => {
+          commentsSnapshot.docs.forEach((doc) => {
             const data = doc.data();
             const comment = {
               id: doc.id,
@@ -161,7 +188,7 @@ const PropertyPage = () => {
               dislikeCounter: data.dislikeCounter || 0,
               isReply: data.isReply || false,
               replies: [],
-              parentCommentId: data.parentCommentId
+              parentCommentId: data.parentCommentId,
             };
 
             if (data.parentCommentId) {
@@ -177,13 +204,13 @@ const PropertyPage = () => {
           });
 
           // Attach replies to their parent comments and sort them by date
-          const commentsWithReplies = parentComments.map(comment => ({
+          const commentsWithReplies = parentComments.map((comment) => ({
             ...comment,
             replies: (repliesMap.get(comment.id) || []).sort((a, b) => {
               const dateA = a.commentDate?.seconds || 0;
               const dateB = b.commentDate?.seconds || 0;
               return dateA - dateB;
-            })
+            }),
           }));
 
           // Sort parent comments by date
@@ -197,7 +224,7 @@ const PropertyPage = () => {
         }
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching property:', error);
+        console.error("Error fetching property:", error);
         setLoading(false);
       }
     };
@@ -208,7 +235,7 @@ const PropertyPage = () => {
   useEffect(() => {
     // Fetch user favorites
     if (auth.currentUser) {
-      const userDoc = doc(db, 'users', auth.currentUser.uid);
+      const userDoc = doc(db, "users", auth.currentUser.uid);
       getDoc(userDoc).then((docSnap) => {
         if (docSnap.exists() && docSnap.data().favorites) {
           setUserFavorites(docSnap.data().favorites);
@@ -222,20 +249,20 @@ const PropertyPage = () => {
       setShowLoginPrompt(true);
       return;
     }
-    if (!auth.currentUser || !id) return;   
+    if (!auth.currentUser || !id) return;
 
-    const userRef = doc(db, 'accounts', auth.currentUser.uid);
+    const userRef = doc(db, "accounts", auth.currentUser.uid);
     const isFavorited = userFavorites.includes(id);
 
     try {
       await updateDoc(userRef, {
-        favorites: isFavorited ? arrayRemove(id) : arrayUnion(id)
+        favorites: isFavorited ? arrayRemove(id) : arrayUnion(id),
       });
       setUserFavorites((prev) =>
         isFavorited ? prev.filter((fav) => fav !== id) : [...prev, id]
       );
     } catch (error) {
-      console.error('Error updating favorites:', error);
+      console.error("Error updating favorites:", error);
     }
   };
 
@@ -248,76 +275,78 @@ const PropertyPage = () => {
     if (!auth.currentUser || !id || !property) return;
 
     try {
-      const propertyRef = doc(db, 'properties', id);
-      const userRef = doc(db, 'accounts', auth.currentUser.uid);
-      const ownerRef = doc(db, 'accounts', property.ownerId);
-      
+      const propertyRef = doc(db, "properties", id);
+      const userRef = doc(db, "accounts", auth.currentUser.uid);
+      const ownerRef = doc(db, "accounts", property.ownerId);
+
       // Get current property data to check current interest status
       const propertyDoc = await getDoc(propertyRef);
       if (!propertyDoc.exists()) return;
-      
+
       const propertyData = propertyDoc.data();
-      const isCurrentlyInterested = propertyData.interestedApplicants?.includes(auth.currentUser.uid);
+      const isCurrentlyInterested = propertyData.interestedApplicants?.includes(
+        auth.currentUser.uid
+      );
       const currentCount = propertyData.interestedCount || 0;
 
       if (!isCurrentlyInterested) {
         // Create notification for the owner
-        const userName = auth.currentUser?.displayName || 'Anonymous';
+        const userName = auth.currentUser?.displayName || "Anonymous";
         const newNotification = {
           id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          type: 'interested',
+          type: "interested",
           message: `${userName} is interested in ${property.propertyName}`,
           timestamp: Date.now(),
           read: false,
           propertyId: id,
           propertyName: property.propertyName,
           userId: auth.currentUser.uid,
-          userName
+          userName,
         };
 
         // Update owner's notifications
         await updateDoc(ownerRef, {
-          notifications: arrayUnion(newNotification)
+          notifications: arrayUnion(newNotification),
         });
       }
 
       // Toggle interest status and update count
       await updateDoc(propertyRef, {
-        interestedApplicants: isCurrentlyInterested 
+        interestedApplicants: isCurrentlyInterested
           ? arrayRemove(auth.currentUser.uid)
           : arrayUnion(auth.currentUser.uid),
-        interestedCount: isCurrentlyInterested 
+        interestedCount: isCurrentlyInterested
           ? Math.max(0, currentCount - 1) // Ensure count never goes below 0
-          : currentCount + 1
+          : currentCount + 1,
       });
 
       // Update user's itemsInterested
       await updateDoc(userRef, {
-        itemsInterested: isCurrentlyInterested 
+        itemsInterested: isCurrentlyInterested
           ? arrayRemove(id)
-          : arrayUnion(id)
+          : arrayUnion(id),
       });
 
       // Update local state
-      setProperty(prev => {
+      setProperty((prev) => {
         if (!prev) return null;
         const currentApplicants = prev.interestedApplicants || [];
-        const newCount = isCurrentlyInterested 
+        const newCount = isCurrentlyInterested
           ? Math.max(0, (prev.interestedCount || 0) - 1)
           : (prev.interestedCount || 0) + 1;
-        
+
         return {
           ...prev,
           interestedApplicants: isCurrentlyInterested
-            ? currentApplicants.filter(uid => uid !== auth.currentUser?.uid)
-            : auth.currentUser?.uid 
-              ? [...currentApplicants, auth.currentUser.uid]
-              : currentApplicants,
-          interestedCount: newCount
+            ? currentApplicants.filter((uid) => uid !== auth.currentUser?.uid)
+            : auth.currentUser?.uid
+            ? [...currentApplicants, auth.currentUser.uid]
+            : currentApplicants,
+          interestedCount: newCount,
         };
       });
     } catch (error) {
-      console.error('Error updating interested status:', error);
+      console.error("Error updating interested status:", error);
     }
   };
 
@@ -331,25 +360,28 @@ const PropertyPage = () => {
 
     try {
       // First add the comment document
-      const commentRef = collection(db, 'comments');
+      const commentRef = collection(db, "comments");
       const newCommentDoc = await addDoc(commentRef, {
         propertyId: id,
         userId: auth.currentUser.uid,
         userEmail: auth.currentUser.email,
         content: newComment,
-        commentDate: serverTimestamp()
+        commentDate: serverTimestamp(),
       });
 
       // Update the property document to include the new comment ID
-      const propertyRef = doc(db, 'properties', id);
+      const propertyRef = doc(db, "properties", id);
       await updateDoc(propertyRef, {
-        comments: arrayUnion(newCommentDoc.id)
+        comments: arrayUnion(newCommentDoc.id),
       });
 
-      setNewComment('');
+      setNewComment("");
 
       // Refresh comments
-      const commentsQuery = query(collection(db, 'comments'), where('propertyId', '==', id));
+      const commentsQuery = query(
+        collection(db, "comments"),
+        where("propertyId", "==", id)
+      );
       const commentsSnapshot = await getDocs(commentsQuery);
       const commentsData: Comment[] = commentsSnapshot.docs.map((doc) => {
         const data = doc.data();
@@ -365,26 +397,27 @@ const PropertyPage = () => {
           dislikeCounter: data.dislikeCounter || 0,
           isReply: data.isReply || false,
           replies: data.replies || [],
-          parentCommentId: data.parentCommentId
+          parentCommentId: data.parentCommentId,
         };
       });
 
       // Sort comments to maintain current sort order
-      const sortedComments = activeSortType === 'date'
-        ? commentsData.sort((a, b) => {
-          return dateSort === 'newest'
-            ? a.commentDate?.seconds - b.commentDate?.seconds
-            : b.commentDate?.seconds - a.commentDate?.seconds;
-        })
-        : commentsData.sort((a, b) => {
-          return likeSort === 'mostLiked'
-            ? (a.likesCounter || 0) - (b.likesCounter || 0)
-            : (b.likesCounter || 0) - (a.likesCounter || 0);
-        });
+      const sortedComments =
+        activeSortType === "date"
+          ? commentsData.sort((a, b) => {
+              return dateSort === "newest"
+                ? a.commentDate?.seconds - b.commentDate?.seconds
+                : b.commentDate?.seconds - a.commentDate?.seconds;
+            })
+          : commentsData.sort((a, b) => {
+              return likeSort === "mostLiked"
+                ? (a.likesCounter || 0) - (b.likesCounter || 0)
+                : (b.likesCounter || 0) - (a.likesCounter || 0);
+            });
 
       setComments(sortedComments);
     } catch (error) {
-      console.error('Error adding comment:', error);
+      console.error("Error adding comment:", error);
     }
   };
 
@@ -392,7 +425,7 @@ const PropertyPage = () => {
     if (!user) return;
 
     try {
-      const commentRef = doc(db, 'comments', commentId);
+      const commentRef = doc(db, "comments", commentId);
       const commentDoc = await getDoc(commentRef);
 
       if (!commentDoc.exists()) return;
@@ -405,26 +438,31 @@ const PropertyPage = () => {
       await deleteDoc(commentRef);
 
       // Update local state
-      setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+      setComments((prevComments) =>
+        prevComments.filter((comment) => comment.id !== commentId)
+      );
     } catch (error) {
-      console.error('Error deleting comment:', error);
+      console.error("Error deleting comment:", error);
     }
   };
 
   const caesarCipher = (text: string, key: number): string => {
-    if (!text || typeof text !== 'string') {
-      return '';
+    if (!text || typeof text !== "string") {
+      return "";
     }
-    return text.split('').map(char => {
-      const code = char.charCodeAt(0);
+    return text
+      .split("")
+      .map((char) => {
+        const code = char.charCodeAt(0);
 
-      if (code >= 65 && code <= 90) {
-        return String.fromCharCode(((code - 65 + key) % 26) + 65);
-      } else if (code >= 97 && code <= 122) {
-        return String.fromCharCode(((code - 97 + key) % 26) + 97);
-      }
-      return char;
-    }).join('');
+        if (code >= 65 && code <= 90) {
+          return String.fromCharCode(((code - 65 + key) % 26) + 65);
+        } else if (code >= 97 && code <= 122) {
+          return String.fromCharCode(((code - 97 + key) % 26) + 97);
+        }
+        return char;
+      })
+      .join("");
   };
 
   const handleLikeComment = async (commentId: string) => {
@@ -434,7 +472,7 @@ const PropertyPage = () => {
     }
 
     try {
-      const commentRef = doc(db, 'comments', commentId);
+      const commentRef = doc(db, "comments", commentId);
       const commentDoc = await getDoc(commentRef);
 
       if (!commentDoc.exists()) return;
@@ -447,33 +485,37 @@ const PropertyPage = () => {
         // Unlike the comment
         await updateDoc(commentRef, {
           likesCounter: (commentData.likesCounter || 0) - 1,
-          likedBy: arrayRemove(user!.uid)
+          likedBy: arrayRemove(user!.uid),
         });
       } else {
         // Like the comment
         await updateDoc(commentRef, {
           likesCounter: (commentData.likesCounter || 0) + 1,
-          likedBy: arrayUnion(user!.uid)
+          likedBy: arrayUnion(user!.uid),
         });
       }
 
       // Update local state
-      setComments(prevComments =>
-        prevComments.map(comment => {
+      setComments((prevComments) =>
+        prevComments.map((comment) => {
           if (comment.id === commentId) {
             return {
               ...comment,
-              likesCounter: hasLiked ? (comment.likesCounter || 0) - 1 : (comment.likesCounter || 0) + 1,
+              likesCounter: hasLiked
+                ? (comment.likesCounter || 0) - 1
+                : (comment.likesCounter || 0) + 1,
               likedBy: hasLiked
-                ? (comment.likedBy || []).filter((id: string) => id !== user!.uid)
-                : [...(comment.likedBy || []), user!.uid]
+                ? (comment.likedBy || []).filter(
+                    (id: string) => id !== user!.uid
+                  )
+                : [...(comment.likedBy || []), user!.uid],
             };
           }
           return comment;
         })
       );
     } catch (error) {
-      console.error('Error updating like:', error);
+      console.error("Error updating like:", error);
     }
   };
 
@@ -495,29 +537,32 @@ const PropertyPage = () => {
         likedBy: [],
         dislikeCounter: 0,
         isReply: true,
-        parentCommentId: commentId
+        parentCommentId: commentId,
       };
 
-      const replyRef = await addDoc(collection(db, 'comments'), replyData);
+      const replyRef = await addDoc(collection(db, "comments"), replyData);
 
       // Update local state
-      setComments(prevComments =>
-        prevComments.map(comment => {
+      setComments((prevComments) =>
+        prevComments.map((comment) => {
           if (comment.id === commentId) {
             return {
               ...comment,
-              replies: [...(comment.replies || []), {
-                ...replyData,
-                id: replyRef.id,
-                commentDate: { seconds: Date.now() / 1000 } // Temporary timestamp for immediate display
-              }]
+              replies: [
+                ...(comment.replies || []),
+                {
+                  ...replyData,
+                  id: replyRef.id,
+                  commentDate: { seconds: Date.now() / 1000 }, // Temporary timestamp for immediate display
+                },
+              ],
             };
           }
           return comment;
         })
       );
     } catch (error) {
-      console.error('Error adding reply:', error);
+      console.error("Error adding reply:", error);
     }
   };
 
@@ -528,7 +573,7 @@ const PropertyPage = () => {
     }
 
     try {
-      const replyRef = doc(db, 'comments', replyId);
+      const replyRef = doc(db, "comments", replyId);
       const replyDoc = await getDoc(replyRef);
       const replyData = replyDoc.data();
 
@@ -540,41 +585,45 @@ const PropertyPage = () => {
         // Unlike the reply
         await updateDoc(replyRef, {
           likesCounter: (replyData.likesCounter || 0) - 1,
-          likedBy: arrayRemove(user!.uid)
+          likedBy: arrayRemove(user!.uid),
         });
       } else {
         // Like the reply
         await updateDoc(replyRef, {
           likesCounter: (replyData.likesCounter || 0) + 1,
-          likedBy: arrayUnion(user!.uid)
+          likedBy: arrayUnion(user!.uid),
         });
       }
 
       // Update local state
-      setComments(prevComments =>
-        prevComments.map(comment => {
+      setComments((prevComments) =>
+        prevComments.map((comment) => {
           if (comment.id === commentId) {
             return {
               ...comment,
-              replies: comment.replies?.map(reply => {
+              replies: comment.replies?.map((reply) => {
                 if (reply.id === replyId) {
                   return {
                     ...reply,
-                    likesCounter: hasLiked ? (reply.likesCounter || 0) - 1 : (reply.likesCounter || 0) + 1,
+                    likesCounter: hasLiked
+                      ? (reply.likesCounter || 0) - 1
+                      : (reply.likesCounter || 0) + 1,
                     likedBy: hasLiked
-                      ? (reply.likedBy || []).filter((id: string) => id !== user!.uid)
-                      : [...(reply.likedBy || []), user!.uid]
+                      ? (reply.likedBy || []).filter(
+                          (id: string) => id !== user!.uid
+                        )
+                      : [...(reply.likedBy || []), user!.uid],
                   };
                 }
                 return reply;
-              })
+              }),
             };
           }
           return comment;
         })
       );
     } catch (error) {
-      console.error('Error updating reply like:', error);
+      console.error("Error updating reply like:", error);
     }
   };
 
@@ -583,22 +632,23 @@ const PropertyPage = () => {
 
     try {
       // Delete the reply document
-      await deleteDoc(doc(db, 'comments', replyId));
+      await deleteDoc(doc(db, "comments", replyId));
 
       // Update local state
-      setComments(prevComments =>
-        prevComments.map(comment => {
+      setComments((prevComments) =>
+        prevComments.map((comment) => {
           if (comment.id === commentId) {
             return {
               ...comment,
-              replies: comment.replies?.filter(reply => reply.id !== replyId) || []
+              replies:
+                comment.replies?.filter((reply) => reply.id !== replyId) || [],
             };
           }
           return comment;
         })
       );
     } catch (error) {
-      console.error('Error deleting reply:', error);
+      console.error("Error deleting reply:", error);
     }
   };
 
@@ -608,7 +658,7 @@ const PropertyPage = () => {
       await signInWithPopup(auth, provider);
       setShowLoginPrompt(false);
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error("Error signing in with Google:", error);
     }
   };
 
@@ -616,30 +666,99 @@ const PropertyPage = () => {
     handleGoogleSignIn();
   };
 
-  if (loading) {
-    return (
-      <div className="property-page">
-        <PropertySkeleton />
-      </div>
-    );
-  }
-
   if (!property) {
-    return <div>Property not found</div>;
+    return <div></div>;
   }
 
-  
   const key = new Date().getDate();
-  const normalDocumentId = property?.ownerId || '';
-  const encryptedDocumentId = normalDocumentId ? caesarCipher(normalDocumentId, key) : '';
+  const normalDocumentId = property?.ownerId || "";
+  const encryptedDocumentId = normalDocumentId
+    ? caesarCipher(normalDocumentId, key)
+    : "";
+
+  const OwnerInfo = () => {
+    return (
+      <>
+        <div className="py-8 px-4 flex items-center">
+          {/* TODO: Replace with owner's profile pic */}
+          <img
+            className="w-1/5 aspect-square rounded-full"
+            src="https://static.vecteezy.com/system/resources/previews/036/594/092/non_2x/man-empty-avatar-photo-placeholder-for-social-networks-resumes-forums-and-dating-sites-male-and-female-no-photo-images-for-unfilled-user-profile-free-vector.jpg"
+            alt=""
+          />
+
+          <div className="ms-4">
+            <h2 className="text-xl font-semibold mb-2">{host?.username}</h2>
+
+            <div className="flex gap-2 text-sm font-semibold">
+              {/* TODO: link */}
+              <button className="py-1 px-4 text-indigo-400 border-2 border-indigo-400 rounded-lg">
+                View Profile
+              </button>
+              {/* TODO: link */}
+              <button className="py-1 px-4 bg-indigo-400 rounded-lg text-white">
+                Message
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <hr className="text-gray-200 border-t-16" />
+      </>
+    );
+  };
 
   return (
-    <div className="property-page">
-      {editChecker ? (
-        <>
-        <PropertyHeader />
+    <>
+      <PropertyGallery propertyPhotos={property.propertyPhotos} />
+      <PropertyInfo property={property} host={host} />
+      <PropertyMap locationGeo={property.propertyLocationGeo} />
+      <OwnerInfo />
+      <CommentSection
+        comments={comments}
+        user={user}
+        newComment={newComment}
+        onCommentChange={(value) => setNewComment(value)}
+        onCommentSubmit={handleCommentSubmit}
+        onLikeComment={handleLikeComment}
+        onDeleteComment={handleDeleteComment}
+        onReplySubmit={(commentId, content) =>
+          handleReplySubmit(commentId, content)
+        }
+        onReplyLike={handleReplyLike}
+        onDeleteReply={handleDeleteReply}
+      />
+    </>
+  );
+};
 
-        {property && (
+export default PropertyPage;
+
+{
+  /*
+  <div className="property-info">
+  <div className="host-section">
+    <div className="host-info">
+      <h2 className="host-name">Hosted by {host?.username || 'Host'}</h2>
+      <div className="property-stats">
+        <span>{property.bedroomCount} bedroom</span>
+        <span>•</span>
+        <span>{property.bathroomCount} bath</span>
+        <span>•</span>
+        <span>{property.viewCount} views</span>
+      </div>
+    </div>
+  </div>
+*/
+}
+
+{
+  /* <div className="property-page">
+  {editChecker ? (
+    <>
+      <PropertyHeader />
+
+      {property && (
         <>
           <div className="property-header">
             <h1 className="property-title">{property.propertyName}</h1>
@@ -648,80 +767,83 @@ const PropertyPage = () => {
           <p className="property-location">{property.propertyLocation}</p>
 
           <div className="host-info">
-          <h2 className="host-name">Hosted by {host?.username || 'Host'}</h2>
-          <div className="property-stats">
-            <span>{property.viewCount} views</span>
-            <span>•</span>
-            <span>{property.interestedCount} interested</span>
-            <span>•</span>
-          </div>
+            <h2 className="host-name">
+              Hosted by {host?.username || "Host"}
+            </h2>
+            <div className="property-stats">
+              <span>{property.viewCount} views</span>
+              <span>•</span>
+              <span>{property.interestedCount} interested</span>
+              <span>•</span>
+            </div>
           </div>
 
-          {/* New Edit Property button */}
-  <button className="edit-property-button" onClick={() => {navigate(`/property/${id}/edit-property`)}}>
-    Edit Property
-  </button>
+          New Edit Property button
+          <button
+            className="edit-property-button"
+            onClick={() => {
+              navigate(`/property/${id}/edit-property`);
+            }}
+          >
+            Edit Property
+          </button>
 
           <section>
             <h2>Interested Applicants</h2>
-            {property.interestedApplicants && property.interestedApplicants.length > 0 ? (
-      <ul className="interested-applicants-list">
-        {property.interestedApplicants.map((applicantId) => (
-          <li key={applicantId} className="applicant-item">
-            <ApplicantDetails applicantId={applicantId} />
-          </li>
-        ))}
-      </ul>
-    ) : (
-      <p>No interested applicants for this property</p>
-    )}
+            {property.interestedApplicants &&
+            property.interestedApplicants.length > 0 ? (
+              <ul className="interested-applicants-list">
+                {property.interestedApplicants.map((applicantId) => (
+                  <li key={applicantId} className="applicant-item">
+                    <ApplicantDetails applicantId={applicantId} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No interested applicants for this property</p>
+            )}
           </section>
         </>
-
       )}
-        </>
-
-      ) : (
-        <>
-
+    </>
+  ) : (
+    <>
       <PropertyHeader />
 
-      {/* Favorite button */}
+      Favorite button
       <button
         onClick={handleFavoriteToggle}
-        className={`favorite-button-property-page ${userFavorites.includes(id || '') ? 'favorited' : ''}`}
-      >
-        
-      </button>
+        className={`favorite-button-property-page ${
+          userFavorites.includes(id || "") ? "favorited" : ""
+        }`}
+      ></button>
 
       {isOwner && (
         <div className="edit-property-button-container">
-          <button 
+          <button
             className="edit-property-button"
             onClick={() => navigate(`/property/${id}/edit-property`)}
           >
             Edit Property
           </button>
-          
-        <button 
-          className="view-applicants-button" 
-          onClick={() => setShowApplicants(!showApplicants)}
-        >
-          {showApplicants ? 'Hide Applicants' : 'View Applicants'}
-        </button>
+
+          <button
+            className="view-applicants-button"
+            onClick={() => setShowApplicants(!showApplicants)}
+          >
+            {showApplicants ? "Hide Applicants" : "View Applicants"}
+          </button>
         </div>
       )}
 
       {property && (
         <>
-
           <div className="property-header">
             <h1 className="property-title">{property.propertyName}</h1>
           </div>
           <PropertyGallery propertyPhotos={property.propertyPhotos} />
           <p className="property-location">{property.propertyLocation}</p>
         </>
-
       )}
 
       <div className="property-content">
@@ -730,7 +852,11 @@ const PropertyPage = () => {
         <BookingCard
           property={property}
           onInterestedClick={handleInterestedClick}
-          isInterested={property.interestedApplicants?.includes(auth.currentUser?.uid || '') || false}
+          isInterested={
+            property.interestedApplicants?.includes(
+              auth.currentUser?.uid || ""
+            ) || false
+          }
         />
       </div>
 
@@ -750,7 +876,9 @@ const PropertyPage = () => {
         onCommentSubmit={handleCommentSubmit}
         onLikeComment={handleLikeComment}
         onDeleteComment={handleDeleteComment}
-        onReplySubmit={(commentId, content) => handleReplySubmit(commentId, content)}
+        onReplySubmit={(commentId, content) =>
+          handleReplySubmit(commentId, content)
+        }
         onReplyLike={handleReplyLike}
         onDeleteReply={handleDeleteReply}
       />
@@ -758,7 +886,14 @@ const PropertyPage = () => {
       {property && (
         <OwnerSection
           ownerId={property.ownerId}
-          onViewProfile={() => navigate(`/owner-page/${normalDocumentId}`, { state: { normalDocumentId: normalDocumentId, encryptedDocumentId: encryptedDocumentId } })}
+          onViewProfile={() =>
+            navigate(`/owner-page/${normalDocumentId}`, {
+              state: {
+                normalDocumentId: normalDocumentId,
+                encryptedDocumentId: encryptedDocumentId,
+              },
+            })
+          }
           onMessage={() => setIsChatModalOpen(true)}
           allowChat={allowChat}
         />
@@ -772,18 +907,13 @@ const PropertyPage = () => {
           isOpen={isChatModalOpen}
           onClose={() => setIsChatModalOpen(false)}
           recipientId={property.ownerId}
-          recipientName={host.username || 'Host'}
-          recipientPhoto={host.photoURL || ''}
+          recipientName={host.username || "Host"}
+          recipientPhoto={host.photoURL || ""}
           isMinimized={isChatMinimized}
           onMinimizedChange={setIsChatMinimized}
         />
       )}
-      </>
-
-    )}
-    </div>
-    
-  );
-};
-
-export default PropertyPage;
+    </>
+  )}
+</div> */
+}
